@@ -159,52 +159,6 @@ class HoneypotServer:
         except Exception as e:
             print(f"[!] Scan Error: {e}")
 
-    async def handle_mysql(self, reader, writer):
-        """Handle basic MySQL handshake to capture auth."""
-        try:
-            ip, port = writer.get_extra_info("peername")
-            session_id = str(uuid.uuid4())[:8]
-            
-            await self.logger.log_event_async({
-                "event": "connect", "protocol": "mysql", 
-                "src_ip": ip, "src_port": port, "session_id": session_id
-            })
-            asyncio.create_task(self.log_geoip(session_id, ip, "mysql"))
-            
-            # Send MySQL Handshake Packet (Mock)
-            # Proto: 10, Version: 5.7.33, Thread: 1, Salt...
-            handshake = b'\x4a\x00\x00\x00\x0a\x35\x2e\x37\x2e\x33\x33\x00\x01\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\x00\xff\xf7\x08\x02\x00\x7f\x80\x15\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x00\x6d\x79\x73\x71\x6c\x5f\x6e\x61\x74\x69\x76\x65\x5f\x70\x61\x73\x73\x77\x6f\x72\x64\x00'
-            writer.write(handshake)
-            await writer.drain()
-            
-            # Read Login Packet
-            data = await asyncio.wait_for(reader.read(1024), timeout=5)
-            
-            if len(data) > 0:
-                 # Extract username (trivial parsing)
-                 # Usually starts after capability flags
-                 try:
-                     # Very heuristic parsing for demo
-                     clean_data = data.replace(b'\x00', b' ').decode('ascii', 'ignore')
-                     parts = clean_data.split()
-                     user_hint = parts[3] if len(parts) > 3 else "unknown"
-                     
-                     await self.logger.log_event_async({
-                         "event": "auth_attempt", "protocol": "mysql", 
-                         "session_id": session_id,
-                         "raw_packet_len": len(data),
-                         "user_hint": user_hint
-                     })
-                 except:
-                     pass
-
-            # Error: Access Denied
-            error_packet = b'\x17\x00\x00\x01\xff\x15\x04\x23\x32\x38\x30\x30\x30\x41\x63\x63\x65\x73\x73\x20\x64\x65\x6e\x69\x65\x64'
-            writer.write(error_packet)
-            await writer.drain()
-            
-        except Exception:
-            pass
         finally:
             writer.close()
 
@@ -247,16 +201,6 @@ class HoneypotServer:
 
 
 
-        # Start Vulnerable Services (MySQL)
-        mysql_conf = self.config.get("services", {}).get("mysql", {})
-        if mysql_conf.get("enabled", False):
-            mysql_port = mysql_conf.get("port", 3306)
-            try:
-                 await asyncio.start_server(self.handle_mysql, "0.0.0.0", mysql_port, reuse_address=True)
-                 print(f"[*] MySQL Emulation listening on port {mysql_port}")
-            except Exception as e:
-                 print(f"[!] MySQL Bind Error: {e}")
-        
         # Start Cleanup Task
         asyncio.create_task(self._cleanup_loop())
         

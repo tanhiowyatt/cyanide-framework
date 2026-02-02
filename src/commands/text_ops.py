@@ -7,16 +7,28 @@ class TextOpCommand(Command):
 
 class GrepCommand(TextOpCommand):
     async def execute(self, args, input_data=""):
-        # Simplified grep: only supports finding fixed string
-        if not args:
-            return "", "grep: usage: grep [PATTERN] [FILE...]\n", 2
+        # Improved grep: supports -i, -v
+        parser = argparse.ArgumentParser(prog="grep", add_help=False)
+        parser.add_argument("-i", "--ignore-case", action="store_true")
+        parser.add_argument("-v", "--invert-match", action="store_true")
+        parser.add_argument("pattern", nargs="?")
+        parser.add_argument("files", nargs="*")
+        
+        try:
+            parsed, unknown = parser.parse_known_args(args)
+        except SystemExit:
+            return "", "", 1
             
-        pattern = args[0]
-        files = args[1:]
+        pattern = parsed.pattern
+        if not pattern:
+             return "", "Usage: grep [OPTION]... PATTERN [FILE]...\n", 2
+             
+        files = parsed.files
+        ignore_case = parsed.ignore_case
+        invert_match = parsed.invert_match
         
         lines = []
         if not files:
-            # Read from input_data
             lines = input_data.splitlines(keepends=True)
         else:
             for f in files:
@@ -24,14 +36,21 @@ class GrepCommand(TextOpCommand):
                 if self.fs.is_file(path):
                      content = self.fs.get_content(path)
                      lines.extend(content.splitlines(keepends=True))
-                # Skip dirs/errors for simplicity like real grep (unless -s) except usually grep prints error.
+                elif self.fs.is_dir(path):
+                     return "", f"grep: {f}: Is a directory\n", 2
         
         output = ""
+        search_pattern = pattern.lower() if ignore_case else pattern
+        
         for line in lines:
-            if pattern in line:
-                output += line
+            search_line = line.lower() if ignore_case else line
+            match = search_pattern in search_line
+            
+            if invert_match:
+                if not match: output += line
+            else:
+                if match: output += line
                 
-        # grep returns 0 if found, 1 if not found
         rc = 0 if output else 1
         return output, "", rc
 

@@ -85,3 +85,37 @@
 {"eventid": "command.input", "timestamp": "2026-02-02T23:29:34.951577", "session": "4f7ac2e7", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
 {"eventid": "command.input", "timestamp": "2026-02-02T23:29:38.013459", "session": "4f7ac2e7", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cd ..", "client_version": "Telnet"}
 {"eventid": "command.input", "timestamp": "2026-02-02T23:29:39.628925", "session": "4f7ac2e7", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "session_end", "timestamp": "2026-02-02T23:34:39.864515", "session": "4f7ac2e7", "protocol": "telnet", "src_ip": "192.168.97.1", "username": "admin", "commands": ["ls", "cd ..", "cd ..", "ls", "d ..", "cd ..", "cd ..", "cd ..", "ls", "cd ..", "ls", "ls", "cd ..", "ls"], "duration": 345.0910699367523}
+{"eventid": "connect", "timestamp": "2026-02-02T23:35:59.582366", "session": "eb07ef96", "protocol": "telnet", "src_ip": "192.168.97.1", "src_port": 49856}
+{"eventid": "auth", "timestamp": "2026-02-02T23:36:05.045771", "session": "eb07ef96", "protocol": "telnet", "src_ip": "192.168.97.1", "username": "Q", "password": "", "success": false}
+{"eventid": "session_end", "timestamp": "2026-02-02T23:36:05.047836", "session": "eb07ef96", "protocol": "telnet", "src_ip": "192.168.97.1", "username": "Q", "commands": [], "duration": 5.466779708862305}
+{"eventid": "connect", "timestamp": "2026-02-02T23:36:07.376855", "session": "516c7fcb", "protocol": "telnet", "src_ip": "192.168.97.1", "src_port": 49658}
+{"eventid": "auth", "timestamp": "2026-02-02T23:36:10.801951", "session": "516c7fcb", "protocol": "telnet", "src_ip": "192.168.97.1", "username": "admin", "password": "admin", "success": true}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:36:13.676130", "session": "516c7fcb", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "nano", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:36:18.988679", "session": "516c7fcb", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "vi", "client_version": "Telnet"}
+{"eventid": "session_end", "timestamp": "2026-02-02T23:37:08.949723", "session": "516c7fcb", "protocol": "telnet", "src_ip": "192.168.97.1", "username": "admin", "commands": ["nano", "vi"], "duration": 61.5727264881134}
+{"eventid": "connect", "timestamp": "2026-02-02T23:38:17.126835", "session": "f4167f4c", "protocol": "telnet", "src_ip": "192.168.97.1", "src_port": 43352}
+{"eventid": "auth", "timestamp": "2026-02-02T23:38:21.317150", "session": "f4167f4c", "protocol": "telnet", "src_ip": "192.168.97.1", "username": "admin", "password": "admin", "success": true}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:38:22.232426", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:38:37.181051", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cat flag.txt", "client_version": "Telnet"}
+{"eventid": "CRITICAL_ALERT", "timestamp": "2026-02-02T23:38:37.375584", "session": "unknown", "action": "read", "path": "/home/admin/flag.txt"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:38:58.782352", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cat secret.conf", "client_version": "Telnet"}
+{"eventid": "CRITICAL_ALERT", "timestamp": "2026-02-02T23:38:58.975657", "session": "unknown", "action": "read", "path": "/home/admin/secret.conf"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:23.985553", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cat file1.txt", "client_version": "Telnet"}
+{"eventid": "fs_audit", "timestamp": "2026-02-02T23:39:24.146561", "session": "unknown", "action": "read", "path": "/home/admin/file1.txt"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:28.009809", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cd ..", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:29.166940", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:35.366909", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "mkdir", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:37.009748", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:41.874186", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "mkdir test", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:42.990928", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:47.557736", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cd test", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:48.543617", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:51.573549", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "pwd", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:53.814800", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cd ..", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:56.707517", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cd ..", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:39:57.826479", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:40:02.758926", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cd proc", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:40:03.696106", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:40:05.095648", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cd", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-02T23:40:06.610342", "session": "f4167f4c", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}

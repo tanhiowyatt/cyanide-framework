@@ -17,8 +17,6 @@ class LsCommand(Command):
         long_format = False
         target_path = self.emulator.cwd
         
-        print(f"[DEBUG] LS Args: {args!r}")
-
         # Parse flags
         paths = []
         for arg in args:

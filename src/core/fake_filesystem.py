@@ -42,7 +42,6 @@ class FakeFilesystem:
         mkdir_p("/var/log")
         mkdir_p("/var/www")
         mkdir_p("/var/www/html")
-        mkdir_p("/var/lib/mysql", owner="mysql", group="mysql", perm="drwxr-x---")
         mkdir_p("/var/spool/cron")
         mkdir_p("/var/spool/cron/crontabs", group="crontab", perm="drwx-wx--T")
         mkdir_p("/var/run")
@@ -275,8 +274,8 @@ class FakeFilesystem:
         """
         node = self.get_node(path)
         if isinstance(node, File):
-            if self.audit:
-                self.audit("read", path)
+            if self.audit_callback:
+                self.audit_callback("read", path)
             return node.content
         return ""
 
@@ -296,4 +295,7 @@ class FakeFilesystem:
         # This is a simplified resolver
         if not path:
              return "/"
-        return posixpath.normpath(str(PurePosixPath(path)))
+        res = posixpath.normpath(str(PurePosixPath(path)))
+        if res.startswith("//") and not res.startswith("///"):
+            res = res[1:]
+        return res
