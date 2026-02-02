@@ -86,7 +86,7 @@ class HoneypotServer:
                 return True
         return False
     
-    def _fs_audit_hook(self, action, path):
+    def _fs_audit_hook(self, action, path, session_id="unknown", src_ip="unknown"):
         """Callback for filesystem auditing."""
         try:
             loop = asyncio.get_running_loop()
@@ -96,7 +96,10 @@ class HoneypotServer:
                 "/home/admin/secret.conf", 
                 "/home/admin/flag.txt", 
                 "/etc/shadow", 
-                "/var/spool/cron/crontabs/root"
+                "/var/spool/cron/crontabs/root",
+                "/root/flag.txt",
+                "/root/secret.conf",
+                "/root/.ssh/id_rsa"
             ]
             
             event_type = "fs_audit"
@@ -106,25 +109,45 @@ class HoneypotServer:
             loop.create_task(self.logger.log_event_async({
                 "event": event_type, 
                 "action": action, 
-                "path": path,
-                # "session_id": "unknown" 
+                "path": str(path),
+                "session_id": session_id,
+                "src_ip": src_ip
             }))
         except RuntimeError:
             pass
 
-    def get_filesystem(self):
+    def get_filesystem(self, session_id="unknown", src_ip="unknown"):
         """Factory to get the filesystem instance."""
+        audit_hook = lambda a, p: self._fs_audit_hook(a, p, session_id, src_ip)
         if self.fs_pickle_path and os.path.exists(self.fs_pickle_path):
             try:
                 root = load_fs(self.fs_pickle_path)
-                fs = FakeFilesystem(audit_callback=self._fs_audit_hook, profile=self.profile)
+                fs = FakeFilesystem(audit_callback=audit_hook, profile=self.profile)
                 fs.root = root # Hot-swap root
                 return fs
             except Exception as e:
                 print(f"Error loading pickle FS: {e}")
-        return FakeFilesystem(audit_callback=self._fs_audit_hook, profile=self.profile)
+        return FakeFilesystem(audit_callback=audit_hook, profile=self.profile)
 
-    def save_quarantine_file(self, filename: str, content: bytes):
+    async def _scan_and_log(self, filename: str, content: bytes, session_id="unknown", src_ip="unknown"):
+        """Background task to scan file and log results."""
+        try:
+            result = await self.vt_scanner.scan(content, filename)
+            if result:
+                await self.logger.log_event_async({
+                    "event": "malware_scan",
+                    "session_id": session_id,
+                    "src_ip": src_ip,
+                    "filename": filename,
+                    "sha256": result.get("sha256"),
+                    "malicious": result.get("malicious"),
+                    "label": result.get("label"),
+                    "vt_link": result.get("link")
+                })
+        except Exception as e:
+            print(f"[!] Scan Error: {e}")
+
+    def save_quarantine_file(self, filename: str, content: bytes, session_id="unknown", src_ip="unknown"):
         """Save a file to the quarantine directory."""
         try:
             timestamp = int(time.time())
@@ -136,31 +159,12 @@ class HoneypotServer:
             
             # Trigger Async Analysis
             if self.vt_scanner.enabled:
-                asyncio.create_task(self._scan_and_log(filename, content))
+                asyncio.create_task(self._scan_and_log(filename, content, session_id, src_ip))
                 
             return str(target_path)
         except Exception as e:
             print(f"[!] Error saving quarantine file: {e}")
             return None
-
-    async def _scan_and_log(self, filename: str, content: bytes):
-        """Background task to scan file and log results."""
-        try:
-            result = await self.vt_scanner.scan(content, filename)
-            if result:
-                await self.logger.log_event_async({
-                    "event": "malware_scan",
-                    "filename": filename,
-                    "sha256": result.get("sha256"),
-                    "malicious": result.get("malicious"),
-                    "label": result.get("label"),
-                    "vt_link": result.get("link")
-                })
-        except Exception as e:
-            print(f"[!] Scan Error: {e}")
-
-        finally:
-            writer.close()
 
     async def start(self):
         """Start all honeypot services and enter main event loop."""
@@ -284,9 +288,10 @@ class HoneypotServer:
             # Shell loop
             # Removed artificial banner to mimic real system behavior (banner handled by issue usually)
             
-            # Use Factory
-            fs = self.get_filesystem()
-            shell = ShellEmulator(fs, username, quarantine_callback=self.save_quarantine_file)
+            # Use Factory with session context
+            fs = self.get_filesystem(session_id, src_ip)
+            quarantine_hook = lambda f, c: self.save_quarantine_file(f, c, session_id, src_ip)
+            shell = ShellEmulator(fs, username, quarantine_callback=quarantine_hook)
             
             prompt = f"{username}@server:~$ "
             writer.write(prompt.encode())
@@ -357,14 +362,16 @@ class SSHServerFactory(asyncssh.SSHServer):
     
     def __init__(self, honeypot: HoneypotServer):
         self.honeypot = honeypot
-        self.src_ip = None
-        self.src_port = None
-        # Create a filesystem instance for this connection
-        self.fs = self.honeypot.get_filesystem()
+        self.src_ip = "unknown"
+        self.src_port = 0
+        self.fs = None
+        self.conn_id = str(uuid.uuid4())[:8]
     
     def connection_made(self, conn):
         self.src_ip = conn.get_extra_info("peername")[0]
         self.src_port = conn.get_extra_info("peername")[1]
+        # Create a filesystem instance for this connection with IP context
+        self.fs = self.honeypot.get_filesystem(session_id="conn_"+self.conn_id, src_ip=self.src_ip)
         
     def password_auth_supported(self):
         return True
@@ -372,14 +379,16 @@ class SSHServerFactory(asyncssh.SSHServer):
     def validate_password(self, username, password):
         success = self.honeypot.is_valid_user(username, password)
         asyncio.create_task(self.honeypot.logger.log_event_async({
-            "event": "auth", "protocol": "ssh", 
+            "event": "auth", "protocol": "ssh", "session_id": "conn_"+self.conn_id,
             "src_ip": self.src_ip, "username": username, "password": password, "success": success
         }))
         return success
 
     def sftp_factory(self, channel):
         """Create SFTP server instance sharing the connection's filesystem."""
-        return CyanideSFTPServer(channel, self.fs, self.honeypot.save_quarantine_file)
+        # Use conn_id for SFTP since it's pre-shell
+        q_hook = lambda f, c: self.honeypot.save_quarantine_file(f, c, "sftp_"+self.conn_id, self.src_ip)
+        return CyanideSFTPServer(channel, self.fs, q_hook)
 
     def session_requested(self):
         return SSHSession(self.honeypot, self.fs, self.src_ip, self.src_port)
@@ -437,7 +446,7 @@ class SSHSession(asyncssh.SSHServerSession):
              }
              
              asyncio.create_task(self.honeypot.logger.log_event_async({
-                 "event": "client_fingerprint", "session_id": self.session_id,
+                 "event": "client_fingerprint", "session_id": self.session_id, "src_ip": self.src_ip,
                  "protocol": "ssh", "fingerprint": fingerprint,
                  "client_version": self.client_version
              }))
@@ -453,6 +462,7 @@ class SSHSession(asyncssh.SSHServerSession):
         asyncio.create_task(self.honeypot.logger.log_event_async({
             "event": "session_disconnect", 
             "session_id": self.session_id,
+            "src_ip": self.src_ip,
             "reason": reason
         }))
 
@@ -461,6 +471,7 @@ class SSHSession(asyncssh.SSHServerSession):
         asyncio.create_task(self.honeypot.logger.log_event_async({
             "event": "window_resize", 
             "session_id": self.session_id,
+            "src_ip": self.src_ip,
             "width": width, "height": height
         }))
         if self.shell:
@@ -469,7 +480,8 @@ class SSHSession(asyncssh.SSHServerSession):
 
     def shell_requested(self):
         # Use shared FS
-        self.shell = ShellEmulator(self.fs, self.username, quarantine_callback=self.honeypot.save_quarantine_file)
+        q_hook = lambda f, c: self.honeypot.save_quarantine_file(f, c, self.session_id, self.src_ip)
+        self.shell = ShellEmulator(self.fs, self.username, quarantine_callback=q_hook)
         return True
     
     def _get_prompt(self):
@@ -492,10 +504,11 @@ class SSHSession(asyncssh.SSHServerSession):
         # User requested: var/log/cyanide/tty (implied inside logs dir)
         log_dir = Path("var/log/cyanide/tty")
         log_dir.mkdir(parents=True, exist_ok=True)
-        self.tty_log_path = log_dir / f"{self.session_id}.log"
+        # Include IP in filename for easier tracing
+        self.tty_log_path = log_dir / f"{self.src_ip}_{self.session_id}.log"
         # Create empty or start 
         with open(self.tty_log_path, "w") as f:
-            f.write(f"Session {self.session_id} started at {time.time()}\n")
+            f.write(f"Session {self.session_id} from {self.src_ip} started at {time.time()}\n")
             
     def _log_tty(self, direction: str, data: str):
         # Simple line-oriented log
@@ -516,6 +529,7 @@ class SSHSession(asyncssh.SSHServerSession):
         asyncio.create_task(self.honeypot.logger.log_event_async({
             "event": "client_env", 
             "session_id": self.session_id,
+            "src_ip": self.src_ip,
             "name": name,
             "value": value
         }))
@@ -578,6 +592,7 @@ class SSHSession(asyncssh.SSHServerSession):
                     asyncio.create_task(self.honeypot.logger.log_event_async({
                          "event": "ioc_detected",
                          "session_id": self.session_id,
+                         "src_ip": self.src_ip,
                          "iocs": list(set(iocs)), # Deduplicate
                          "cmd": cmd
                      }))
@@ -594,6 +609,7 @@ class SSHSession(asyncssh.SSHServerSession):
                      asyncio.create_task(self.honeypot.logger.log_event_async({
                          "event": "command_not_found",
                          "session_id": self.session_id,
+                         "src_ip": self.src_ip,
                          "cmd": cmd
                      }))
                 

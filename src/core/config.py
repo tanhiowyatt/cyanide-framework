@@ -35,7 +35,14 @@ def load_config(path: Path = Path("etc/cyanide.cfg")):
             "port": cfg.getint("telnet", "listen_port", fallback=2223),
             "enabled": cfg.getboolean("telnet", "enabled", fallback=False)
         },
-        # Default users if not handling auth backend yet
-        "users": [{"user": "root", "pass": "password"}, {"user": "admin", "pass": "admin"}] 
+        "users": []
     }
+    
+    if cfg.has_section("users"):
+        for username, password in cfg.items("users"):
+            config["users"].append({"user": username, "pass": password})
+    
+    if not config["users"]:
+        config["users"] = [{"user": "root", "pass": "admin"}, {"user": "admin", "pass": "admin"}]
+        
     return config

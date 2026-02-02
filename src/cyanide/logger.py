@@ -52,12 +52,14 @@ class CyanideLogger:
         """Async wrapper for log_event to match HoneypotServer expectations."""
         event_type = data_dict.pop("event", "unknown")
         session_id = data_dict.pop("session_id", "unknown")
+        src_ip = data_dict.pop("src_ip", "unknown")
         
         # Merge basic fields
         entry = {
             "eventid": event_type,
             "timestamp": datetime.datetime.now().isoformat(),
-            "session": session_id
+            "session": session_id,
+            "src_ip": src_ip
         }
         # Merge rest of data
         entry.update(data_dict)

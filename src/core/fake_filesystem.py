@@ -136,6 +136,14 @@ class FakeFilesystem:
         mkfile("/home/admin/secret.conf", "db_password=supersecret123\napi_key=XYZ-999-000\n", owner="admin", group="admin", perm="-rw-------")
         mkfile("/home/admin/flag.txt", "flag{r3al_fl46_f0r_h0n3yp0t}\n", owner="admin", group="admin", perm="-r--------")
 
+        # /root files (Sync with admin and add SSH keys)
+        mkdir_p("/root/.ssh", owner="root", group="root", perm="drwx------")
+        mkfile("/root/file1.txt", "Just a boring file.\n", owner="root", group="root")
+        mkfile("/root/secret.conf", "db_password=supersecret123\napi_key=XYZ-999-000\n", owner="root", group="root", perm="-rw-------")
+        mkfile("/root/flag.txt", "flag{r3al_fl46_f0r_h0n3yp0t}\n", owner="root", group="root", perm="-r--------")
+        mkfile("/root/.ssh/id_rsa", "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA75...\n-----END RSA PRIVATE KEY-----\n", owner="root", group="root", perm="-rw-------")
+        mkfile("/root/.ssh/authorized_keys", "ssh-rsa AAAAB3Nza... root@server\n", owner="root", group="root", perm="-rw-------")
+
         from .filesystem_nodes import DynamicFile
         import random
 
