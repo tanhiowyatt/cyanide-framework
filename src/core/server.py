@@ -9,6 +9,7 @@ import signal
 import uuid
 import time
 import random
+import json
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -20,6 +21,7 @@ from src.cyanide.fs.pickle import load_fs
 from src.core.sftp import CyanideSFTPServer
 from src.core.vt_scanner import VTScanner
 from src.core.geoip import GeoIP
+from src.core.stats import StatsManager
 
 class HoneypotServer:
     """Main honeypot server orchestrating SSH, Telnet, and MySQL services."""
@@ -61,9 +63,12 @@ class HoneypotServer:
             if profile_key != "random":
                 print(f"[!] Unknown profile '{profile_key}', falling back to random.")
             self.profile = random.choice(list(PROFILES.values()))
-            
+        
         print(f"[*] OS Profile: {self.profile['name']}")
         
+        # Stats Manager
+        self.stats = StatsManager()
+
     async def log_geoip(self, session_id, ip, protocol):
         """Async GeoIP enrichment logging."""
         geo_data = await self.geoip.lookup(ip)
@@ -105,6 +110,7 @@ class HoneypotServer:
             event_type = "fs_audit"
             if str(path) in HONEYTOKENS:
                 event_type = "CRITICAL_ALERT"
+                self.stats.on_honeytoken(str(path), src_ip)
             
             loop.create_task(self.logger.log_event_async({
                 "event": event_type, 
@@ -144,6 +150,7 @@ class HoneypotServer:
                     "label": result.get("label"),
                     "vt_link": result.get("link")
                 })
+                self.stats.on_malware(filename, result.get("malicious", False))
         except Exception as e:
             print(f"[!] Scan Error: {e}")
 
@@ -165,6 +172,78 @@ class HoneypotServer:
         except Exception as e:
             print(f"[!] Error saving quarantine file: {e}")
             return None
+
+    async def start_metrics_server(self):
+        """Start a lightweight HTTP server for metrics and stats."""
+        metrics_conf = self.config.get("metrics", {})
+        if not metrics_conf.get("enabled", True):
+            return
+            
+        port = metrics_conf.get("port", 9090)
+        
+        async def handle_request(reader, writer):
+            try:
+                # Read request line with timeout
+                try:
+                    line = await asyncio.wait_for(reader.readline(), timeout=2.0)
+                except asyncio.TimeoutError:
+                    writer.close()
+                    return
+                    
+                if not line:
+                    writer.close()
+                    return
+                    
+                request_parts = line.decode().split()
+                if len(request_parts) < 2:
+                    writer.close()
+                    return
+                    
+                path = request_parts[1]
+                
+                # Drain headers
+                try:
+                    while True:
+                        header = await asyncio.wait_for(reader.readline(), timeout=1.0)
+                        if header in (b'\r\n', b'\n', b''):
+                            break
+                except asyncio.TimeoutError:
+                    pass
+
+                if path == "/metrics":
+                    content = self.stats.to_prometheus()
+                    content_type = "text/plain; version=0.0.4; charset=utf-8"
+                elif path == "/stats":
+                    content = json.dumps(self.stats.get_stats(), indent=2)
+                    content_type = "application/json"
+                else:
+                    content = "Cyanide Honeypot Metrics Server. Use /metrics or /stats."
+                    content_type = "text/plain"
+                    
+                response = (
+                    f"HTTP/1.1 200 OK\r\n"
+                    f"Content-Type: {content_type}\r\n"
+                    f"Content-Length: {len(content)}\r\n"
+                    f"Connection: close\r\n"
+                    f"\r\n"
+                    f"{content}"
+                ).encode()
+                
+                writer.write(response)
+                await writer.drain()
+            except Exception as e:
+                print(f"[!] Metrics Handler Error: {e}")
+            finally:
+                writer.close()
+                await writer.wait_closed()
+
+        try:
+            server = await asyncio.start_server(handle_request, "0.0.0.0", port)
+            print(f"[*] Metrics Server listening on port {port}")
+            async with server:
+                await server.serve_forever()
+        except Exception as e:
+            print(f"[!] Metrics Server Error: {e}")
 
     async def start(self):
         """Start all honeypot services and enter main event loop."""
@@ -204,6 +283,9 @@ class HoneypotServer:
             print(f"[*] Telnet Server listening on port {telnet_port}", flush=True)
 
 
+
+        # Start Metrics Server
+        asyncio.create_task(self.start_metrics_server())
 
         # Start Cleanup Task
         asyncio.create_task(self._cleanup_loop())
@@ -262,6 +344,7 @@ class HoneypotServer:
             
             # GeoIP Lookup
             asyncio.create_task(self.log_geoip(session_id, src_ip, "telnet"))
+            self.stats.on_connect("telnet", src_ip)
 
             
             # Simple auth
@@ -274,6 +357,7 @@ class HoneypotServer:
             password = (await reader.readuntil(b"\n")).decode().strip()
             
             success = self.is_valid_user(username, password)
+            self.stats.on_auth("telnet", src_ip, username, password, success)
             await self.logger.log_event_async({
                 "event": "auth", "protocol": "telnet", "session_id": session_id,
                 "src_ip": src_ip, "username": username, "password": password, "success": success
@@ -312,6 +396,7 @@ class HoneypotServer:
                         break
                         
                     # Log command immediately
+                    self.stats.on_command("telnet", src_ip, username, cmd)
                     await self.logger.log_command(session_id, "telnet", src_ip, username, cmd, client_version="Telnet")
                     
                     # Jitter
@@ -355,6 +440,7 @@ class HoneypotServer:
                 "src_ip": src_ip, "username": username, "commands": commands, "duration": duration
             })
             self.active_sessions -= 1
+            self.stats.on_disconnect("telnet", src_ip)
             writer.close()
 
 class SSHServerFactory(asyncssh.SSHServer):
@@ -424,6 +510,8 @@ class SSHSession(asyncssh.SSHServerSession):
         self.username = conn.get_extra_info("username") or "root"
         self.client_version = conn.get_extra_info("client_version") or "unknown"
         
+        self.honeypot.stats.on_connect("ssh", self.src_ip)
+        
         # GeoIP Lookup
         asyncio.create_task(self.honeypot.log_geoip(self.session_id, self.src_ip, "ssh"))
 
@@ -458,6 +546,8 @@ class SSHSession(asyncssh.SSHServerSession):
         reason = "clean"
         if exc:
             reason = f"error: {exc}"
+            
+        self.honeypot.stats.on_disconnect("ssh", self.src_ip)
             
         asyncio.create_task(self.honeypot.logger.log_event_async({
             "event": "session_disconnect", 
@@ -596,6 +686,9 @@ class SSHSession(asyncssh.SSHServerSession):
                          "iocs": list(set(iocs)), # Deduplicate
                          "cmd": cmd
                      }))
+
+                # Log command immediately
+                self.honeypot.stats.on_command("ssh", self.src_ip, self.username, cmd)
 
                 asyncio.create_task(self.honeypot.logger.log_command(
                     self.session_id, "ssh", self.src_ip, self.username, cmd,

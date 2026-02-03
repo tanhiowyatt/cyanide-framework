@@ -90,8 +90,53 @@ def stop():
     os.remove(PID_FILE)
     print("Stopped.")
 
+def stats():
+    import urllib.request
+    import json
+    from datetime import timedelta
+
+    try:
+        # Get port from config if possible
+        port = 9090 # Default fallback
+        try:
+            sys.path.append(os.path.join(os.getcwd(), 'src'))
+            from core.config import load_config
+            from pathlib import Path
+            config = load_config(Path("etc/cyanide.cfg"))
+            port = config.get("metrics", {}).get("port", 9090)
+        except:
+            pass
+
+        with urllib.request.urlopen(f"http://localhost:{port}/stats") as response:
+            data = json.load(response)
+            
+            print("\n" + "\033[1;36m" + "="*50 + "\033[0m")
+            print("\033[1;36m CYANIDE HONEYPOT STATISTICS\033[0m")
+            print("\033[1;36m" + "="*50 + "\033[0m")
+            print(f"[*] Uptime:          {timedelta(seconds=data['uptime_seconds'])}")
+            print(f"[*] Active Sessions: \033[1;32m{data['active_sessions']}\033[0m")
+            print(f"[*] Total Sessions:  {data['total_sessions']}")
+            print(f"[*] Malware Scans:   {data['malware_scans']} (Detected: \033[1;31m{data['malicious_detected']}\033[0m)")
+            
+            if data['top_ips']:
+                print("\n\033[1;33m--- Top Attacker IPs ---\033[0m")
+                for ip, count in data['top_ips'].items():
+                    print(f" {ip:<20} | {count} hits")
+                
+            if data['recent_commands']:
+                print("\n\033[1;33m--- Recent Commands ---\033[0m")
+                for cmd in data['recent_commands']:
+                    t = time.strftime('%H:%M:%S', time.localtime(cmd['timestamp']))
+                    print(f" [{t}] {cmd['ip']:<15} ({cmd['username']}): {cmd['command']}")
+            
+            print("\033[1;36m" + "="*50 + "\033[0m\n")
+    except Exception as e:
+        print(f"\033[1;31m[!] Error fetching stats: {e}\033[0m")
+        print("    Ensure Cyanide is running and metrics are enabled in etc/cyanide.cfg")
+
+
 def usage():
-    print("Usage: bin/cyanide {start|stop|restart}")
+    print("Usage: bin/cyanide {start|stop|restart|stats}")
     sys.exit(1)
 
 def main():
@@ -106,6 +151,8 @@ def main():
     elif cmd == "restart":
         stop()
         start()
+    elif cmd == "stats":
+        stats()
     else:
         usage()
 

@@ -35,6 +35,8 @@ RUN mkdir -p var/log/cyanide var/run var/quarantine
 EXPOSE 2222
 # Expose Telnet port if enabled (2223 default in config)
 EXPOSE 2223
+# Expose Metrics port
+EXPOSE 9090
 
 # Run main.py when the container launches
 CMD ["python3", "main.py"]

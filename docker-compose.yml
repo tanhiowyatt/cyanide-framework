@@ -5,6 +5,7 @@ services:
     ports:
       - "2222:2222"
       - "2223:2223"
+      - "9090:9090" # Metrics
     volumes:
       - ./var/log/cyanide:/app/var/log/cyanide
       - ./var/quarantine:/app/var/quarantine

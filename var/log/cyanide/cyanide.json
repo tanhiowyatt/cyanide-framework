@@ -158,3 +158,13 @@
 {"eventid": "client_fingerprint", "timestamp": "2026-02-02T23:57:32.707384", "session": "4ba16937", "src_ip": "192.168.97.1", "protocol": "ssh", "fingerprint": {"kex": "unknown", "key_algo": "unknown", "cipher": "unknown", "mac": "unknown", "compression": "unknown"}, "client_version": "SSH-2.0-OpenSSH_10.0"}
 {"eventid": "command.input", "timestamp": "2026-02-02T23:57:32.711111", "session": "4ba16937", "src_ip": "192.168.97.1", "username": "root", "protocol": "ssh", "input": "ls /root", "client_version": "SSH-2.0-OpenSSH_10.0"}
 {"eventid": "session_disconnect", "timestamp": "2026-02-02T23:57:32.728541", "session": "4ba16937", "src_ip": "192.168.97.1", "reason": "clean"}
+{"eventid": "connect", "timestamp": "2026-02-03T00:11:23.052709", "session": "d42c9f6a", "src_ip": "192.168.97.1", "protocol": "telnet", "src_port": 40280}
+{"eventid": "auth", "timestamp": "2026-02-03T00:11:25.913687", "session": "d42c9f6a", "src_ip": "192.168.97.1", "protocol": "telnet", "username": "admin", "password": "admin", "success": true}
+{"eventid": "command.input", "timestamp": "2026-02-03T00:11:26.925680", "session": "d42c9f6a", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "ls", "client_version": "Telnet"}
+{"eventid": "command.input", "timestamp": "2026-02-03T00:11:27.947299", "session": "d42c9f6a", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "cat /root/flag.txt", "client_version": "Telnet"}
+{"eventid": "CRITICAL_ALERT", "timestamp": "2026-02-03T00:11:28.211791", "session": "d42c9f6a", "src_ip": "192.168.97.1", "action": "read", "path": "/root/flag.txt"}
+{"eventid": "session_end", "timestamp": "2026-02-03T00:11:28.947696", "session": "d42c9f6a", "src_ip": "192.168.97.1", "protocol": "telnet", "username": "admin", "commands": ["ls", "cat /root/flag.txt"], "duration": 5.89522647857666}
+{"eventid": "connect", "timestamp": "2026-02-03T00:18:34.844573", "session": "d927daea", "src_ip": "192.168.97.1", "protocol": "telnet", "src_port": 59858}
+{"eventid": "auth", "timestamp": "2026-02-03T00:18:38.047316", "session": "d927daea", "src_ip": "192.168.97.1", "protocol": "telnet", "username": "admin", "password": "admin", "success": true}
+{"eventid": "command.input", "timestamp": "2026-02-03T00:18:39.491612", "session": "d927daea", "src_ip": "192.168.97.1", "username": "admin", "protocol": "telnet", "input": "whoami", "client_version": "Telnet"}
+{"eventid": "session_end", "timestamp": "2026-02-03T00:18:40.494868", "session": "d927daea", "src_ip": "192.168.97.1", "protocol": "telnet", "username": "admin", "commands": ["whoami", "exit"], "duration": 5.650576829910278}
