@@ -3,7 +3,7 @@ import time
 import asyncssh
 import errno
 from pathlib import PurePosixPath
-from src.core.filesystem_nodes import Directory, File
+from core.filesystem_nodes import Directory, File
 
 class CyanideSFTPServer(asyncssh.SFTPServer):
     """

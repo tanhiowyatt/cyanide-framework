@@ -17,7 +17,7 @@ import os
 sys.path.append(os.getcwd())
 
 from typing import Optional, List
-from src.core.fake_filesystem import FakeFilesystem
+from core.fake_filesystem import FakeFilesystem
 
 # Configure logging to stdout as json
 logging.basicConfig(level=logging.INFO, format='%(message)s', handlers=[logging.StreamHandler(sys.stdout)])

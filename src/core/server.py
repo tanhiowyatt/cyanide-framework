@@ -20,8 +20,8 @@ from cyanide.fs import load_fs
 from .sftp import CyanideSFTPServer
 from .vt_scanner import VTScanner
 from .stats import StatsManager
-from src.proxy.tcp_proxy import TCPProxy
-from src.core.vm_pool import VMPool
+from proxy.tcp_proxy import TCPProxy
+from core.vm_pool import VMPool
 
 # ML Integration
 try:

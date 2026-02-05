@@ -126,12 +126,35 @@ class HoneypotFilter:
         
         return is_anomaly, reason, float(min_dist)
 
+
+# Try to import RestrictedUnpickler from security module
+try:
+    from core.security import load as safe_load
+except ImportError:
+    # If we are running in a context where src is not in path (e.g. standalone script)
+    # we might need to adjust path or fallback (though for this task we assume core is available)
+    import sys
+    import os
+    # Try adding project root/src
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # cyanideML/model.py -> ai-models/cyanideML -> ai-models -> root -> src
+    src_path = os.path.abspath(os.path.join(current_dir, "../../src"))
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    try:
+        from core.security import load as safe_load
+    except ImportError:
+        # Fallback only if absolutely necessary, but we should enforce security
+        raise ImportError("Could not import core.security.load")
+
     def save(self, path="model.pkl"):
         """Saves current state."""
         with open(path, "wb") as f:
+            # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
             pickle.dump(self, f)
             
     @staticmethod
     def load(path="model.pkl"):
         with open(path, "rb") as f:
-            return pickle.load(f)
+            # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
+            return safe_load(f)

@@ -7,20 +7,12 @@ from core.filesystem_nodes import Node, Directory, File
 import hmac
 import hashlib
 
+from core.security import loads as safe_loads
+
 # Internal Integrity Key
 # This prevents loading arbitrary pickle files not created by this tool.
 # It is NOT a cryptographic secret for external security, but an integrity check.
 INTEGRITY_KEY = b"cyanide-honeypot-internal-integrity-key-v1"
-
-class SafeUnpickler(pickle.Unpickler):
-    """Restricted unpickler that only allows safe built-in types."""
-    def find_class(self, module, name):
-        # Allow only safe builtins
-        if module == "builtins" and name in {
-            'str', 'int', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'NoneType', 'bytes'
-        }:
-            return getattr(builtins, name)
-        raise pickle.UnpicklingError(f"Unsafe class: {module}.{name}")
 
 def save_fs(root_node, path: str):
     """Save filesystem to signed pickle file."""
@@ -28,6 +20,7 @@ def save_fs(root_node, path: str):
     fs_dict = root_node.to_dict()
     
     # Dump to bytes
+    # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
     data = pickle.dumps(fs_dict)
     
     # Calculate HMAC
@@ -54,8 +47,8 @@ def load_fs(path: str):
     # Use safe unpickler on trusted data
     try:
         # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
-        # Reason: Integrity checked via HMAC-SHA256 above. Only internal files loaded.
-        fs_dict = SafeUnpickler(io.BytesIO(data)).load()
+        # Reason: Integrity checked via HMAC above, and RestrictedUnpickler is used.
+        fs_dict = safe_loads(data)
     except Exception as e:
         print(f"Error unpickling FS: {e}")
         return None

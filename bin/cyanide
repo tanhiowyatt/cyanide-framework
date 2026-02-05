@@ -103,10 +103,11 @@ def stats():
             from core.config import load_config
             from pathlib import Path
             config = load_config(Path("etc/cyanide.cfg"))
-            port = config.get("metrics", {}).get("port", 9090)
+            port = int(config.get("metrics", {}).get("port", 9090))
         except:
             pass
 
+        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
         with urllib.request.urlopen(f"http://localhost:{port}/stats") as response:
             data = json.load(response)
             
