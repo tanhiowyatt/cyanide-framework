@@ -26,7 +26,12 @@ COPY . .
 RUN chmod +x bin/*
 
 # Set environment variable for PYTHONPATH so imports work correctly
-ENV PYTHONPATH=/app/src
+ENV PYTHONPATH=/app/src:/app
+
+# Run ML model update during build if possible (pre-train on repo logs)
+# We ignore failure if logs/data are missing
+RUN export PYTHONPATH=$PYTHONPATH:/app/ai_models && \
+    python3 ai_models/cyanideML/validate_model.py || true
 
 # Create a non-privileged user and group
 RUN groupadd -r cyanide && useradd -r -g cyanide cyanide

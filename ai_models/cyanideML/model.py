@@ -12,6 +12,28 @@ class HoneypotFilter:
     Identifies anomalies (dist > threshold) vs known patterns.
     """
     
+    # Try to import RestrictedUnpickler from security module
+    try:
+        from core.security import load as safe_load
+    except ImportError:
+        # If we are running in a context where src is not in path (e.g. standalone script)
+        # we might need to adjust path or fallback (though for this task we assume core is available)
+        import sys
+        import os
+        # Try adding project root/src
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # cyanideML/model.py -> ai-models/cyanideML -> ai-models -> root -> src
+        src_path = os.path.abspath(os.path.join(current_dir, "../../src"))
+        if src_path not in sys.path:
+            sys.path.append(src_path)
+        try:
+            from core.security import load as safe_load
+        except ImportError:
+            # Fallback only if absolutely necessary, but we should enforce security
+            # raise ImportError("Could not import core.security.load")
+            # Forcing import inside method to avoid early failures if not used immediately
+            pass
+    
     def __init__(self, n_clusters=75, batch_size=100):
         self.feature_extractor = FeatureExtractor()
         
@@ -92,7 +114,6 @@ class HoneypotFilter:
         if self.logs_processed % 50 == 0:
             self._update_threshold()
             
-        # 3. Anomaly Decision
         is_anomaly = False
         reason = "KNOWN_PATTERN"
         
@@ -100,12 +121,8 @@ class HoneypotFilter:
             is_anomaly = True
             reason = f"DISTANCE_EXCEEDED_THRESHOLD ({min_dist:.2f} > {self.threshold:.2f})"
         elif min_dist < (0.3 * self.threshold):
-            is_anomaly = False
+            is_anomaly = False # Deep match in cluster
             reason = "DEEP_CLUSTER_MATCH"
-
-        # Debug occasionally
-        if self.logs_processed % 500 == 0:
-            print(f"[DEBUG] Log {self.logs_processed}: Dist={min_dist:.4f}, Thr={self.threshold:.4f}, Anomaly={is_anomaly}")
 
         # Record Metrics
         processing_time = time.time() - start_time
@@ -127,34 +144,24 @@ class HoneypotFilter:
         return is_anomaly, reason, float(min_dist)
 
 
-# Try to import RestrictedUnpickler from security module
-try:
-    from core.security import load as safe_load
-except ImportError:
-    # If we are running in a context where src is not in path (e.g. standalone script)
-    # we might need to adjust path or fallback (though for this task we assume core is available)
-    import sys
-    import os
-    # Try adding project root/src
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    # cyanideML/model.py -> ai-models/cyanideML -> ai-models -> root -> src
-    src_path = os.path.abspath(os.path.join(current_dir, "../../src"))
-    if src_path not in sys.path:
-        sys.path.append(src_path)
-    try:
-        from core.security import load as safe_load
-    except ImportError:
-        # Fallback only if absolutely necessary, but we should enforce security
-        raise ImportError("Could not import core.security.load")
-
-    def save(self, path="model.pkl"):
+    def save(self, path="cyanideML.pkl"):
         """Saves current state."""
         with open(path, "wb") as f:
             # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
             pickle.dump(self, f)
             
     @staticmethod
-    def load(path="model.pkl"):
+    def load(path="cyanideML.pkl"):
+        # Lazy import if not at top level
+        try:
+             from core.security import load as safe_load
+        except ImportError:
+             import sys, os
+             current_dir = os.path.dirname(os.path.abspath(__file__))
+             src_path = os.path.abspath(os.path.join(current_dir, "../../src"))
+             if src_path not in sys.path: sys.path.append(src_path)
+             from core.security import load as safe_load
+
         with open(path, "rb") as f:
             # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
             return safe_load(f)

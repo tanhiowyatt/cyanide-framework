@@ -45,4 +45,12 @@ def load_config(path: Path = Path("etc/cyanide.cfg")):
     if not config["users"]:
         config["users"] = [{"user": "root", "pass": "admin"}, {"user": "admin", "pass": "admin"}]
         
+    if cfg.has_section("ml"):
+        config["ml"] = {
+            "enabled": cfg.getboolean("ml", "enabled", fallback=False),
+            "anomalies_log": cfg.get("ml", "anomalies_log", fallback="var/log/cyanide/cyanideML-anomalies-log.json"),
+            "ml_log": cfg.get("ml", "ml_log", fallback="var/log/cyanide/cyanideML-log.json"),
+            "model_path": cfg.get("ml", "model_path", fallback="ai_models/cyanideML/cyanideML.pkl")
+        }
+        
     return config

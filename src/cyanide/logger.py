@@ -9,7 +9,7 @@ class CyanideLogger:
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
         
-        self.cyanide_log = self._setup_logger("cyanide", os.path.join(log_dir, "cyanide.json"))
+        self.cyanide_log = self._setup_logger("cyanide", os.path.join(log_dir, "cyanide-log.json"))
         # self.auth_log = self._setup_logger("auth", os.path.join(log_dir, "auth.json"))
 
     def _setup_logger(self, name, path):

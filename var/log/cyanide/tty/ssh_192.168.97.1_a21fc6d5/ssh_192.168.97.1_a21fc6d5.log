@@ -1,0 +1,3 @@
+ls
+file1.txt  flag.txt  secret.conf
+root@server:~$ ls

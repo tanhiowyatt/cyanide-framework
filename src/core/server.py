@@ -22,15 +22,11 @@ from .vt_scanner import VTScanner
 from .stats import StatsManager
 from proxy.tcp_proxy import TCPProxy
 from core.vm_pool import VMPool
+from .geoip import GeoIP
+from prometheus_client import generate_latest, CollectorRegistry, CONTENT_TYPE_LATEST
 
-# ML Integration
-try:
-    from ai_models.cyanideML import HoneypotFilter
-    from prometheus_client import generate_latest, CollectorRegistry, CONTENT_TYPE_LATEST
-    ML_AVAILABLE = True
-except ImportError:
-    ML_AVAILABLE = False
-    print("[!] ML Module not found. Running in standard mode.")
+# ML Integration - Moved to HoneypotServer.__init__ to avoid circular imports
+
 
 class HoneypotServer:
     """Main honeypot server orchestrating SSH, Telnet, and MySQL services."""
@@ -86,11 +82,25 @@ class HoneypotServer:
         # ML Initialization
         self.ml_enabled = config.get("ml", {}).get("enabled", False)
         self.ml_filter = None
-        if self.ml_enabled and ML_AVAILABLE:
+        if self.ml_enabled:
             print("[*] Initializing ML Anomaly Detector...")
             try:
-                self.ml_filter = HoneypotFilter()
-                self.anomalies_log_path = config.get("ml", {}).get("anomalies_log", "var/log/cyanide/anomalies.json")
+                try:
+                    from ai_models.cyanideML import HoneypotFilter
+                    model_file = config.get("ml", {}).get("model_path", "ai_models/cyanideML/cyanideML.pkl")
+                    if os.path.exists(model_file):
+                        print(f"[*] Loading pre-trained ML model from {model_file}...")
+                        self.ml_filter = HoneypotFilter.load(model_file)
+                    else:
+                        print("[!] Pre-trained model not found, starting fresh (WARMUP mode).")
+                        self.ml_filter = HoneypotFilter()
+                except (ImportError, ModuleNotFoundError) as e:
+                    print(f"[!] ML Module could not be loaded: {e}")
+                    self.ml_enabled = False
+                    return
+                
+                self.anomalies_log_path = config.get("ml", {}).get("anomalies_log", "var/log/cyanide/cyanideML-anomalies-log.json")
+                self.ml_log_path = config.get("ml", {}).get("ml_log", "var/log/cyanide/cyanideML-log.json")
             except Exception as e:
                 print(f"[!] Failed to init ML model: {e}")
                 self.ml_enabled = False
@@ -109,22 +119,25 @@ class HoneypotServer:
             
             is_anomaly, reason, distance = self.ml_filter.process_log(log_entry)
             
+            # Log ML 'thought' for every action
+            ml_log_entry = {
+                "timestamp": time.time(),
+                "src_ip": src_ip,
+                "session_id": session_id,
+                "verdict": "anomaly" if is_anomaly else "clean",
+                "reason": reason,
+                "distance": float(distance),
+                "command": cmd
+            }
+            with open(self.ml_log_path, "a") as f:
+                f.write(json.dumps(ml_log_entry) + "\n")
+
             if is_anomaly:
                 print(f"[!] ML ANOMALY: {reason} from {src_ip}")
                 
                 # Log to dedicated anomaly file
-                alert = {
-                    "timestamp": time.time(),
-                    "src_ip": src_ip,
-                    "session_id": session_id,
-                    "reason": reason,
-                    "distance": float(distance),
-                    "command": cmd
-                }
-                
-                # Async file write (simple append)
                 with open(self.anomalies_log_path, "a") as f:
-                    f.write(json.dumps(alert) + "\n")
+                    f.write(json.dumps(ml_log_entry) + "\n")
                     
                 # Log to generic logger as well
                 asyncio.create_task(self.logger.log_event_async({
@@ -250,33 +263,43 @@ class HoneypotServer:
             print(f"[!] Error saving quarantine file: {e}")
             return None
     def _log_tty(self, session_obj, direction: str, data: str):
-        """Standard scriptreplay format: timing file + typescript file."""
-        if direction != "OUT":
+        """Dual format logging: JSONL for reading + Timing/TS for scriptreplay."""
+        if direction != "OUT" and not hasattr(session_obj, 'tty_log_path_jsonl'):
             return
             
+        # 1. JSONL Log
+        if hasattr(session_obj, 'tty_log_path_jsonl'):
+            try:
+                now = time.time()
+                # Convert to string if bytes
+                if isinstance(data, bytes):
+                    readable_data = data.decode('utf-8', 'ignore')
+                else:
+                    readable_data = data
+                
+                entry = {"timestamp": now, "direction": direction, "data": readable_data}
+                with open(session_obj.tty_log_path_jsonl, "a") as f:
+                    f.write(json.dumps(entry) + "\n")
+            except Exception as e:
+                print(f"[!] Error saving JSONL TTY: {e}")
+
+        # 2. Timing + TypeScript Log (scriptreplay)
         if hasattr(session_obj, 'tty_log_path') and hasattr(session_obj, 'tty_timing_path'):
             try:
                 now = time.time()
                 elapsed = now - session_obj.last_log_time
                 session_obj.last_log_time = now
                 
-                # Convert to bytes if string
-                if isinstance(data, str):
-                    raw_bytes = data.encode('utf-8', 'ignore')
-                else:
-                    raw_bytes = data
-                
-                # Write timing: <interval> <bytes>
-                with open(session_obj.tty_timing_path, "a") as f:
-                    f.write(f"{elapsed:.6f} {len(raw_bytes)}\n")
-                    f.flush()
+                with open(session_obj.tty_timing_path, "a") as f_time:
+                    f_time.write(f"{elapsed:.6f} {len(data)}\n")
                     
-                # Write raw data
-                with open(session_obj.tty_log_path, "ab", buffering=0) as f:
-                    f.write(raw_bytes)
+                with open(session_obj.tty_log_path, "ab") as f_log:
+                    if isinstance(data, str):
+                        f_log.write(data.encode())
+                    else:
+                        f_log.write(data)
             except Exception as e:
-                pass
-
+                print(f"[!] Error saving scriptreplay TTY: {e}")
 
     async def start_metrics_server(self):
         """Start a lightweight HTTP server for metrics and stats."""
@@ -319,7 +342,7 @@ class HoneypotServer:
                     content = self.stats.to_prometheus()
                     
                     # Append ML metrics if available
-                    if self.ml_enabled and ML_AVAILABLE:
+                    if self.ml_enabled and self.ml_filter:
                          try:
                              ml_metrics = generate_latest().decode()
                              content += "\n" + ml_metrics
@@ -517,10 +540,8 @@ class HoneypotServer:
         folder_name = f"telnet_{src_ip}_{session_id}"
         log_dir = Path("var/log/cyanide/tty") / folder_name
         log_dir.mkdir(parents=True, exist_ok=True)
-        self.tty_log_path = log_dir / f"{folder_name}.log"
-        self.tty_timing_path = log_dir / f"{folder_name}.timing"
-        open(self.tty_log_path, "wb").close()
-        open(self.tty_timing_path, "w").close()
+        self.tty_log_path = log_dir / f"{folder_name}.jsonl"
+        open(self.tty_log_path, "w").close()
         
         commands = []
         username = ""
@@ -567,12 +588,22 @@ class HoneypotServer:
             quarantine_hook = lambda f, c: self.save_quarantine_file(f, c, session_id, src_ip)
             shell = ShellEmulator(fs, username, quarantine_callback=quarantine_hook)
             
-            # Session state for Telnet
+            # Setup TTY logging (scriptreplay + JSONL)
+            folder_name = f"telnet_{src_ip}_{session_id}"
+            log_dir = Path("var/log/cyanide/tty") / folder_name
+            log_dir.mkdir(parents=True, exist_ok=True)
+            
             class TelnetState: pass
             session_state = TelnetState()
-            session_state.tty_log_path = self.tty_log_path
-            session_state.tty_timing_path = self.tty_timing_path
-            session_state.last_log_time = self.last_log_time
+            session_state.tty_log_path_jsonl = log_dir / f"{folder_name}.jsonl"
+            session_state.tty_log_path = log_dir / f"{folder_name}.log"
+            session_state.tty_timing_path = log_dir / f"{folder_name}.time"
+            session_state.last_log_time = time.time()
+            
+            # Touch files
+            open(session_state.tty_log_path_jsonl, 'a').close()
+            open(session_state.tty_log_path, 'a').close()
+            open(session_state.tty_timing_path, 'a').close()
             
             prompt = f"{username}@server:~$ "
             writer.write(prompt.encode())
@@ -589,6 +620,7 @@ class HoneypotServer:
                         continue
                         
                     commands.append(cmd)
+                    self._log_tty(session_state, "IN", cmd + "\n")
                     
                     if cmd in ("exit", "logout"):
                         break
@@ -824,16 +856,20 @@ class SSHSession(asyncssh.SSHServerSession):
             self.channel.write(self._get_prompt())
     
     def _ensure_tty_log(self):
-        # Setup TTY logging (scriptreplay compatible)
+        # Setup TTY logging (scriptreplay + JSONL)
         folder_name = f"ssh_{self.src_ip}_{self.session_id}"
         log_dir = Path("var/log/cyanide/tty") / folder_name
         log_dir.mkdir(parents=True, exist_ok=True)
         
+        self.tty_log_path_jsonl = log_dir / f"{folder_name}.jsonl"
         self.tty_log_path = log_dir / f"{folder_name}.log"
-        self.tty_timing_path = log_dir / f"{folder_name}.timing"
-        open(self.tty_log_path, "wb").close()
-        open(self.tty_timing_path, "w").close()
+        self.tty_timing_path = log_dir / f"{folder_name}.time"
         self.last_log_time = time.time()
+        
+        # Touch files
+        open(self.tty_log_path_jsonl, 'a').close()
+        open(self.tty_log_path, 'a').close()
+        open(self.tty_timing_path, 'a').close()
             
     def _log_tty(self, direction: str, data: str):
         self.honeypot._log_tty(self, direction, data)
@@ -953,6 +989,7 @@ class SSHSession(asyncssh.SSHServerSession):
                 self.channel.write(curr_prompt)
                 self.bytes_out += len(curr_prompt)
                 self._log_tty("OUT", curr_prompt)
+                self._log_tty("IN", cmd + "\n")
                 
         except Exception as e:
             print(f"[DEBUG] process_input error: {e}", flush=True)
@@ -978,6 +1015,11 @@ class SSHSession(asyncssh.SSHServerSession):
         self._ensure_tty_log()
         fs = self.honeypot.get_filesystem()
         shell = ShellEmulator(fs, self.username, quarantine_callback=self.honeypot.save_quarantine_file)
+        
+        # ML Analysis
+        if self.honeypot.ml_enabled and self.honeypot.ml_filter:
+            self.honeypot._analyze_command(command, self.username, self.src_ip, self.session_id, "ssh")
+            
         stdout, stderr, rc = await shell.execute(command)
         
         self.channel.write(stdout)

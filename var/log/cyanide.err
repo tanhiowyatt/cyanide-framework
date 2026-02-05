@@ -2,3 +2,11 @@
   from cryptography.hazmat.primitives.ciphers.algorithms import AES, ARC4
 /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/asyncssh/crypto/cipher.py:30: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
   from cryptography.hazmat.primitives.ciphers.algorithms import TripleDES
+Traceback (most recent call last):
+  File "/Users/tanhiowyatt/projects/cyanide/src/core/server.py", line 585, in handle_telnet
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/streams.py", line 655, in readuntil
+    raise exceptions.IncompleteReadError(chunk, None)
+asyncio.exceptions.IncompleteReadError: 19 bytes read on a total of undefined expected bytes

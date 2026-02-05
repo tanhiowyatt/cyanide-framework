@@ -24,9 +24,10 @@ class RestrictedUnpickler(pickle.Unpickler):
         'joblib', # Often used by sklearn
         
         # Internal Project Modules
-        'cyanideML.model', 'ai_models.cyanideML.model',
+        'cyanideML.model', 'cyanideML.feature_extractor',
+        'ai_models.cyanideML.model', 'ai_models.cyanideML.feature_extractor',
         'core.filesystem_nodes', 'cyanide.fs.pickle',
-        'src.core.filesystem_nodes', # handling potential import variations
+        'src.core.filesystem_nodes',
         'src.cyanideML.model'
     }
 
