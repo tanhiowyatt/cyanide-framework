@@ -147,5 +147,53 @@ make clean
 
 ---
 
+## 🤖 ML Anomaly Detection
+
+Cyanide includes a built-in Machine Learning engine (`cyanideML`) to filter high-volume attacks (e.g., Mirai botnets) and identify novel threats.
+
+### Features
+*   **Algorithm**: MiniBatchKMeans Clustering (Online Learning).
+*   **Input**: 537-dimensional feature vector (Command Hashing + Stats + Dynamic Ports).
+*   **Performance**: Process >10k logs/sec with <10ms latency.
+*   **Metrics**: Exports Prometheus metrics for latency and anomaly rates.
+
+### Usage
+The ML filter is available as a Python package in `ai-models/cyanideML`.
+
+```python
+from cyanideML import HoneypotFilter
+
+# Initialize
+model = HoneypotFilter()
+
+# Analyze Log
+is_anomaly, reason, distance = model.process_log(log_entry)
+
+if is_anomaly:
+    print(f"New Threat Detected! Reason: {reason}")
+```
+
+### Integration
+The ML engine is integrated directly into the Cyanide core. If enabled, it processes every command in real-time.
+
+**Metrics**: available on the main metrics port (default `:9090/metrics`), combined with standard statistics.
+
+### Configuration
+Enable it in `etc/cyanide.cfg`:
+```ini
+[ml]
+enabled = true
+anomalies_log = var/log/cyanide/anomalies.json
+```
+
+### Real-time Monitoring CLI
+To watch logs and detect anomalies in real-time as they appear:
+
+```bash
+python3 tools/watch_logs.py
+```
+
+---
+
 ## ⚠️ Disclaimer
 This software is for **educational and research purposes only**. Running a honeypot involves risks. The author is not responsible for any damage.

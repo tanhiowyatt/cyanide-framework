@@ -22,6 +22,15 @@ from .vt_scanner import VTScanner
 from .geoip import GeoIP
 from .stats import StatsManager
 
+# ML Integration
+try:
+    from ai_models.cyanideML import HoneypotFilter
+    from prometheus_client import generate_latest, CollectorRegistry, CONTENT_TYPE_LATEST
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    print("[!] ML Module not found. Running in standard mode.")
+
 class HoneypotServer:
     """Main honeypot server orchestrating SSH, Telnet, and MySQL services."""
     
@@ -72,6 +81,61 @@ class HoneypotServer:
         
         # Stats Manager
         self.stats = StatsManager()
+
+        # ML Initialization
+        self.ml_enabled = config.get("ml", {}).get("enabled", False)
+        self.ml_filter = None
+        if self.ml_enabled and ML_AVAILABLE:
+            print("[*] Initializing ML Anomaly Detector...")
+            try:
+                self.ml_filter = HoneypotFilter()
+                self.anomalies_log_path = config.get("ml", {}).get("anomalies_log", "var/log/cyanide/anomalies.json")
+            except Exception as e:
+                print(f"[!] Failed to init ML model: {e}")
+                self.ml_enabled = False
+
+    def _analyze_command(self, cmd, username, src_ip, session_id, protocol):
+        """Run command through ML filter and alert if anomaly."""
+        try:
+            # Construct log entry format expected by filter
+            log_entry = {
+                "command": cmd,
+                "username": username,
+                "src_ip": src_ip,
+                "dst_port": self.config.get(protocol, {}).get("port", 0), # Best effort
+                "protocol": protocol
+            }
+            
+            is_anomaly, reason, distance = self.ml_filter.process_log(log_entry)
+            
+            if is_anomaly:
+                print(f"[!] ML ANOMALY: {reason} from {src_ip}")
+                
+                # Log to dedicated anomaly file
+                alert = {
+                    "timestamp": time.time(),
+                    "src_ip": src_ip,
+                    "session_id": session_id,
+                    "reason": reason,
+                    "distance": float(distance),
+                    "command": cmd
+                }
+                
+                # Async file write (simple append)
+                with open(self.anomalies_log_path, "a") as f:
+                    f.write(json.dumps(alert) + "\n")
+                    
+                # Log to generic logger as well
+                asyncio.create_task(self.logger.log_event_async({
+                    "event": "ml_anomaly",
+                    "reason": reason,
+                    "distance": distance,
+                    "cmd": cmd,
+                    "src_ip": src_ip
+                }))
+                
+        except Exception as e:
+            print(f"[!] ML Error: {e}")
 
     async def log_geoip(self, session_id, ip, protocol):
         """Async GeoIP enrichment logging."""
@@ -252,6 +316,15 @@ class HoneypotServer:
 
                 if path == "/metrics":
                     content = self.stats.to_prometheus()
+                    
+                    # Append ML metrics if available
+                    if self.ml_enabled and ML_AVAILABLE:
+                         try:
+                             ml_metrics = generate_latest().decode()
+                             content += "\n" + ml_metrics
+                         except Exception as e:
+                             print(f"Error generating ML metrics: {e}")
+                             
                     content_type = "text/plain; version=0.0.4; charset=utf-8"
                 elif path == "/stats":
                     content = json.dumps(self.stats.get_stats(), indent=2)
@@ -467,7 +540,12 @@ class HoneypotServer:
                         
                     # Log command immediately
                     self.stats.on_command("telnet", src_ip, username, cmd)
+                    self.stats.on_command("telnet", src_ip, username, cmd)
                     await self.logger.log_command(session_id, "telnet", src_ip, username, cmd, client_version="Telnet")
+                    
+                    # ML Analysis
+                    if self.ml_enabled and self.ml_filter:
+                         self._analyze_command(cmd, username, src_ip, session_id, "telnet")
                     
                     # Jitter
                     import random
@@ -794,6 +872,10 @@ class SSHSession(asyncssh.SSHServerSession):
                     self.session_id, "ssh", self.src_ip, self.username, cmd,
                     client_version=self.client_version
                 ))
+                
+                # ML Analysis
+                if self.honeypot.ml_enabled and self.honeypot.ml_filter:
+                    self.honeypot._analyze_command(cmd, self.username, self.src_ip, self.session_id, "ssh")
                 
                 stdout, stderr, rc = await self.shell.execute(cmd)
                 
