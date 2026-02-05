@@ -221,6 +221,32 @@ class FakeFilesystem:
             return f
         return None
 
+    def remove(self, path: str) -> bool:
+        """Remove a file or directory.
+        
+        Args:
+            path: Path to remove.
+            
+        Returns:
+            bool: True if successful, False if not found or permissions error (mocked).
+        """
+        resolved = self.resolve(path)
+        if resolved == "/":
+            return False # Cannot remove root
+
+        parent_path = str(PurePosixPath(resolved).parent)
+        name = PurePosixPath(resolved).name
+        
+        parent = self.get_node(parent_path)
+        if isinstance(parent, Directory):
+            # Check if it exists first
+            if parent.get_child(name):
+                # Audit
+                if self.audit_callback:
+                    self.audit_callback("delete", resolved)
+                return parent.remove_child(name)
+        return False
+
 
 
     def get_node(self, path: str) -> Node:

@@ -95,7 +95,7 @@ class RmdirCommand(FileOpCommand):
                  return "", f"rmdir: failed to remove '{arg}': Directory not empty\n", 1
                  
             # Remove
-            node.parent.children.pop(node.name)
+            node.parent.remove_child(node.name)
             
         return "", "", 0
 
@@ -122,8 +122,8 @@ class RmCommand(FileOpCommand):
                 return "", f"rm: cannot remove '{arg}': Is a directory\n", 1
                 
             # Remove
-            if node.parent:
-                node.parent.children.pop(node.name)
+            # Use fs.remove to ensure audit callback is triggered
+            self.fs.remove(path)
                 
         return "", "", 0
 
@@ -212,14 +212,15 @@ class MvCommand(FileOpCommand):
                 return "", f"mv: cannot stat '{src_str}': No such file or directory\n", 1
             
             # Unlink from old parent
-            src_node.parent.children.pop(src_node.name)
+            # Unlink from old parent
+            src_node.parent.remove_child(src_node.name)
             
             if dest_is_dir:
                  # Move into
                  target_name = src_node.name
                  if dest_node.get_child(target_name):
                       # Overwrite? usually yes.
-                      dest_node.children.pop(target_name)
+                      dest_node.remove_child(target_name)
                  
                  src_node.parent = dest_node
                  src_node.name = target_name
@@ -235,7 +236,7 @@ class MvCommand(FileOpCommand):
                 
                 if parent.get_child(target_name):
                      # Overwrite existing dest file
-                     parent.children.pop(target_name)
+                     parent.remove_child(target_name)
                      
                 src_node.parent = parent
                 src_node.name = target_name

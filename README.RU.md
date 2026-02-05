@@ -49,40 +49,25 @@
 ---
 
 ## 🚀 Запуск и эксплуатация
-
-### 🐳 Вариант 1: Docker (Рекомендуемый)
-Самый быстрый и безопасный способ запуска.
-
-```bash
-# Сборка и запуск в фоне
-docker-compose up -d --build
-
-# Просмотр логов сервера в реальном времени
-docker-compose logs -f
-
-# Остановка
-docker-compose down
-```
-
-### 🐍 Вариант 2: Локальный запуск
-Требуется **Python 3.10+**.
-
-```bash
-# 1. Установка зависимостей
-make install
-
-# 2. Настройка конфигурации
-# Отредактируйте etc/cyanide.cfg (порт, профиль ОС, пароли)
-
-# 3. Запуск через контрольный скрипт
-./bin/cyanide start
-
-# Проверка статуса
-./bin/cyanide status
-
-# Остановка
-./bin/cyanide stop
-```
+ 
+ **Примечание: Этот проект предназначен исключительно для запуска через Docker.**
+ 
+ ### 🐳 Docker Compose (Обязательно)
+ Самый быстрый и безопасный способ запуска.
+ 
+ ```bash
+ # Сборка и запуск в фоне
+ docker compose -f docker/docker-compose.yml up --build -d
+ 
+ # Просмотр логов сервера в реальном времени
+ docker compose -f docker/docker-compose.yml logs -f
+ 
+ # Проверка статуса
+ docker compose -f docker/docker-compose.yml ps
+ 
+ # Остановка
+ docker compose -f docker/docker-compose.yml down
+ ```
 
 ---
 

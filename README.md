@@ -50,38 +50,23 @@ The project is built on a modular principle using modern Python patterns:
 
 ## 🚀 Deployment & Operation
 
-### 🐳 Option 1: Docker (Recommended)
+**Note: This project is designed to run exclusively within Docker.**
+
+### 🐳 Docker Compose (Required)
 The fastest and safest way to run.
 
 ```bash
 # Build and start in background
-docker-compose up -d --build
+docker compose -f docker/docker-compose.yml up --build -d
 
 # View server logs in real-time
-docker-compose logs -f
-
-# Stop
-docker-compose down
-```
-
-### 🐍 Option 2: Local Launch
-Requires **Python 3.10+**.
-
-```bash
-# 1. Install dependencies
-make install
-
-# 2. Configure
-# Edit etc/cyanide.cfg (ports, OS profile, passwords)
-
-# 3. Start via control script
-./bin/cyanide start
+docker compose -f docker/docker-compose.yml logs -f
 
 # Check status
-./bin/cyanide status
+docker compose -f docker/docker-compose.yml ps
 
 # Stop
-./bin/cyanide stop
+docker compose -f docker/docker-compose.yml down
 ```
 
 ---

@@ -19,8 +19,9 @@ from cyanide import CyanideLogger
 from cyanide.fs import load_fs
 from .sftp import CyanideSFTPServer
 from .vt_scanner import VTScanner
-from .geoip import GeoIP
 from .stats import StatsManager
+from src.proxy.tcp_proxy import TCPProxy
+from src.core.vm_pool import VMPool
 
 # ML Integration
 try:
@@ -366,34 +367,88 @@ class HoneypotServer:
         # Helper to inject dependencies into SFTPServer
         def sftp_factory(channel):
             return CyanideSFTPServer(channel, self.get_filesystem(), self.save_quarantine_file)
+            
+        # Initialize VM Pool if needed
+        self.vm_pool = VMPool(self.config)
 
         # Start SSH Server
-        ssh_enabled = self.config.get("ssh", {}).get("enabled", True)
+        ssh_conf = self.config.get("ssh", {})
+        ssh_enabled = ssh_conf.get("enabled", True)
         if ssh_enabled:
-            ssh_port = self.config["ssh"]["port"]
+            ssh_port = ssh_conf["port"]
+            backend_mode = ssh_conf.get("backend_mode", "emulated") # emulated, proxy, pool
             
-            # Anti-Fingerprinting
-            # Use consistent banner from profile
-            chosen_version = self.profile["ssh_banner"]
-            print(f"[*] SSH Banner: {chosen_version}")
+            if backend_mode == "emulated":
+                # Anti-Fingerprinting
+                # Use consistent banner from profile
+                chosen_version = self.profile["ssh_banner"]
+                print(f"[*] SSH Banner: {chosen_version}")
+                
+                ssh_server = await asyncssh.listen(
+                    "0.0.0.0", ssh_port,
+                    server_host_keys=[ssh_key],
+                    server_factory=lambda: SSHServerFactory(self),
+                    reuse_address=True,
+                    server_version=chosen_version
+                )
+                print(f"[*] SSH Server (Emulated) listening on port {ssh_port}", flush=True)
+            elif backend_mode == "proxy" or backend_mode == "pool":
+                 # Use TCP Proxy for pure SSH monitoring (simplest approach for "Pure Proxy" request)
+                 # Or use the specific SSH Proxy implementation if we want to dissect packets?
+                 # The user asked for "pure telnet and ssh proxy with monitoring"
+                 # Our TCPProxy monitors data.
+                 # If pool, use selector.
+                 selector = self.vm_pool.get_target if backend_mode == "pool" else None
+                 t_host = ssh_conf.get("target_host", "127.0.0.1")
+                 t_port = int(ssh_conf.get("target_port", 22222))
+                 
+                 ssh_proxy = TCPProxy(
+                    "0.0.0.0", ssh_port,
+                    target_host=t_host, target_port=t_port,
+                    protocol_name="ssh_proxy",
+                    target_selector=selector
+                 )
+                 await ssh_proxy.start()
             
-            ssh_server = await asyncssh.listen(
-                "0.0.0.0", ssh_port,
-                server_host_keys=[ssh_key],
-                server_factory=lambda: SSHServerFactory(self),
-                reuse_address=True,
-                server_version=chosen_version
-            )
-            print(f"[*] SSH Server listening on port {ssh_port} (SFTP enabled via Factory)", flush=True)
-
         # Start Telnet Server
-        telnet_enabled = self.config.get("telnet", {}).get("enabled", False)
+        telnet_conf = self.config.get("telnet", {})
+        telnet_enabled = telnet_conf.get("enabled", False)
         if telnet_enabled:
-            telnet_port = self.config["telnet"]["port"]
-            telnet_server = await asyncio.start_server(
-                self.handle_telnet, "0.0.0.0", telnet_port, reuse_address=True
-            )
-            print(f"[*] Telnet Server listening on port {telnet_port}", flush=True)
+            telnet_port = telnet_conf["port"]
+            backend_mode = telnet_conf.get("backend_mode", "emulated")
+
+            if backend_mode == "emulated":
+                telnet_server = await asyncio.start_server(
+                    self.handle_telnet, "0.0.0.0", telnet_port, reuse_address=True
+                )
+                print(f"[*] Telnet Server (Emulated) listening on port {telnet_port}", flush=True)
+            elif backend_mode == "pool" or backend_mode == "proxy":
+                 selector = self.vm_pool.get_target if backend_mode == "pool" else None
+                 t_host = telnet_conf.get("target_host", "127.0.0.1")
+                 t_port = int(telnet_conf.get("target_port", 2323))
+                 
+                 telnet_proxy = TCPProxy(
+                    "0.0.0.0", telnet_port,
+                    target_host=t_host, target_port=t_port,
+                    protocol_name="telnet_proxy",
+                    target_selector=selector
+                 )
+                 await telnet_proxy.start()
+
+        # Start SMTP Proxy (Forwarding)
+        smtp_conf = self.config.get("smtp", {})
+        if smtp_conf.get("enabled", False):
+            try:
+                smtp_proxy = TCPProxy(
+                    "0.0.0.0",
+                    int(smtp_conf.get("listen_port", 25)),
+                    smtp_conf.get("target_host", "127.0.0.1"),
+                    int(smtp_conf.get("target_port", 2525)),
+                    protocol_name="smtp"
+                )
+                await smtp_proxy.start()
+            except Exception as e:
+                print(f"[!] Failed to start SMTP Proxy: {e}")
 
 
 

@@ -49,40 +49,25 @@ Projekt zbudowany jest na zasadzie modułowej z wykorzystaniem nowoczesnych wzor
 ---
 
 ## 🚀 Wdrożenie i Obsługa
-
-### 🐳 Opcja 1: Docker (Zalecane)
-Najszybszy i najbezpieczniejszy sposób uruchomienia.
-
-```bash
-# Zbuduj i uruchom w tle
-docker-compose up -d --build
-
-# Podgląd logów serwera w czasie rzeczywistym
-docker-compose logs -f
-
-# Zatrzymaj
-docker-compose down
-```
-
-### 🐍 Opcja 2: Uruchomienie Lokalne
-Wymaga **Python 3.10+**.
-
-```bash
-# 1. Instalacja zależności
-make install
-
-# 2. Konfiguracja
-# Edytuj etc/cyanide.cfg (porty, profil OS, hasła)
-
-# 3. Uruchom przez skrypt kontrolny
-./bin/cyanide start
-
-# Sprawdź status
-./bin/cyanide status
-
-# Zatrzymaj
-./bin/cyanide stop
-```
+ 
+ **Uwaga: Ten projekt jest przeznaczony wyłącznie do uruchamiania w Dockerze.**
+ 
+ ### 🐳 Docker Compose (Wymagane)
+ Najszybszy i najbezpieczniejszy sposób uruchomienia.
+ 
+ ```bash
+ # Zbuduj i uruchom w tle
+ docker compose -f docker/docker-compose.yml up --build -d
+ 
+ # Podgląd logów serwera w czasie rzeczywistym
+ docker compose -f docker/docker-compose.yml logs -f
+ 
+ # Sprawdź status
+ docker compose -f docker/docker-compose.yml ps
+ 
+ # Zatrzymaj
+ docker compose -f docker/docker-compose.yml down
+ ```
 
 ---
 

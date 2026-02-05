@@ -120,6 +120,20 @@ class Directory(Node):
         """Retrieve a direct child node by name."""
         return self.children.get(name)
 
+    def remove_child(self, name: str) -> bool:
+        """Remove a child node by name.
+        
+        Args:
+            name: Name of the child to remove.
+            
+        Returns:
+            bool: True if removed, False if not found.
+        """
+        if name in self.children:
+            del self.children[name]
+            return True
+        return False
+
     def to_dict(self) -> dict:
         d = super().to_dict()
         d["type"] = "dir"
