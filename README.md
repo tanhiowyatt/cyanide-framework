@@ -168,7 +168,6 @@ Enable it in `etc/cyanide.cfg`:
 ```ini
 [ml]
 enabled = true
-anomalies_log = var/log/cyanide/anomalies.json
 ```
 
 ### Real-time Monitoring CLI

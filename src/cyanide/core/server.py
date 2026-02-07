@@ -107,7 +107,6 @@ class HoneypotServer:
                     self.ml_enabled = False
                     return
                 
-                self.anomalies_log_path = config.get("ml", {}).get("anomalies_log", "var/log/cyanide/cyanideML-anomalies-log.json")
                 self.ml_log_path = config.get("ml", {}).get("ml_log", "var/log/cyanide/cyanideML-log.json")
                 
                 # Load Knowledge Base
@@ -170,11 +169,7 @@ class HoneypotServer:
             if is_anomaly:
                 print(f"[!] ML ANOMALY: {reason} from {src_ip}")
                 
-                # Log to dedicated anomaly file
-                with open(self.anomalies_log_path, "a") as f:
-                    f.write(json.dumps(ml_log_entry) + "\n")
-                    
-                # Log to generic logger as well
+                # Log to generic logger
                 asyncio.create_task(self.logger.log_event_async({
                     "event": "ml_anomaly",
                     "reason": reason,

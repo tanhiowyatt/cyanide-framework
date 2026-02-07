@@ -69,7 +69,6 @@ def load_config(path: Path = Path("config/cyanide.cfg")):
         
     config["ml"] = {
         "enabled": get_val("ml", "enabled", "ML_ENABLED", False, bool),
-        "anomalies_log": get_val("ml", "anomalies_log", "ML_ANOMALIES_LOG", "var/log/cyanide/cyanideML-anomalies-log.json"),
         "ml_log": get_val("ml", "ml_log", "ML_LOG", "var/log/cyanide/cyanideML-log.json"),
         "model_path": get_val("ml", "model_path", "MODEL_PATH", "src/cyanide/ml/cyanideML/cyanideML.pkl"),
         "online_learning": get_val("ml", "online_learning", "ONLINE_LEARNING", False, bool),

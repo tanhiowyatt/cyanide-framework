@@ -51,7 +51,6 @@ Allowed credentials for Emulated mode.
 ## [ml]
 Machine Learning settings.
 *   `enabled`: true/false.
-*   `anomalies_log`: Path to save anomaly alerts.
 
 ## [cleanup]
 Auto-cleanup settings.
