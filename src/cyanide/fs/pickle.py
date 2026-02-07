@@ -2,12 +2,12 @@ import pickle
 import io
 import builtins
 import typing
-from core.filesystem_nodes import Node, Directory, File
+from cyanide.core.filesystem_nodes import Node, Directory, File
 
 import hmac
 import hashlib
 
-from core.security import loads as safe_loads
+from cyanide.core.security import loads as safe_loads
 
 # Internal Integrity Key
 # This prevents loading arbitrary pickle files not created by this tool.
