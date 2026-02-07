@@ -3,6 +3,7 @@ Advanced SSH/Telnet Honeypot Server Implementation.
 """
 import asyncio
 import asyncssh
+import datetime
 import sys
 import os
 import signal
@@ -26,6 +27,7 @@ from .geoip import GeoIP
 from prometheus_client import generate_latest, CollectorRegistry, CONTENT_TYPE_LATEST
 
 # ML Integration - Moved to HoneypotServer.__init__ to avoid circular imports
+from cyanide.ml.cyanideML.knowledge_base import KnowledgeBase
 
 
 class HoneypotServer:
@@ -88,10 +90,14 @@ class HoneypotServer:
             try:
                 try:
                     from cyanide.ml.cyanideML import HoneypotFilter
-                    model_file = config.get("ml", {}).get("model_path", "src/cyanide/ml/cyanideML/cyanideML.pkl")
-                    if os.path.exists(model_file):
-                        print(f"[*] Loading pre-trained ML model from {model_file}...")
-                        self.ml_filter = HoneypotFilter.load(model_file)
+                    from cyanide.ml.cyanideML.knowledge_base import KnowledgeBase
+                    
+                    config_path = config.get("ml", {}).get("model_path", "src/cyanide/ml/cyanideML/cyanideML.pkl")
+                    model_path = Path(config_path)
+                    
+                    if model_path.exists():
+                        print(f"[*] Loading pre-trained ML model from {model_path}...")
+                        self.ml_filter = HoneypotFilter.load(str(model_path))
                         self.ml_filter.online_learning = self.ml_online_learning
                     else:
                         print("[!] Pre-trained model not found, starting fresh (WARMUP mode).")
@@ -103,6 +109,14 @@ class HoneypotServer:
                 
                 self.anomalies_log_path = config.get("ml", {}).get("anomalies_log", "var/log/cyanide/cyanideML-anomalies-log.json")
                 self.ml_log_path = config.get("ml", {}).get("ml_log", "var/log/cyanide/cyanideML-log.json")
+                
+                # Load Knowledge Base
+                self.kb = KnowledgeBase()
+                kb_file = model_path.parent / "knowledge_base.pkl"
+                if kb_file.exists():
+                    self.kb.load(str(kb_file))
+                else:
+                    print(f"[!] Knowledge Base file not found at {kb_file}")
             except Exception as e:
                 print(f"[!] Failed to init ML model: {e}")
                 self.ml_enabled = False
@@ -123,7 +137,7 @@ class HoneypotServer:
             
             # Log ML 'thought' for every action
             ml_log_entry = {
-                "timestamp": time.time(),
+                "timestamp": datetime.datetime.now().isoformat(),
                 "src_ip": src_ip,
                 "session_id": session_id,
                 "verdict": "anomaly" if is_anomaly else "clean",
@@ -131,6 +145,25 @@ class HoneypotServer:
                 "distance": float(distance),
                 "command": cmd
             }
+            
+            # Enrich with Knowledge Base if anomaly
+            if is_anomaly:
+                kb_results = self.kb.search(cmd)
+                if kb_results:
+                    ml_log_entry["kb_correlation"] = kb_results
+                    # Add human-readable display string
+                    kb_parts = []
+                    for match in kb_results:
+                        if match.get("source") == "MITRE":
+                            mid = match.get("id", "N/A")
+                            mname = match.get("name", "Unknown")
+                            mdesc = match.get("description", "").replace("\n", " ")
+                            kb_parts.append(f"{mid}\t{mname}\t{mdesc}")
+                        else:
+                            content = match.get("content", "")[:100].replace("\n", " ") + "..."
+                            kb_parts.append(f"[{match.get('source')}] {content}")
+                    ml_log_entry["kb_display"] = " | ".join(kb_parts)
+            
             with open(self.ml_log_path, "a") as f:
                 f.write(json.dumps(ml_log_entry) + "\n")
 
@@ -389,10 +422,7 @@ class HoneypotServer:
         # Generate SSH Host Key
         ssh_key = asyncssh.generate_private_key("ssh-rsa")
         
-        # Helper to inject dependencies into SFTPServer
-        def sftp_factory(channel):
-            return CyanideSFTPServer(channel, self.get_filesystem(), self.save_quarantine_file)
-            
+        
         # Initialize VM Pool if needed
         self.vm_pool = VMPool(self.config)
 
@@ -745,6 +775,11 @@ class SSHServerFactory(asyncssh.SSHServer):
         # Use conn_id for SFTP since it's pre-shell
         q_hook = lambda f, c: self.honeypot.save_quarantine_file(f, c, "sftp_"+self.conn_id, self.src_ip)
         return CyanideSFTPServer(channel, self.fs, q_hook)
+
+    def subsystem_requested(self, subsystem):
+        if subsystem == 'sftp':
+            return self.sftp_factory
+        return super().subsystem_requested(subsystem)
 
     def session_requested(self):
         return SSHSession(self.honeypot, self.fs, self.src_ip, self.src_port)

@@ -90,17 +90,29 @@ def generate_subtle_anomalies(n=100):
 def run_test():
     print("[*] Generating Advanced Test Dataset...")
     
-    # 1. Training Phase (Warmup)
-    # The model needs to see "normal" to define patterns.
     train_data = generate_normal_traffic(n=3000)
-    print(f"[*] Training on {len(train_data)} normal logs...")
     
-    model = HoneypotFilter(n_clusters=30, batch_size=100)
+    # Load Existing Model
+    model_path = "../../../ai_models/cyanideML/cyanideML.pkl"
+    if os.path.exists(model_path):
+        print(f"[*] Loading production model from {model_path}...")
+        model = HoneypotFilter.load(model_path)
+    else:
+        print("[*] No existing model found. Initializing fresh model and warming up...")
+        model = HoneypotFilter(batch_size=100)
+    
+    # Disable online learning for validation test
+    model.online_learning = False
     
     start_train = time.time()
-    for log in train_data:
-        model.process_log(log)
-    print(f"[*] Training done in {time.time() - start_train:.2f}s")
+    # If the model is not fitted, we need some training data
+    if not model.is_fitted:
+        print(f"[*] Training on {len(train_data)} normal logs...")
+        for log in train_data:
+            model.process_log(log)
+        print(f"[*] Warmup training done in {time.time() - start_train:.2f}s")
+    else:
+        print("[*] Using pre-trained model for validation.")
     
     # 2. Testing Phase
     test_normal = generate_normal_traffic(n=500)

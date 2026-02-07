@@ -82,7 +82,8 @@ class FeatureExtractor:
         if "input" in log_entry: text_content += str(log_entry["input"]) + " "
         if "username" in log_entry: text_content += str(log_entry["username"]) + " "
         if "password" in log_entry: text_content += str(log_entry["password"]) + " "
-        if "cmd" in log_entry: text_content += str(log_entry["cmd"]) # For command_not_found
+        if "cmd" in log_entry: text_content += str(log_entry["cmd"]) + " " # For command_not_found
+        if "command" in log_entry: text_content += str(log_entry["command"]) + " " # Standardized key
         
         # HashingVectorizer returns scipy.sparse matrix
         text_vec = self.text_vectorizer.transform([text_content])

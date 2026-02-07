@@ -72,7 +72,11 @@ def load_config(path: Path = Path("config/cyanide.cfg")):
         "anomalies_log": get_val("ml", "anomalies_log", "ML_ANOMALIES_LOG", "var/log/cyanide/cyanideML-anomalies-log.json"),
         "ml_log": get_val("ml", "ml_log", "ML_LOG", "var/log/cyanide/cyanideML-log.json"),
         "model_path": get_val("ml", "model_path", "MODEL_PATH", "src/cyanide/ml/cyanideML/cyanideML.pkl"),
-        "online_learning": get_val("ml", "online_learning", "ONLINE_LEARNING", False, bool)
+        "online_learning": get_val("ml", "online_learning", "ONLINE_LEARNING", False, bool),
+        "training_data": {
+            "hacker_methods": Path("data/ml_training/hacker_methods"),
+            "mitre_cve": Path("data/ml_training/kb_ready")
+        }
     }
 
     config["cleanup"] = {
