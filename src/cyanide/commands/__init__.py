@@ -20,7 +20,8 @@ from .who import WhoCommand
 from .w import WCommand
 from .file_ops import TouchCommand, MkdirCommand, RmdirCommand, RmCommand, CpCommand, MvCommand
 from .text_ops import GrepCommand, HeadCommand, TailCommand
-from .misc import CurlCommand, PingCommand, EditorCommand
+from .misc import PingCommand, EditorCommand
+from .curl import CurlCommand
 
 # Central command registry
 COMMAND_MAP = {
