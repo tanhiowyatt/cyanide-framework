@@ -81,7 +81,7 @@ class PingCommand(Command):
             
         out += f"\n--- {host} ping statistics ---\n"
         out += f"{count} packets transmitted, {count} received, 0% packet loss, time {count*1000}ms\n"
-        out += f"rtt min/avg/max/mdev = 5.123/15.456/50.789/10.123 ms\n"
+        out += "rtt min/avg/max/mdev = 5.123/15.456/50.789/10.123 ms\n"
         return out, "", 0
 
 class EditorCommand(Command):

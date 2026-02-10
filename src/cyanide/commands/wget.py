@@ -1,6 +1,5 @@
 import argparse
 import aiohttp
-import asyncio
 from .base import Command
 from pathlib import PurePosixPath
 
@@ -38,8 +37,8 @@ class WgetCommand(Command):
         output_msg = ""
         if not parsed.quiet:
             output_msg += f"--2026-02-02 12:00:00--  {url}\n"
-            output_msg += f"Resolving host... 1.2.3.4\n"
-            output_msg += f"Connecting to host|1.2.3.4|:80... connected.\n"
+            output_msg += "Resolving host... 1.2.3.4\n"
+            output_msg += "Connecting to host|1.2.3.4|:80... connected.\n"
             output_msg += "HTTP request sent, awaiting response... 200 OK\n"
             output_msg += "Length: 1234 (1.2K) [text/html]\n"
             output_msg += f"Saving to: '{filename}'\n\n"

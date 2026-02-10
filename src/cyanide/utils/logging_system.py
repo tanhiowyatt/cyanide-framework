@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 import aiohttp
-import asyncio
 
 class HoneypotLogger:
     """Centralized logging system for honeypot events and commands.
@@ -85,7 +84,6 @@ class HoneypotLogger:
             "event_type": event_data.get("event", "unknown"),
             "src_ip": event_data.get("src_ip", "unknown"),
             "src_port": event_data.get("src_port", 0),
-            "session_id": event_data.get("session_id", "unknown"),
             "session_id": event_data.get("session_id", "unknown"),
             "client_version": event_data.get("client_version", ""), # SSH Client String
             "details": event_data  # Embed original data as details

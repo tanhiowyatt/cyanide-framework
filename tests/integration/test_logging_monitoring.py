@@ -1,7 +1,6 @@
 import pytest
 import json
 import os
-import time
 from cyanide.core.stats import StatsManager
 from cyanide.logger import CyanideLogger
 

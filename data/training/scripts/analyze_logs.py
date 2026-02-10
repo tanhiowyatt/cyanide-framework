@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import json
 import os
-import math
 
 def analyze_logs(log_path):
     if not os.path.exists(log_path):

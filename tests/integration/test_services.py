@@ -3,7 +3,6 @@ import asyncio
 import asyncssh
 import telnetlib3
 from cyanide.core.server import HoneypotServer
-from cyanide.core.stats import StatsManager
 
 # Mocks and fixtures would be better, but for integration we might want to spin up the server
 # However, spinning up the full server might be heavy. 

@@ -1,6 +1,5 @@
 from pathlib import PurePosixPath
 import posixpath
-import datetime
 from .filesystem_nodes import Directory, File, Node
 
 class FakeFilesystem:

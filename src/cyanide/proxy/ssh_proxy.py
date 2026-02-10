@@ -16,7 +16,6 @@ import os
 
 sys.path.append(os.getcwd())
 
-from typing import Optional, List
 from cyanide.core.fake_filesystem import FakeFilesystem
 
 # Configure logging to stdout as json

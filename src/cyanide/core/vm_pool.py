@@ -1,5 +1,4 @@
 import random
-import asyncio
 
 class VMPool:
     """

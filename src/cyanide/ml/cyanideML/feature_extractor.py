@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.preprocessing import OneHotEncoder
 import math
 import collections
 

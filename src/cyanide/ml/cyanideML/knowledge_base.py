@@ -1,10 +1,7 @@
 import json
-import logging
 import re
 from pathlib import Path
-import random
 import pickle
-import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 

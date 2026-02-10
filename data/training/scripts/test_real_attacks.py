@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import sys
 import os
-import json
-import time
 from pathlib import Path
 
 # Add project root to path

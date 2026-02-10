@@ -1,9 +1,7 @@
-import os
 import time
 import asyncssh
-import errno
 from pathlib import PurePosixPath
-from cyanide.core.filesystem_nodes import Directory, File
+from cyanide.core.filesystem_nodes import Directory
 
 class CyanideSFTPServer(asyncssh.SFTPServer):
     """

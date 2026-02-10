@@ -1,8 +1,5 @@
 import aiohttp
 import hashlib
-import asyncio
-import json
-import logging
 
 class VTScanner:
     """

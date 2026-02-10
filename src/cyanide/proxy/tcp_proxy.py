@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import json
-import time
 
 logger = logging.getLogger("cyanide")
 

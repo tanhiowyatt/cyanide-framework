@@ -4,8 +4,6 @@ import sys
 import os
 import resource
 import statistics
-import cProfile
-import pstats
 
 # Add ai-models to path for importing cyanideML
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

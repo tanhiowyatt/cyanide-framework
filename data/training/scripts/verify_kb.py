@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import sys
-import pickle
 import time
 from pathlib import Path
 

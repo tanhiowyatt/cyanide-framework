@@ -1,6 +1,5 @@
 import os
 import time
-import logging
 from pathlib import Path
 
 class CleanupManager:

@@ -1,6 +1,4 @@
 import aiohttp
-import asyncio
-import json
 
 class GeoIP:
     """
@@ -47,7 +45,7 @@ class GeoIP:
                             if len(self.cache) < self.cache_size:
                                 self.cache[ip] = result
                             return result
-        except Exception as e:
+        except Exception:
             # Silently fail to avoid log spam on network issues
             pass
             

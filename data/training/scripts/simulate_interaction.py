@@ -1,7 +1,5 @@
 import asyncio
 import asyncssh
-import sys
-import os
 
 async def run_client():
     try:

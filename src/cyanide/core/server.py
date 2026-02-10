@@ -4,16 +4,14 @@ Advanced SSH/Telnet Honeypot Server Implementation.
 import asyncio
 import asyncssh
 import datetime
-import sys
 import os
-import signal
 import uuid
 import time
 import random
 import json
 import traceback
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from .fake_filesystem import FakeFilesystem
 from .shell_emulator import ShellEmulator
@@ -25,10 +23,9 @@ from .stats import StatsManager
 from cyanide.proxy.tcp_proxy import TCPProxy
 from .vm_pool import VMPool
 from .geoip import GeoIP
-from prometheus_client import generate_latest, CollectorRegistry, CONTENT_TYPE_LATEST
+from prometheus_client import generate_latest
 
 # ML Integration - Moved to HoneypotServer.__init__ to avoid circular imports
-from cyanide.ml.cyanideML.knowledge_base import KnowledgeBase
 
 
 class HoneypotServer:
@@ -900,7 +897,7 @@ class SSHSession(asyncssh.SSHServerSession):
                  "protocol": "ssh", "fingerprint": fingerprint,
                  "client_version": self.client_version
              }))
-        except Exception as e:
+        except Exception:
              pass
 
     def connection_lost(self, exc):

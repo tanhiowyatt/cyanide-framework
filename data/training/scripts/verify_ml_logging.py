@@ -2,7 +2,6 @@
 import sys
 import json
 import time
-import random
 from pathlib import Path
 
 # Add project root to path
@@ -11,7 +10,6 @@ sys.path.append(str(Path.cwd() / "src"))
 
 from cyanide.ml.cyanideML.model import HoneypotFilter
 from cyanide.ml.cyanideML.knowledge_base import KnowledgeBase
-from cyanide.core.config import load_config
 
 def verify_logging():
     print("[*] Starting Full ML & KB Verification...")
@@ -132,7 +130,7 @@ def verify_logging():
         with open(ml_log_path, "a") as f:
             f.write(json.dumps(log_data) + "\n")
             
-    print(f"\n[+] Logging complete.")
+    print("\n[+] Logging complete.")
     
     # 3. Verify Log File
     with open(ml_log_path, "r") as f:

@@ -1,9 +1,6 @@
 import json
-import numpy as np
 import sys
 import os
-import collections
-from sklearn.metrics import confusion_matrix
 import random
 
 # Add project root to path

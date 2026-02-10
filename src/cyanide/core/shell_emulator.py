@@ -1,7 +1,6 @@
 import shlex
-import re
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from .fake_filesystem import FakeFilesystem
 
