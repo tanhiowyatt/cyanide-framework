@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # Python deps (pip из tox/pyproject.toml)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -10,12 +11,8 @@ updates:
       - dependency-name: "pytest*"
       - dependency-name: "black"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "security"
-    reviewers:
-      - "tanhiowyatt"  
 
+  # GitHub Actions (tox, codeql-action, ruff-pre-commit)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -25,16 +22,14 @@ updates:
         patterns:
           - "github/codeql-action*"
           - "actions/upload-artifact*"
-        labels:
-          - "CI"
-          - "security"
       testing:
         patterns:
           - "actions/setup-python*"
-          - "astral-sh/setup-ruff*"  
+          - "astral-sh/setup-ruff*"
           - "pre-commit/action*"
     open-pull-requests-limit: 3
 
+  # Docker (honeypot/Proxmox images)
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -42,12 +37,4 @@ updates:
     ignore:
       - dependency-name: "python"
         update-types: ["version-update:semver-patch"]
-    labels:
-      - "docker"
-      - "security"
-
-security-updates:
-  labels:
-    - "security"
-    - "autofix"
-  open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
