@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Python deps (pip из tox/pyproject.toml)
+  # Python deps
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -12,7 +12,7 @@ updates:
       - dependency-name: "black"
     open-pull-requests-limit: 5
 
-  # GitHub Actions (tox, codeql-action, ruff-pre-commit)
+  # GitHub Actions 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -29,7 +29,7 @@ updates:
           - "pre-commit/action*"
     open-pull-requests-limit: 3
 
-  # Docker (honeypot/Proxmox images)
+  # Docker 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
