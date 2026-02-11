@@ -5,7 +5,7 @@
 ---
 
 ### 🌐 Tłumaczenia / Translations / Переводы
-*   🇺🇸 [English (Angielski)](README.md)
+*   🇺🇸 [English (Angielski)](../README.md)
 *   🇷🇺 [Russian (Rosyjski)](README.RU.md)
 
 ---
