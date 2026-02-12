@@ -17,7 +17,7 @@ The main event loop and service orchestrator.
 
 ### `fake_filesystem.py`
 **Class:** `FakeFilesystem`
-Simulates a Linux filesystem structure in memory (or backed by a pickle file).
+Simulates a Linux filesystem structure in memory (loaded from YAML).
 *   **Functions:**
     *   `mkfile(path, content, ...)`: Creates a fake file.
     *   `mkdir_p(path, ...)`: Creates a fake directory recursively.

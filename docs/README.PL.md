@@ -38,13 +38,12 @@ Projekt zbudowany jest na zasadzie modułowej z wykorzystaniem nowoczesnych wzor
 ### Struktura Katalogów
 | Ścieżka | Opis |
 |---------|-------------|
-| `bin/` | Narzędzia do zarządzania i kontroli |
-| `etc/` | Pliki konfiguracyjne (`cyanide.cfg`) |
-| `src/core/` | Rdzeń serwera, emulator shella i logika systemu plików |
-| `src/commands/` | Implementacje emulowanych komend Linux |
-| `src/cyanide/` | Biblioteki pomocnicze i logowanie |
+| `scripts/` | Narzędzia do zarządzania i kontroli |
+| `config/` | Pliki konfiguracyjne (`cyanide.cfg`) i szablony ФС |
+| `src/cyanide/core/` | Rdzeń serwera, emulator shella i logika systemu plików |
+| `src/cyanide/commands/` | Implementacje emulowanych komend Linux |
 | `var/log/cyanide/` | Logi JSON i nagrania TTY |
-| `var/quarantine/` | Odizolowane pliki |
+| `var/lib/cyanide/` | Przechowywanie danych i kwarantanna |
 
 ---
 
@@ -60,26 +59,18 @@ Projekt zbudowany jest na zasadzie modułowej z wykorzystaniem nowoczesnych wzor
  docker compose -f docker/docker-compose.yml up --build -d
  
  # Podgląd logów serwera w czasie rzeczywistym
- docker compose -f docker/docker-compose.yml logs -f
- 
- # Sprawdź status
- docker compose -f docker/docker-compose.yml ps
- 
- # Zatrzymaj
- docker compose -f docker/docker-compose.yml down
+ docker compose -f docker/docker-compose.yml logs -f cyanide
  ```
 
 ---
 
-## 🛠️ Materiały Narzędziowe (`bin/`)
+## 🛠️ Materiały Narzędziowe (`scripts/`)
 
 | Narzędzie | Opis |
 |-----------|-------------|
-| `./bin/cyanide` | Główny skrypt zarządzający (start, stop, status, restart). |
-| `./bin/cyanide-replay` | Odtwarzacz logów TTY. |
-| `./bin/cyanide-createfs` | Tworzy nowy "migawka" systemu plików z realnego katalogu. |
-| `./bin/cyanide-clean` | Narzędzie do czyszczenia starych logów i plików w kwarantannie. |
-| `./bin/cyanide-fsctl` | Narzędzie do ręcznego zarządzania bazą danych `fs.pickle`. |
+| `./scripts/cyanide` | Główny skrypt zarządzający (start, stop, status, restart). |
+| `./scripts/cyanide-replay` | Odtwarzacz logów TTY. |
+| `./scripts/cyanide-clean` | Narzędzie do czyszczenia starych logów i plików w kwarantannie. |
 
 ---
 
@@ -103,20 +94,35 @@ Wszystkie sesje są nagrywane w `var/log/cyanide/tty/`. Każda sesja ma własny 
 1.  Znajdź odpowiedni folder sesji w `var/log/cyanide/tty/`.
 2.  Wykonaj polecenie:
 ```bash
-scriptreplay --timing var/log/cyanide/tty/<dir>/<dir>.timing --typescript var/log/cyanide/tty/<dir>/<dir>.log
+./scripts/cyanide-replay var/log/cyanide/tty/<dir>/
 ```
 
----
+## 💾 Konfiguracja systemu plików (YAML)
 
-## 💾 Persystencja i Migawki (fs.pickle)
+System plików honeypot jest zdefiniowany w szablonach YAML w `config/fs-config/`.
 
-System plików Cyanide jest przechowywany w pliku `share/cyanide/fs.pickle`. Jest to binarny zrzut chroniony sygnaturą HMAC.
+### 🌍 Profile OS
+Cyanide obsługuje kilka profili OS dla realizmu:
+- **Ubuntu 22.04**
+- **Debian 11**
+- **CentOS 7**
 
-**Jak stworzyć własną migawkę:**
-Jeśli chcesz, aby atakujący widział strukturę Twojego realnego serwera:
+### 📝 Ręczna edycja
+Główny system plików zdefiniowany jest w `config/fs-config/fs.yaml`. Po prostu edytuj plik YAML aby dodać honey-pliki:
+
+```yaml
+- name: passwords.txt
+  type: file
+  content: "admin:SuperSecret123!"
+```
+
+### 🎯 Personalizacja profili
+Użyj `generate_profiles.py`, aby zaktualizować YAML specyficzne dla dystrybucji:
 ```bash
-sudo ./bin/cyanide-createfs / --output share/cyanide/fs.pickle
+python3 generate_profiles.py
 ```
+
+**Skrypty nie są potrzebne do jednorazowych testów** — po prostu edytuj `config/fs-config/fs.yaml` i zrestartuj honeypot.
 
 ---
 
@@ -125,9 +131,7 @@ sudo ./bin/cyanide-createfs / --output share/cyanide/fs.pickle
 Po długim czasie pracy zaleca się wyczyszczenie logów:
 ```bash
 # Usuń logi starsze niż 7 dni
-make clean
-# lub konkretnie:
-./bin/cyanide-clean --days 7 --force
+./scripts/cyanide-clean --days 7 --force
 ```
 
 ---

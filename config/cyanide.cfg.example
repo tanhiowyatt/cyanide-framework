@@ -12,13 +12,11 @@ log_path = var/log/cyanide
 # Values: String (valid file path)
 data_path = var/lib/cyanide
 
-# Path to the pickled filesystem for state persistence
-# Values: String (valid file path)
-fs_pickle = data/cyanide/fs.pickle
+# Path to the YAML filesystem configuration
+# You can edit this file manually to add honey files
+fs_yaml = data/cyanide/fs.yaml
 
-# Path to text commands definitions (if used)
-# Values: String (valid file path)
-txtcmds_path = data/cyanide/txtcmds
+fs_yaml = data/cyanide/fs.yaml
 
 
 [server]
@@ -31,8 +29,19 @@ host = 0.0.0.0
 #   - ubuntu_22_04 (Mimics Ubuntu 22.04 LTS)
 #   - debian_11 (Mimics Debian 11 Bullseye)
 #   - centos_7 (Mimics CentOS 7)
+#   - custom (Uses metadata from [custom_profile] and fs.custom.yaml)
 #   - random (Selects a profile randomly on startup)
 os_profile = random
+
+# Example Custom Profile (Optional)
+# Used only if os_profile = custom
+# [custom_profile]
+# name = My Custom Linux
+# ssh_banner = SSH-2.0-OpenSSH_9.0
+# uname_r = 6.1.0-custom
+# uname_a = Linux my-server 6.1.0-custom #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux
+# etc_issue = My Custom Distro \n \l\n\n
+# proc_version = Linux version 6.1.0-custom (user@build-machine) (gcc 12) #1 SMP
 
 # Maximum total concurrent sessions allowed
 # Values: Integer (e.g. 100)

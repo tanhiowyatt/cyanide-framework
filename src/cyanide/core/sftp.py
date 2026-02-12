@@ -192,7 +192,7 @@ class CyanideSFTPServer(asyncssh.SFTPServer):
                     # Try to decode for text files, keep bytes for binary
                     # But our Node definition currently usually expects text?
                     # Let's save as bytes in content regardless, but Node might default to text methods.
-                    # We updated pickle to accept bytes.
+
                     
                     # Check overwrite
                     existing = parent.get_child(filename)

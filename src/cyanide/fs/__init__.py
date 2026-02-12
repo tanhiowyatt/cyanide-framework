@@ -1,9 +1,9 @@
 """
 Cyanide Filesystem Utilities
 ----------------------------
-Persistence logic for the fake filesystem (Signed Pickle).
+Persistence logic for the fake filesystem (YAML).
 """
 
-from .pickle import load_fs, save_fs
+from .yaml_fs import load_fs
 
-__all__ = ["load_fs", "save_fs"]
+__all__ = ["load_fs"]

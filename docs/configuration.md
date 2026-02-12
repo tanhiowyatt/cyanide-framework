@@ -1,20 +1,31 @@
 # Configuration Documentation
 
-The main configuration file is located at `etc/cyanide.cfg`.
+The main configuration file is located at `config/cyanide.cfg`.
 
 ## [honeypot]
 General settings.
 *   `hostname`: hostname of the fake server.
 *   `log_path`: Directory for logs.
 *   `data_path`: Directory for persistence.
-*   `fs_pickle`: Path to the serialized filesystem.
+*   `fs_yaml`: Primary YAML filesystem template (optional if using profiles).
+
 
 ## [server]
 Connection handling settings.
 *   `host`: Listen address (0.0.0.0).
 *   `max_sessions`: Global connection limit.
 *   `session_timeout`: Inactivity timeout in seconds.
-*   `os_profile`: OS personality (e.g., `ubuntu_22_04`, `centos_7`, `random`).
+*   `os_profile`: OS personality (`ubuntu_22_04`, `debian_11`, `centos_7`, `custom`, or `random`).
+    *   If `custom` is selected, the honeypot loads metadata from the `[custom_profile]` section and expects a filesystem at `config/fs-config/fs.custom.yaml`.
+
+## [custom_profile]
+Required if `os_profile = custom`.
+*   `name`: Descriptive name (e.g., "Generic Router").
+*   `ssh_banner`: Version string (e.g., `SSH-2.0-OpenSSH_9.0`).
+*   `uname_r`: Kernel release (`6.1.0`).
+*   `uname_a`: Full uname output.
+*   `etc_issue`: Content of `/etc/issue`.
+*   `proc_version`: Content of `/proc/version`.
 
 ## [ssh]
 SSH Service settings.
@@ -80,7 +91,7 @@ sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-port 2222
 To use real QEMU/KVM backends instead of the fake shell:
 
 1.  Start your VMs and ensure you can SSH into them (e.g., at 192.168.122.10 and .11).
-2.  Edit `etc/cyanide.cfg`:
+2.  Edit `config/cyanide.cfg`:
 ```ini
 [ssh]
 enabled = true
@@ -94,7 +105,7 @@ targets = 192.168.122.10:22, 192.168.122.11:22
 ## 3. Creating Custom Users
 To catch attackers using specific credentials (like `oracle:oracle`):
 
-Edit `etc/cyanide.cfg`:
+Edit `config/cyanide.cfg`:
 ```ini
 [users]
 root = admin

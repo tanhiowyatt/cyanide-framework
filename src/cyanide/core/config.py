@@ -36,17 +36,9 @@ def load_config(path: Path = Path("config/cyanide.cfg")):
     # Convert to dictionary structure expected by HoneypotServer
     config = {
         "log_path": get_val("honeypot", "log_path", "LOG_PATH", "var/log/cyanide"),
-        "fs_pickle": get_val("honeypot", "fs_pickle", "FS_PICKLE", None),
-        "quarantine_path": get_val("honeypot", "quarantine_path", "DATA_PATH", "var/lib/cyanide/quarantine"), # Note: DATA_PATH in env covers this? No, config.cfg had data_path but code used separate logic. 
-        # Wait, config.cfg has data_path=var/lib/cyanide. Code logic below used hardcoded fallback.
-        # In .env I put DATA_PATH. Let's use that base or specific?
-        # The original code used "quarantine_path" key with fallback "var/lib/cyanide/quarantine".
-        # config.cfg doesn't actually HAVE "quarantine_path". It has "data_path".
-        # So original code fallback was always used unless I missed something?
-        # Ah, lines 29: cfg.get("honeypot", "quarantine_path", fallback="var/lib/cyanide/quarantine")
-        # In .env I don't have QUARANTINE_PATH. I have DATA_PATH=var/lib/cyanide.
-        # I should probably just construct it from DATA_PATH if possible, or use default.
-        # I'll stick to the original logic for now but checking DATA_PATH/quarantine.
+        "fs_yaml": get_val("honeypot", "fs_yaml", "FS_YAML", None),
+        "quarantine_path": get_val("honeypot", "quarantine_path", "DATA_PATH", "var/lib/cyanide/quarantine"),
+        "os_profile": get_val("server", "os_profile", "OS_PROFILE", "random"),
         "ssh": {
             "port": get_val("ssh", "listen_port", "SSH_PORT", 2222, int),
             "enabled": get_val("ssh", "enabled", "SSH_ENABLED", True, bool)
@@ -84,5 +76,11 @@ def load_config(path: Path = Path("config/cyanide.cfg")):
         "retention_days": get_val("cleanup", "retention_days", "CLEANUP_RETENTION_DAYS", 7, int),
         "paths": get_val("cleanup", "paths", "CLEANUP_PATHS", "var/log/cyanide,var/lib/cyanide").split(",")
     }
+
+    # Load Custom Profile metadata if exists
+    config["custom_profile"] = {}
+    if cfg.has_section("custom_profile"):
+        for key in ["name", "ssh_banner", "uname_r", "uname_a", "etc_issue", "proc_version"]:
+            config["custom_profile"][key] = cfg.get("custom_profile", key, fallback="")
         
     return config

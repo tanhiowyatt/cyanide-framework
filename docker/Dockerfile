@@ -41,7 +41,7 @@ ENV PYTHONPATH=/app/src:/app
 COPY . .
 
 # Create necessary directories and set ownership
-# We need write access to var/log/cyanide, var/lib/cyanide, var/run and data/cyanide (for txtcmds/fs.pickle updates if any)
+# We need write access to var/log/cyanide, var/lib/cyanide, var/run and data/cyanide (for fs.yaml if any)
 # Note: config is mounted read-only usually, but data might be read-only too. 
 # Var is where we write.
 RUN mkdir -p var/log/cyanide/tty var/lib/cyanide/quarantine var/run \

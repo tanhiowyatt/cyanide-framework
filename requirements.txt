@@ -10,4 +10,4 @@ scikit-learn==1.8.0
 numpy==2.4.2
 prometheus_client==0.24.1
 python-dotenv==1.2.1
-telnetlib3==2.4.0 
+telnetlib3==1.0.3

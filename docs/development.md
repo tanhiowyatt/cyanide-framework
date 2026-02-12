@@ -92,7 +92,7 @@ The application is an asynchronous event-driven server based on `asyncio`.
     *   Commands are delegated to classes in `src/commands/*.py`.
 4.  **Filesystem**:
     *   `src/core/fake_filesystem.py`: In-memory object tree.
-    *   `share/cyanide/fs.pickle`: Persisted state.
+    *   `data/cyanide/fs.yaml`: Persisted state (YAML format).
 
 ### Key Class Interactions
 
@@ -104,7 +104,7 @@ graph TD
     B --> E[CommandRegistry]
     E --> F[LsCommand]
     E --> G[CdCommand]
-    D --> H[Persistent Pickle]
+    D --> H[Persistent YAML]
 ```
 
 ---
@@ -150,7 +150,7 @@ All application logs go to stdout (Docker logs) and `var/log/cyanide/cyanide.jso
 ### Common Issues
 *   **"Address already in use"**: Check if another container or system process is using port 2222/2223.
 *   **"Module not found"**: Ensure `PYTHONPATH` includes `src/`. Docker handles this automatically.
-*   **"Permission denied" on persistence**: Check file permissions on `share/cyanide/fs.pickle`. The container runs as user `cyanide` (UID often 1000 or 999).
+*   **"Permission denied" on persistence**: Check file permissions on `data/cyanide/fs.yaml`. The container runs as user `cyanide` (UID often 1000 or 999).
 
 ## 📦 Release Process
 

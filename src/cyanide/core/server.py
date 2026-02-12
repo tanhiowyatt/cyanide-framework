@@ -16,7 +16,7 @@ from typing import Dict, Any
 from .fake_filesystem import FakeFilesystem
 from .shell_emulator import ShellEmulator
 from cyanide import CyanideLogger
-from cyanide.fs import load_fs
+
 from .sftp import CyanideSFTPServer
 from .vt_scanner import VTScanner
 from .stats import StatsManager
@@ -53,9 +53,6 @@ class HoneypotServer:
         # Quarantine quota (in MB)
         self.quarantine_max_mb = config.get("quarantine_max_size_mb", 500)
         
-        # Preload FS if pickled
-        self.fs_pickle_path = config.get("fs_pickle")
-        
         # VirusTotal
         vt_key = config.get("virustotal", {}).get("api_key", "")
         self.vt_scanner = VTScanner(vt_key)
@@ -67,14 +64,29 @@ class HoneypotServer:
         from .system_profiles import PROFILES
         
         profile_key = config.get("os_profile", "random")
-        if profile_key in PROFILES:
+        if profile_key == "custom" and config.get("custom_profile"):
+            self.profile = config["custom_profile"]
+            self.logger.log_event("system", "system_status", {"message": "Using Custom OS Profile from configuration."})
+        elif profile_key in PROFILES:
             self.profile = PROFILES[profile_key]
         else:
-            if profile_key != "random":
+            if profile_key not in ("random", "custom"):
                 self.logger.log_event("system", "config_warning", {"message": f"Unknown profile '{profile_key}', falling back to random."})
             self.profile = random.choice(list(PROFILES.values()))
+            # Reverse lookup for FS loading
+            profile_key = [k for k, v in PROFILES.items() if v == self.profile][0]
         
         self.logger.log_event("system", "system_status", {"message": f"OS Profile: {self.profile['name']}"})
+
+        # Preload FS if YAML based on profile
+        configured_fs_path = config.get("fs_yaml")
+        if configured_fs_path:
+             self.fs_yaml_path = configured_fs_path
+        else:
+             self.fs_yaml_path = f"config/fs-config/fs.{profile_key}.yaml"
+             if not os.path.exists(self.fs_yaml_path):
+                 self.logger.log_event("system", "warning", {"message": f"Profile FS not found at {self.fs_yaml_path}, falling back to config/fs-config/fs.yaml"})
+                 self.fs_yaml_path = "config/fs-config/fs.yaml"
         
         # Stats Manager
         self.stats = StatsManager()
@@ -238,17 +250,19 @@ class HoneypotServer:
             pass
 
     def get_filesystem(self, session_id="unknown", src_ip="unknown"):
-        """Factory to get the filesystem instance."""
-        def audit_hook(a, p):
-            return self._fs_audit_hook(a, p, session_id, src_ip)
-        if self.fs_pickle_path and os.path.isfile(self.fs_pickle_path):
+        """Create a fresh filesystem instance for a new session."""
+        def audit_hook(action, path):
+            self._fs_audit_hook(action, path, session_id, src_ip)
+
+        if self.fs_yaml_path and os.path.isfile(self.fs_yaml_path):
             try:
-                root = load_fs(self.fs_pickle_path)
+                from cyanide.fs.yaml_fs import load_fs
+                root = load_fs(self.fs_yaml_path)
                 fs = FakeFilesystem(audit_callback=audit_hook, profile=self.profile)
                 fs.root = root # Hot-swap root
                 return fs
             except Exception as e:
-                self.logger.log_event(session_id, "error", {"message": f"Error loading pickle FS: {e}"})
+                self.logger.log_event(session_id, "error", {"message": f"Error loading YAML FS: {e}"})
         return FakeFilesystem(audit_callback=audit_hook, profile=self.profile)
 
     async def _scan_and_log(self, filename: str, content: bytes, session_id="unknown", src_ip="unknown"):

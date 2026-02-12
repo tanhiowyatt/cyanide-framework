@@ -26,8 +26,6 @@ class RestrictedUnpickler(pickle.Unpickler):
         # Internal Project Modules
         'cyanideML.model', 'cyanideML.feature_extractor',
         'ai_models.cyanideML.model', 'ai_models.cyanideML.feature_extractor',
-        'core.filesystem_nodes', 'cyanide.fs.pickle',
-        'src.core.filesystem_nodes',
         'src.cyanideML.model'
     }
 

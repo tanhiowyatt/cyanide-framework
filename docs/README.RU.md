@@ -38,13 +38,12 @@
 ### Структура папок
 | Путь | Описание |
 |------|-------------|
-| `bin/` | Инструменты управления и контроля |
-| `etc/` | Конфигурационные файлы (`cyanide.cfg`) |
-| `src/core/` | Ядро сервера, эмулятор оболочки и логика ФС |
-| `src/commands/` | Реализации эмулируемых команд Linux |
-| `src/cyanide/` | Вспомогательные библиотеки и логирование |
+| `scripts/` | Инструменты управления и контроля |
+| `config/` | Конфигурационные файлы (`cyanide.cfg`) и шаблоны ФС |
+| `src/cyanide/core/` | Ядро сервера, эмулятор оболочки и логика ФС |
+| `src/cyanide/commands/` | Реализации эмулируемых команд Linux |
 | `var/log/cyanide/` | JSON логи и TTY записи |
-| `var/quarantine/` | Изолированные файлы |
+| `var/lib/cyanide/` | Хранилище данных и карантин |
 
 ---
 
@@ -60,26 +59,16 @@
  docker compose -f docker/docker-compose.yml up --build -d
  
  # Просмотр логов сервера в реальном времени
- docker compose -f docker/docker-compose.yml logs -f
- 
- # Проверка статуса
- docker compose -f docker/docker-compose.yml ps
- 
- # Остановка
- docker compose -f docker/docker-compose.yml down
+ docker compose -f docker/docker-compose.yml logs -f cyanide
  ```
 
----
-
-## 🛠️ Справочник инструментов (`bin/`)
+## 🛠️ Справочник инструментов (`scripts/`)
 
 | Утилита | Описание |
 |---------|-------------|
-| `./bin/cyanide` | Основной скрипт управления (start, stop, status, restart). |
-| `./bin/cyanide-replay` | Проигрыватель TTY логов. |
-| `./bin/cyanide-createfs` | Создание нового "снимка" файловой системы из реальной директории. |
-| `./bin/cyanide-clean` | Утилита очистки старых логов и файлов в карантине. |
-| `./bin/cyanide-fsctl` | Инструмент для ручного управления базой данных `fs.pickle`. |
+| `./scripts/cyanide` | Основной скрипт управления (start, stop, status, restart). |
+| `./scripts/cyanide-replay` | Проигрыватель TTY логов. |
+| `./scripts/cyanide-clean` | Утилита очистки старых логов и файлов в карантине. |
 
 ---
 
@@ -103,20 +92,35 @@ Cyanide поддерживает более 25 стандартных коман
 1.  Найдите нужную папку сессии в `var/log/cyanide/tty/`.
 2.  Выполните команду:
 ```bash
-scriptreplay --timing var/log/cyanide/tty/<dir>/<dir>.timing --typescript var/log/cyanide/tty/<dir>/<dir>.log
+./scripts/cyanide-replay var/log/cyanide/tty/<dir>/
 ```
 
----
+## 💾 Конфигурация файловой системы (YAML)
 
-## 💾 Персистентность и Снимки (fs.pickle)
+Файловая система honeypot определена в шаблонах YAML в `config/fs-config/`.
 
-Файловая система Cyanide хранится в файле `share/cyanide/fs.pickle`. Это бинарный снимок, защищенный HMAC-подписью.
+### 🌍 Профили ОС
+Cyanide поддерживает несколько профилей ОС для реалистичности:
+- **Ubuntu 22.04**
+- **Debian 11**
+- **CentOS 7**
 
-**Как создать свой снимок:**
-Если вы хотите, чтобы хакер видел структуру вашего реального сервера:
+### 📝 Ручное редактирование
+Основная ФС определена в `config/fs-config/fs.yaml`. Просто отредактируйте YAML файл для добавления honey-файлов:
+
+```yaml
+- name: passwords.txt
+  type: file
+  content: "admin:SuperSecret123!"
+```
+
+### 🎯 Кастомизация профилей
+Используйте `generate_profiles.py` для обновления специфичных для дистрибутивов YAML:
 ```bash
-sudo ./bin/cyanide-createfs / --output share/cyanide/fs.pickle
+python3 generate_profiles.py
 ```
+
+**Скрипты не нужны для разовых тестов** — просто отредактируйте `config/fs-config/fs.yaml` и перезапустите honeypot.
 
 ---
 
@@ -125,9 +129,7 @@ sudo ./bin/cyanide-createfs / --output share/cyanide/fs.pickle
 После долгой работы рекомендуется очищать логи:
 ```bash
 # Удалить логи старше 7 дней
-make clean
-# или точечно:
-./bin/cyanide-clean --days 7 --force
+./scripts/cyanide-clean --days 7 --force
 ```
 
 ---

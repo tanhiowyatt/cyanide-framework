@@ -77,9 +77,7 @@ docker compose -f docker/docker-compose.yml down
 |---------|-------------|
 | `./bin/cyanide` | Main management script (start, stop, status, restart). |
 | `./bin/cyanide-replay` | TTY log player. |
-| `./bin/cyanide-createfs` | Create a new filesystem snapshot from a real directory. |
 | `./bin/cyanide-clean` | Clean up old logs and quarantined files. |
-| `./bin/cyanide-fsctl` | Manual management tool for `fs.pickle` database. |
 
 ---
 
@@ -108,15 +106,51 @@ scriptreplay --timing var/log/cyanide/tty/<dir>/<dir>.timing --typescript var/lo
 
 ---
 
-## 💾 Persistence & Snapshots (fs.pickle)
+## 💾 Filesystem Configuration (fs.yaml)
 
-The Cyanide filesystem is stored in the `share/cyanide/fs.pickle` file. This is a binary snapshot protected by an HMAC signature.
+The honeypot filesystem is defined in `data/cyanide/fs.yaml`. This is a **human-editable** YAML file.
 
-**How to create your own snapshot:**
-If you want the attacker to see the structure of your real server:
-```bash
-sudo ./bin/cyanide-createfs / --output share/cyanide/fs.pickle
+### 📝 Manual Editing
+
+Simply edit the YAML file to add honey files or modify the filesystem structure:
+
+```yaml
+name: ""
+type: directory
+perm: drwxr-xr-x
+owner: root
+group: root
+children:
+  - name: home
+    type: directory
+    perm: drwxr-xr-x
+    children:
+      - name: admin
+        type: directory
+        perm: drwxr-xr-x
+        children:
+          - name: passwords.txt
+            type: file
+            perm: "-rw-------"
+            owner: admin
+            group: admin
+            content: |
+              admin:SuperSecret123!
+              root:MyP@ssw0rd
+          - name: database_backup.sql
+            type: file
+            perm: "-rw-r--r--"
+            content: |
+              -- Database backup
+              USE production;
+              SELECT * FROM users;
 ```
+
+### 🎯 Example Files
+
+See `data/cyanide/fs.yaml.example` for a complete filesystem template.
+
+**No scripts needed** — just edit and restart the honeypot.
 
 ---
 

@@ -1,0 +1,7215 @@
+# OS Profile: centos_7
+# Name: CentOS 7
+# SSH Banner: SSH-2.0-OpenSSH_7.4
+# Kernel: 3.10.0-1160.108.1.el7.x86_64
+# Uname: Linux server 3.10.0-1160.108.1.el7.x86_64 #1 SMP Thu Jan 25 16:17:31 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
+
+name: root
+type: directory
+perm: dr-xr-xr-x
+owner: root
+group: root
+children:
+- name: bin
+  type: directory
+  perm: drwxr-xr-x
+  children:
+  - name: ls
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: cd
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: pwd
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: cp
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: mv
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: rm
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: mkdir
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: rmdir
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: touch
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: cat
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: more
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: less
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: head
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: tail
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: grep
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: find
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: locate
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: chmod
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: chown
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: chgrp
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: useradd
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: userdel
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: usermod
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: groupadd
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: passwd
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: su
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: sudo
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: which
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: whereis
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: whatis
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: man
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: echo
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: printf
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: sed
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: awk
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: cut
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: sort
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: uniq
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: wc
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: diff
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: cmp
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: tar
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: gzip
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: gunzip
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: zip
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: unzip
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: bzip2
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: xz
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: ssh
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: scp
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: sftp
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: telnet
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: ftp
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: curl
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: wget
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: netstat
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: ifconfig
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: ip
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: ping
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: traceroute
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: nslookup
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: dig
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: host
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: route
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: arp
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: iptables
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: ufw
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: ps
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: top
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: htop
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: kill
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: killall
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: pkill
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: free
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: df
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: du
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: mount
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: umount
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: fdisk
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: mkfs
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: fsck
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: dd
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: uname
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: hostname
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: uptime
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: date
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: cal
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: bc
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: expr
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: systemctl
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: service
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: journalctl
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: dmesg
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: crontab
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: at
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: alias
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: unalias
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: history
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: export
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: env
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: printenv
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: source
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: vim
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: nano
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: python
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: python3
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: perl
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: ruby
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: gcc
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: g++
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: make
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: git
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: docker
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+  - name: docker-compose
+    type: file
+    perm: -rwxr-xr-x
+    owner: root
+    group: root
+    content: ''
+- name: boot
+  type: directory
+  perm: drwxr-xr-x
+  children: []
+- name: dev
+  type: directory
+  perm: drwxr-xr-x
+  children: []
+- name: etc
+  type: directory
+  perm: drwxr-xr-x
+  children:
+  - name: passwd
+    type: file
+    perm: -rw-r--r--
+    content: 'root:x:0:0:root:/root:/bin/bash
+
+      admin:x:1000:1000:admin:/home/admin:/bin/bash
+
+      '
+  - name: shadow
+    type: file
+    perm: -rw-r-----
+    owner: root
+    group: shadow
+    content: 'root:$6$.....:19000:0:99999:7:::
+
+      admin:$6$.....:19000:0:99999:7:::
+
+      '
+  - name: hostname
+    type: file
+    perm: -rw-r--r--
+    content: 'server01
+
+      '
+  - name: hosts
+    type: file
+    perm: -rw-r--r--
+    content: '127.0.0.1 localhost
+
+      127.0.1.1 server01
+
+      '
+  - name: detect_me
+    type: file
+    perm: -rw-r--r--
+    content: 'If you are reading this, you are in a honeypot!
+
+      '
+  - name: os-release
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'NAME="CentOS Linux"
+
+      VERSION="7 (Core)"
+
+      ID="centos"
+
+      ID_LIKE="rhel fedora"
+
+      VERSION_ID="7"
+
+      PRETTY_NAME="CentOS Linux 7 (Core)"
+
+      '
+  - name: centos-release
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'CentOS Linux release 7.9.2009 (Core)
+
+      '
+  - name: redhat-release
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'CentOS Linux release 7.9.2009 (Core)
+
+      '
+  - name: issue
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: '\S
+
+      Kernel \r on an \m
+
+
+      '
+  - name: issue.net
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: '\S
+
+      Kernel \r on an \m
+
+      '
+- name: home
+  type: directory
+  perm: drwxr-xr-x
+  children:
+  - name: admin
+    type: directory
+    perm: drwxr-x---
+    owner: admin
+    group: admin
+    children:
+    - name: user.txt
+      type: file
+      perm: -rw-r--r--
+      owner: admin
+      group: admin
+      content: 'ea7b8...
+
+        '
+    - name: .ssh
+      type: directory
+      perm: drwx------
+      owner: admin
+      group: admin
+      children:
+      - name: authorized_keys
+        type: file
+        perm: -rw-------
+        owner: admin
+        group: admin
+        content: 'ssh-rsa AAAAB3Nza... dev@workstation
+
+          '
+    - name: .bash_history
+      type: file
+      perm: -rw-------
+      owner: admin
+      group: admin
+      content: 'ls
+
+        cd /var/www
+
+        sudo systemctl restart nginx
+
+        exit
+
+        '
+- name: lib
+  type: directory
+  perm: drwxr-xr-x
+  children:
+  - name: security_app.cpp
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 7f1a6851-1b22-4ae8-9e18-accfc9315f0d
+
+      '
+  - name: audit_lib.so
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content f32ca92b-6c83-4505-a6a3-e99af68efd19
+
+      '
+  - name: module_debug.json
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content df60ad24-6316-48dd-83f2-8daae4544d0c
+
+      '
+  - name: error_lib.c
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content edae092b-f951-4288-80f2-aa3db9032bdb
+
+      '
+  - name: module_plugin.tmp
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 0237ad82-5124-4777-abdc-f3effcaf7b9e
+
+      '
+  - name: net_auth.cpp
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 3938c5d6-32a2-49c7-a82d-dc3c85757786
+
+      '
+  - name: app_auth.so
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 0e2a0c4f-2fca-46dd-b483-34880f2f018d
+
+      '
+  - name: temp_backup.conf
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 16d2a14b-4dd0-4c38-b623-866a735c4fb5
+
+      '
+  - name: security_auth.old
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 4fc051af-22fe-4865-a6ab-7b12c68c33f6
+
+      '
+  - name: data_tools.log
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 65324858-5e25-4e2a-b793-8bcccfea79c9
+
+      '
+  - name: plugin_access.sh
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 527760bf-7b3e-4651-b07f-57d4483572d8
+
+      '
+  - name: app_net.txt
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content f56b3d6d-78ae-46e4-af55-1daacc05abea
+
+      '
+  - name: security_security.sh
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 7eb2e785-ebf8-46e3-aa41-937eff54c7d0
+
+      '
+  - name: tools_settings.so
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 3fdebe6b-46a7-4335-995f-2bb5e42a38ed
+
+      '
+  - name: backup_cache.c
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 29d2a5e5-4949-45ab-8f31-5dd92a15556c
+
+      '
+  - name: plugin_plugin.sh
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 37f19744-b413-4414-9239-13da914efbea
+
+      '
+  - name: client_debug.txt
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content b6a97c95-7870-41b9-bb43-9929edd90f8a
+
+      '
+  - name: module_data.tmp
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content c02694bd-e5fd-448e-b9d9-b896d00a35db
+
+      '
+  - name: settings_temp.bak
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content a24808e2-ed42-4aef-9290-7d64bacf4f0e
+
+      '
+  - name: warn_error.sh
+    type: file
+    perm: -rw-r--r--
+    owner: root
+    group: root
+    content: 'Random content 25534d53-e4c9-48dc-9a48-ec8888a0d5c0
+
+      '
+- name: lib64
+  type: directory
+  perm: drwxr-xr-x
+  children: []
+- name: media
+  type: directory
+  perm: drwxr-xr-x
+  children: []
+- name: mnt
+  type: directory
+  perm: drwxr-xr-x
+  children: []
+- name: opt
+  type: directory
+  perm: drwxr-xr-x
+  children:
+  - name: webapp
+    type: directory
+    children:
+    - name: app.py
+      type: file
+      content: 'import flask
+
+        ...'
+    - name: config.py
+      type: file
+      content: DB_URI='sqlite:///data.db'
+    - name: .env
+      type: file
+      perm: -rw-------
+      content: SECRET_KEY=nzb123...
+- name: proc
+  type: directory
+  perm: dr-xr-xr-x
+  children: []
+- name: root
+  type: directory
+  perm: drwx------
+  owner: root
+  group: root
+  children:
+  - name: root.txt
+    type: file
+    perm: -rw-------
+    content: 'c99a...
+
+      '
+  - name: .ssh
+    type: directory
+    perm: drwx------
+    children:
+    - name: id_rsa
+      type: file
+      perm: -rw-------
+      content: '-----BEGIN OPENSSH PRIVATE KEY-----
+
+        ...'
+  - name: .bash_history
+    type: file
+    perm: -rw-------
+    content: 'apt update
+
+      apt upgrade
+
+      vi /etc/ssh/sshd_config
+
+      service ssh restart
+
+      '
+- name: run
+  type: directory
+  perm: drwxr-xr-x
+  children: []
+- name: sbin
+  type: directory
+  perm: drwxr-xr-x
+  children: []
+- name: srv
+  type: directory
+  perm: drwxr-xr-x
+  children: []
+- name: sys
+  type: directory
+  perm: dr-xr-xr-x
+  children: []
+- name: tmp
+  type: directory
+  perm: drwxrwxrwt
+  children:
+  - name: sess_339509
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_573295
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_561409
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_840303
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_365052
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_574388
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_384387
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_412459
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_843020
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_255495
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_973856
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_450017
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_415183
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_780694
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_551841
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_475809
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_654495
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_322437
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_997833
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_962197
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_908330
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_336807
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_149114
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_246081
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_605573
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_314181
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_255421
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_444614
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_981307
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+  - name: sess_660688
+    type: file
+    perm: -rw-------
+    owner: root
+    group: root
+    content: ''
+- name: usr
+  type: directory
+  perm: drwxr-xr-x
+  children:
+  - name: bin
+    type: directory
+    perm: drwxr-xr-x
+    children:
+    - name: ls
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: cd
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: pwd
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: cp
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: mv
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: rm
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: mkdir
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: rmdir
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: touch
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: cat
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: more
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: less
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: head
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: tail
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: grep
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: find
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: locate
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: chmod
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: chown
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: chgrp
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: useradd
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: userdel
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: usermod
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: groupadd
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: passwd
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: su
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: sudo
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: which
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: whereis
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: whatis
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: man
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: echo
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: printf
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: sed
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: awk
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: cut
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: sort
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: uniq
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: wc
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: diff
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: cmp
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: tar
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: gzip
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: gunzip
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: zip
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: unzip
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: bzip2
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: xz
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: ssh
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: scp
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: sftp
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: telnet
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: ftp
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: curl
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: wget
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: netstat
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: ifconfig
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: ip
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: ping
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: traceroute
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: nslookup
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: dig
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: host
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: route
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: arp
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: iptables
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: ufw
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: ps
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: top
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: htop
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: kill
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: killall
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: pkill
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: free
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: df
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: du
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: mount
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: umount
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: fdisk
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: mkfs
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: fsck
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: dd
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: uname
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: hostname
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: uptime
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: date
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: cal
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: bc
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: expr
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: systemctl
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: service
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: journalctl
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: dmesg
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: crontab
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: at
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: alias
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: unalias
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: history
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: export
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: env
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: printenv
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: source
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: vim
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: nano
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: python
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: python3
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: perl
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: ruby
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: gcc
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: g++
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: make
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: git
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: docker
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: docker-compose
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: version
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: 'Linux version 5.15.0-91-generic (buildd@lcy02-amd64-018) (gcc (Ubuntu
+        11.4.0-1ubuntu1~22.04) 11.4.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #101-Ubuntu
+        SMP Tue Nov 14 13:30:08 UTC 2023
+
+        '
+    - name: meminfo
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: 'MemTotal:        8026748 kB
+
+        MemFree:         4123560 kB
+
+        MemAvailable:    5642832 kB
+
+        Buffers:          345120 kB
+
+        Cached:          1234567 kB
+
+        SwapCached:            0 kB
+
+        Active:          2345678 kB
+
+        Inactive:        1234567 kB
+
+        Active(anon):    1234567 kB
+
+        Inactive(anon):   234567 kB
+
+        Active(file):    1111111 kB
+
+        Inactive(file):  1000000 kB
+
+        Unevictable:           0 kB
+
+        Mlocked:               0 kB
+
+        SwapTotal:       2097148 kB
+
+        SwapFree:        2097148 kB
+
+        Dirty:               123 kB
+
+        Writeback:             0 kB
+
+        AnonPages:       1432567 kB
+
+        Mapped:           432567 kB
+
+        Shmem:             32567 kB
+
+        KReclaimable:     123456 kB
+
+        Slab:             234567 kB
+
+        SReclaimable:     123456 kB
+
+        SUnreclaim:       111111 kB
+
+        KernelStack:       12345 kB
+
+        PageTables:        23456 kB
+
+        NFS_Unstable:          0 kB
+
+        Bounce:                0 kB
+
+        WritebackTmp:          0 kB
+
+        CommitLimit:     6110520 kB
+
+        Committed_AS:    4567890 kB
+
+        VmallocTotal:   34359738367 kB
+
+        VmallocUsed:       45678 kB
+
+        VmallocChunk:          0 kB
+
+        Percpu:             4567 kB
+
+        HardwareCorrupted:     0 kB
+
+        AnonHugePages:         0 kB
+
+        ShmemHugePages:        0 kB
+
+        ShmemPmdMapped:        0 kB
+
+        FileHugePages:         0 kB
+
+        FilePmdMapped:         0 kB
+
+        HugePages_Total:       0
+
+        HugePages_Free:        0
+
+        HugePages_Rsvd:        0
+
+        HugePages_Surp:        0
+
+        Hugepagesize:       2048 kB
+
+        Hugetlb:               0 kB
+
+        DirectMap4k:      234567 kB
+
+        DirectMap2M:     5678901 kB
+
+        DirectMap1G:     2097152 kB
+
+        '
+    - name: cpuinfo
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: "processor\t: 0\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\
+        \t: 142\nmodel name\t: Intel(R) Core(TM) i5-7200U CPU @ 2.50GHz\nstepping\t\
+        : 9\nmicrocode\t: 0xea\ncpu MHz\t\t: 2712.000\ncache size\t: 3072 KB\nphysical\
+        \ id\t: 0\nsiblings\t: 4\ncore id\t\t: 0\ncpu cores\t: 2\napicid\t\t: 0\n\
+        initial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\n\
+        wp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge\
+        \ mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall\
+        \ nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl\
+        \ xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl\
+        \ vmx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe\
+        \ popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch\
+        \ cpuid_fault epb invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi\
+        \ flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms\
+        \ invpcid mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1\
+        \ xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear\
+        \ flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2\
+        \ spec_store_bypass l1tf mds swapgs itlb_multihit srbds\nbogomips\t: 5424.00\n\
+        clflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 39 bits physical,\
+        \ 48 bits virtual\npower management:\n"
+  - name: lib
+    type: directory
+    perm: drwxr-xr-x
+    children:
+    - name: python2.7
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: site-packages
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: requests
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: __init__.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+          - name: core.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: requests-1.2.3.dist-info
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: METADATA
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: urllib3
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: __init__.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+          - name: core.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: urllib3-1.2.3.dist-info
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: METADATA
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: flask
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: __init__.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+          - name: core.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: flask-1.2.3.dist-info
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: METADATA
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: django
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: __init__.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+          - name: core.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: django-1.2.3.dist-info
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: METADATA
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: numpy
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: __init__.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+          - name: core.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: numpy-1.2.3.dist-info
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: METADATA
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: pandas
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: __init__.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+          - name: core.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: pandas-1.2.3.dist-info
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: METADATA
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: pyyaml
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: __init__.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+          - name: core.py
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+        - name: pyyaml-1.2.3.dist-info
+          type: directory
+          perm: drwxr-xr-x
+          owner: root
+          group: root
+          children:
+          - name: METADATA
+            type: file
+            perm: -rw-r--r--
+            owner: root
+            group: root
+            content: ''
+  - name: share
+    type: directory
+    perm: drwxr-xr-x
+    children:
+    - name: doc_0
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: debug_auth.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 90b2f4a8-8e7b-40c0-885d-4c6f85207c42
+
+          '
+      - name: app_lib.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3ee9a209-553d-491c-a6af-43b25ae95e8f
+
+          '
+      - name: user_debug.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9ec19d59-c441-4177-85b2-99914f0f6331
+
+          '
+      - name: backup_data.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d86b8d47-0c3b-44d2-9890-14ab9bc3155a
+
+          '
+      - name: info_backup.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 2f8f37c7-291f-43c3-bac2-6296bc08c261
+
+          '
+    - name: doc_1
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: trace_audit.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ca61cf62-4ddc-4011-aebd-dad551a52de7
+
+          '
+      - name: data_audit.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4ea0b05d-3816-431b-ba73-33d5c826265c
+
+          '
+      - name: module_common.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content f887cfee-2305-43b9-9185-071b50f8332b
+
+          '
+      - name: system_warn.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content aeb6fe51-35ab-4716-b7a6-1d6b8357ef23
+
+          '
+      - name: settings_error.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 50c2fb36-f9d3-4d0c-aee7-9d373c483f92
+
+          '
+    - name: doc_2
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: trace_error.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 039ced4c-40c0-4511-aa09-118f3c900d46
+
+          '
+      - name: app_client.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 8619942f-a88d-4195-8043-07b92a9674b3
+
+          '
+      - name: core_client.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 69ac7447-0088-4fb0-bfc0-60b12d367717
+
+          '
+      - name: net_utils.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 56d0d07b-b0a0-458b-9033-e9423e6c3b21
+
+          '
+      - name: info_client.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 05115a69-9e14-423c-8283-cd3ed50b51a5
+
+          '
+    - name: doc_3
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: lib_core.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7b2ae741-4613-41e3-ad38-2d0270afbead
+
+          '
+      - name: security_plugin.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 243f5de4-746a-4bf7-a9cf-99da16f06cdc
+
+          '
+      - name: audit_settings.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b0935b6a-d0f9-48c5-83b3-329c2f983887
+
+          '
+      - name: utils_user.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7019a5d4-d5e2-4244-b2d0-9367b756d26c
+
+          '
+      - name: plugin_info.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 335a54df-5232-4acb-8f64-6a1aab3ac164
+
+          '
+    - name: doc_4
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: tools_access.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b4515f78-2ac4-475f-85ea-e742b878123a
+
+          '
+      - name: lib_net.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9471e3f2-f6fa-4d8a-bf9b-e88d5cac8935
+
+          '
+      - name: user_trace.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e6452a33-741c-4291-832c-48d6e4fa7fde
+
+          '
+      - name: cache_server.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d9445a5f-48bc-460a-a758-c4583ad580ca
+
+          '
+      - name: server_data.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 0117f816-a870-4e2b-8239-87102fd037ea
+
+          '
+    - name: doc_5
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: system_warn.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3086ac3e-48b7-4224-9111-b230f22152dc
+
+          '
+      - name: default_core.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content f96f62f4-ca85-4b5b-8cb0-70d20b6181b0
+
+          '
+      - name: cache_debug.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 03ba7c63-6152-48fc-8134-a92d98d90ae5
+
+          '
+      - name: error_user.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 582b7ea3-0814-44d5-a30a-cd6aa461ec6b
+
+          '
+      - name: server_debug.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 81a20fc4-374f-437c-b6c8-7997f77a3ae3
+
+          '
+    - name: doc_6
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: data_warn.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e7f31fd1-2f44-4f27-abbb-18e509087626
+
+          '
+      - name: debug_client.log
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a6195cd4-7791-4dc6-b580-73291dcddd54
+
+          '
+      - name: backup_temp.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 00787946-6ce4-4f22-8060-3bd118ce6045
+
+          '
+      - name: core_trace.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content fcd22b6f-39e4-4563-9d7a-525352a7bb71
+
+          '
+      - name: core_info.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 83f31b82-ea8b-41ed-ae6b-674cce0562c4
+
+          '
+    - name: doc_7
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: warn_cache.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content f4786510-12c5-44b9-9da6-9e3d1a3c0558
+
+          '
+      - name: backup_data.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9062919c-4a4e-47d0-988d-d6b094c644aa
+
+          '
+      - name: security_plugin.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 0d4cf1ae-7202-4b5c-8ecc-44ad8f602828
+
+          '
+      - name: user_error.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 523d3a97-06e7-4ca9-a8bd-de5c20bb116a
+
+          '
+      - name: settings_user.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 0eaf2790-7df2-4574-8268-6b6ecafb2bf7
+
+          '
+    - name: doc_8
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: data_error.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 48556df0-ca8a-48ec-9b7a-8958d5a67427
+
+          '
+      - name: audit_plugin.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 1bbf9c53-89f3-484e-a0d4-eb7f3063de8e
+
+          '
+      - name: debug_utils.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 772091d5-1acf-447a-a86d-c33838727dc1
+
+          '
+      - name: common_utils.log
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a5d48c87-0159-4f9d-9dc8-6ddbedb4b675
+
+          '
+      - name: security_plugin.log
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ba1e5589-551f-4485-85c9-23dce6efea29
+
+          '
+    - name: doc_9
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: auth_debug.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7a8b2bf4-6861-41b8-be4b-6ea5c02a7431
+
+          '
+      - name: app_settings.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ca453973-8774-4e14-967f-052d4551cf3e
+
+          '
+      - name: user_default.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e41e3fc3-20ad-4324-8421-c7ec623a9f4f
+
+          '
+      - name: warn_warn.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7915c965-1097-42cf-bfd7-0cc2b298bcc8
+
+          '
+      - name: temp_error.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 41ca4e07-380d-4e39-85e0-4783a5d2b687
+
+          '
+    - name: doc_10
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: trace_client.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d95b3f67-adf5-43d4-84d5-04e078f2e057
+
+          '
+      - name: cache_audit.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4eb39ad0-090a-4f2d-b8d8-304913dddcec
+
+          '
+      - name: data_error.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4d101892-4051-40ac-829b-d98d58e2afd3
+
+          '
+      - name: core_client.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 17c31d18-ebee-45e7-8b7c-08cda20a3aa3
+
+          '
+      - name: tools_client.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 8cddff4f-634f-4f41-9ecd-853719326c20
+
+          '
+    - name: doc_11
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: settings_user.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d952c361-79ca-4a1c-836b-3299d94cce80
+
+          '
+      - name: trace_backup.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3faadbc0-e41f-4354-b3cf-faaba298f691
+
+          '
+      - name: plugin_app.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 09037318-07ea-452a-b3a8-dfd78745a099
+
+          '
+      - name: core_tools.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ad0e476e-0cde-46bd-9bce-494ff076dc79
+
+          '
+      - name: server_access.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content c1a7a086-ea30-45ee-8f2a-d9439556034b
+
+          '
+    - name: doc_12
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: config_security.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9a2a60ef-d2fd-4986-9cfc-585fdda8db1c
+
+          '
+      - name: plugin_default.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7fbe49d2-43bd-4a45-9fb9-49d133e32296
+
+          '
+      - name: user_security.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 6b642ce7-6b2e-4fe1-a1c5-f933e2454263
+
+          '
+      - name: server_security.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 702795fb-79f7-4a8e-b5bb-4b21dc80d68a
+
+          '
+      - name: plugin_system.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 853b8404-77d9-4e6e-8f90-2e0859e7802c
+
+          '
+    - name: doc_13
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: access_cache.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 378f07dc-2790-4cca-946b-0cb227328be1
+
+          '
+      - name: default_module.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 23a687cc-369c-40c9-aed5-924d71fd8eb3
+
+          '
+      - name: server_data.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 35f3c792-73cb-405f-a8e0-b9941dd7b14c
+
+          '
+      - name: utils_tools.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 2c992902-221a-4eb3-bd9b-e8c71adf3775
+
+          '
+      - name: data_plugin.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 27061271-5916-452f-b026-02071ebf6cc2
+
+          '
+    - name: doc_14
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: server_net.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 087af2d6-3f8a-4bdc-8bd3-e0a5a403f392
+
+          '
+      - name: access_app.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 78ab3bfb-57f8-41d3-9608-094ce0aaad2f
+
+          '
+      - name: access_config.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7c28d097-2da1-4c04-97e3-041f3d47c1f4
+
+          '
+      - name: plugin_default.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content fbc5b2a9-2b88-4a33-8ea8-c468135b20cd
+
+          '
+      - name: default_temp.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 52f2356e-7ebc-424e-afa4-2af360a237dd
+
+          '
+    - name: doc_15
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: data_temp.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b66d0fb7-334e-4f8e-b332-2f3747fcbd56
+
+          '
+      - name: module_warn.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content f47e977d-0a73-44cf-8fb3-b0ce80091c61
+
+          '
+      - name: app_net.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content c9d95836-db5a-4cc8-9589-5b21e6dfe57b
+
+          '
+      - name: default_utils.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content edac21ba-452d-4522-a3c7-253e50dc918c
+
+          '
+      - name: utils_data.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 23fafece-0acd-442d-a25e-bc739df9a882
+
+          '
+    - name: doc_16
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: client_tools.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 73205ee0-8770-4911-9d57-a9b737c84dd0
+
+          '
+      - name: default_default.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 2e0d464b-09b0-4494-b334-b79a66dc8074
+
+          '
+      - name: tools_access.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 28f2edc2-151a-465d-bfd4-b0e3403dac2c
+
+          '
+      - name: temp_backup.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 72f71ba5-d5f1-451d-8e9d-129a7fea2b5d
+
+          '
+      - name: settings_auth.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 002fb743-c4f5-4b39-a681-64af7ce985a4
+
+          '
+    - name: doc_17
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: module_audit.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9bafb571-7cf9-4729-839a-6fbce8fc581e
+
+          '
+      - name: common_module.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 405e409d-7ba6-4eee-92cc-f06927705cde
+
+          '
+      - name: tools_auth.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 1634a658-0e8a-4c4a-b3da-520b0e472bfa
+
+          '
+      - name: module_core.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7cc9b280-490c-4bec-80df-7f93a375215a
+
+          '
+      - name: warn_server.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 13f7fc14-6cb2-4386-9556-27e3801e282a
+
+          '
+    - name: doc_18
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: backup_debug.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 485946fa-892f-48c1-b0d1-3a94c3063047
+
+          '
+      - name: error_default.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3372dd91-1067-41c0-90d3-6fe950fa1c6b
+
+          '
+      - name: user_error.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content cefec63f-78a5-4e02-9c94-0d6b8af552ba
+
+          '
+      - name: plugin_user.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7b33109b-1e96-45b6-a4a8-003eeb0878ce
+
+          '
+      - name: debug_info.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4e906ded-5a09-4623-9dc0-0d7aa9c4dba6
+
+          '
+    - name: doc_19
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: security_user.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 72fd0195-b4a6-4a69-8571-df3922f904a7
+
+          '
+      - name: net_utils.log
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7f89ff96-528b-470e-a564-374cb11cfd35
+
+          '
+      - name: error_user.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 0e729741-d06e-4a67-aeeb-dc9eff5b3fc2
+
+          '
+      - name: backup_settings.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3cce468c-7332-4a86-8063-1114c09a2687
+
+          '
+      - name: common_client.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d14f1e46-4433-4240-aad0-5f7bc95574e0
+
+          '
+    - name: doc_20
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: data_security.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d8abc70b-ceab-4a6a-b36b-a5366e5c3be8
+
+          '
+      - name: module_server.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 6b814d04-e894-4717-919f-aef2b6d32a3c
+
+          '
+      - name: settings_error.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 077d291c-80f7-4dc4-85c7-3d3172684960
+
+          '
+      - name: utils_debug.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b1200b0e-c833-46a7-93d0-c8cfd9aada5e
+
+          '
+      - name: backup_debug.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e433531b-eec3-4ac9-8edd-495ba762c80c
+
+          '
+    - name: doc_21
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: data_net.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content be2d86fe-216b-4306-b9ac-c063cbe019dd
+
+          '
+      - name: common_client.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 691ae0ca-e762-4a77-82cf-35b9cad15c61
+
+          '
+      - name: app_security.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 8bb1f885-1930-4948-b774-1d89eae56402
+
+          '
+      - name: net_app.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 107055eb-1a30-4333-8b6b-8600fc42d789
+
+          '
+      - name: lib_core.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9af2c858-30b7-4262-b26a-66d30dd2dbf0
+
+          '
+    - name: doc_22
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: backup_config.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content c0529ec1-778c-4e2a-beff-247ec77a2849
+
+          '
+      - name: core_access.log
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 33daedb5-f8ed-48ee-baf0-056969c43bde
+
+          '
+      - name: trace_app.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 0f82786e-0134-46a2-ad4e-85f6cbc38a30
+
+          '
+      - name: server_common.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 19733584-737e-4052-a04d-ea484a245746
+
+          '
+      - name: access_common.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b2b67ba3-17e4-4dc5-835a-aca21350f1b7
+
+          '
+    - name: doc_23
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: system_info.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 84fe7a4b-79bb-4538-b5d3-d8f8b84bc18d
+
+          '
+      - name: info_audit.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 55c76c32-79b8-400a-9806-e5b66be7bac8
+
+          '
+      - name: server_debug.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9d54d279-2542-4b20-9453-739aa725d7ed
+
+          '
+      - name: lib_server.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content bd35dc86-0166-4c8d-8dbe-bd149b393a77
+
+          '
+      - name: security_backup.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b0504475-a681-4744-8daa-71858c81f4ba
+
+          '
+    - name: doc_24
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: user_backup.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3526b912-9954-4d78-97cd-b04cf3fec7ae
+
+          '
+      - name: plugin_auth.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content dacaff6d-2882-4844-87b6-24d49d3a9cc7
+
+          '
+      - name: temp_security.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 2bcb5b57-34d5-471e-88ea-e024106e29c2
+
+          '
+      - name: cache_core.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e1cda059-53a4-4c45-a859-bf6a0fea7cc1
+
+          '
+      - name: config_core.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 86fcb79d-c1bb-4c02-b174-257929714356
+
+          '
+    - name: doc_25
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: warn_client.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d374f475-bf25-4600-a89f-e3dbabe12b7f
+
+          '
+      - name: tools_lib.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e2f5d27b-61be-4a89-930b-64ed78f5404b
+
+          '
+      - name: client_temp.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ec7e4dba-9f80-4f3c-bd0c-5b5e70898fa8
+
+          '
+      - name: utils_info.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 54860c72-213f-4859-8afd-aabe4cd9a27a
+
+          '
+      - name: user_info.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4b548f03-25b1-4c5a-84df-9464889cfb9f
+
+          '
+    - name: doc_26
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: default_warn.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e5eeea3f-42f0-45d5-b0d2-bc31534235a0
+
+          '
+      - name: default_system.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 2d94cff1-beb8-45ec-be45-c13f09c74aac
+
+          '
+      - name: core_client.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e5c3016f-58d2-4e89-bcb4-416bfceeaacc
+
+          '
+      - name: module_core.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b6cec865-c6da-4df2-863f-013f128ed562
+
+          '
+      - name: user_client.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content cb8b5c3a-b2d3-400a-9f57-47d2707a296d
+
+          '
+    - name: doc_27
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: core_audit.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9967aa73-39cb-4107-97dc-5dc6ce1ead22
+
+          '
+      - name: plugin_default.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 6fee64a8-9f02-4c5f-95c4-ee166ae9911c
+
+          '
+      - name: utils_tools.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 45f2b859-a429-4ca3-bc50-c23f20990bce
+
+          '
+      - name: core_default.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4b1f1664-2369-4872-8220-12604dbc2de7
+
+          '
+      - name: system_config.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 5553f834-9cea-4d76-9494-246ba55587f8
+
+          '
+    - name: doc_28
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: data_app.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 6ae912c8-36b7-42b2-a222-40718f025e93
+
+          '
+      - name: config_audit.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 35784d3a-479b-4454-9493-da1e67019bfb
+
+          '
+      - name: utils_backup.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content c0427d95-18ae-4c43-a6ac-da74b38f0993
+
+          '
+      - name: core_core.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 5fbd5b31-9302-45f5-aed5-f26f0d8d36f3
+
+          '
+      - name: server_audit.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3b5a8428-3056-47ff-bcf1-71ebfb63aa47
+
+          '
+    - name: doc_29
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: error_trace.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ac6d8566-ba97-447f-a8c5-04ebb56b35a7
+
+          '
+      - name: info_debug.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 08506b23-b795-4fe2-b492-eff450b23c9e
+
+          '
+      - name: utils_audit.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4d89f619-d804-4290-bda5-aa4b50b1a9a4
+
+          '
+      - name: backup_temp.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content af564346-0fc0-4591-9311-6c22d0237284
+
+          '
+      - name: trace_tools.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 8c53f10e-38bf-422b-96ae-232cafb286bc
+
+          '
+    - name: doc_30
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: plugin_server.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 6a2e6610-4a83-4503-acbe-f4c0946a1925
+
+          '
+      - name: client_data.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4e01c7d4-636f-4ef2-b69b-2357c0e121df
+
+          '
+      - name: warn_module.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 77f79b58-f1cf-49b8-bd20-289a6fe0ffbc
+
+          '
+      - name: app_settings.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 14a4e5e1-2eb2-448c-b857-20ac0ac340ae
+
+          '
+      - name: plugin_audit.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 754b31a7-4522-4e2c-9914-eb2cf56e8d18
+
+          '
+    - name: doc_31
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: client_net.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 727ee351-d5ea-48f7-90ad-03b03fdc239d
+
+          '
+      - name: settings_common.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content bb0ee04c-c526-4b4b-86f9-860946c11826
+
+          '
+      - name: core_plugin.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d9350bea-60a9-498e-8722-7dd70bf21525
+
+          '
+      - name: common_module.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 399bbc98-779b-437d-a028-98335a1c6dd0
+
+          '
+      - name: client_user.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content e9d150bd-e79f-4b02-b60f-fedca560a956
+
+          '
+    - name: doc_32
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: access_error.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 31e5ea37-3764-4e18-a68c-3351bf830e80
+
+          '
+      - name: error_utils.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 1fc68c14-3313-4ae7-a720-510216dceba7
+
+          '
+      - name: trace_settings.log
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 189f670b-6da3-43b2-97ab-e49d735db55e
+
+          '
+      - name: tools_warn.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ab4e3560-1a03-4d70-925c-aac1ebb58c49
+
+          '
+      - name: plugin_core.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content f593ba1c-c4a1-4a43-bea0-0bbfb755dc3f
+
+          '
+    - name: doc_33
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: app_access.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content aa0ef45d-d298-4710-9783-57956d969bd3
+
+          '
+      - name: core_warn.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 06693c9a-7769-4f6d-8938-b0629e6c0bd9
+
+          '
+      - name: user_common.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content c1aa7383-4f80-4260-9022-85de2a92c0a5
+
+          '
+      - name: common_utils.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a24dffd8-63f7-4745-86e3-51728c90af09
+
+          '
+      - name: core_debug.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 16d3f5e7-190d-4c0b-b855-f5a6ca8123a3
+
+          '
+    - name: doc_34
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: lib_warn.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 2b3d298a-77a2-4198-875a-a1daa6201c5f
+
+          '
+      - name: cache_app.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 42a4c290-a636-4ba0-afcb-6755f39426dc
+
+          '
+      - name: auth_common.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 4434fdaa-c41f-47db-88d0-d09e0813c938
+
+          '
+      - name: lib_system.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 18a57dca-4994-451a-9095-0a75c554079b
+
+          '
+      - name: audit_debug.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 891b716c-86b9-4ed3-997d-4519733bb311
+
+          '
+    - name: doc_35
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: trace_audit.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 2b9cabbf-30c8-41bf-b906-aeded541060d
+
+          '
+      - name: warn_audit.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 56871524-0713-43f3-b79d-18d4a17f6b00
+
+          '
+      - name: debug_app.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 50b2710f-be11-48a8-98c3-92d1416763cc
+
+          '
+      - name: config_config.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 8c906cf0-6888-463c-9430-e0328a79e7e4
+
+          '
+      - name: app_info.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content fec37459-835e-483d-8e1f-505cfd6a76c2
+
+          '
+    - name: doc_36
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: core_lib.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 71dad60a-e66c-43a3-a945-fcab684741e5
+
+          '
+      - name: security_cache.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 72fb454d-4640-4fda-9c94-aacc766f5371
+
+          '
+      - name: tools_app.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 31c5ce2e-ec65-4578-a68e-350d8419618f
+
+          '
+      - name: default_common.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7c96ffdc-9eab-422a-8cd5-e1330307858d
+
+          '
+      - name: tools_user.txt
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content fa97c508-ce8e-4010-9149-edd69b78ebae
+
+          '
+    - name: doc_37
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: net_info.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3cd0fcc0-d0a3-429a-b2e9-3044e8ac308e
+
+          '
+      - name: net_config.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9d006ffd-c743-45bc-bff0-67787a40a57b
+
+          '
+      - name: plugin_default.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 943a0dc9-bfd2-42cc-babb-bbfa101e3305
+
+          '
+      - name: client_backup.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d3092779-5958-4b23-9dde-3a9f252f5951
+
+          '
+      - name: trace_config.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ef996e81-6213-4513-b979-d6bad6ca8d4c
+
+          '
+    - name: doc_38
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: trace_client.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d929bc28-6a50-4624-a35d-f9e025c38078
+
+          '
+      - name: core_temp.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content bde89312-8eea-4975-9dbb-a9a17665e7f0
+
+          '
+      - name: server_common.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d32b9c23-c26f-49fe-8588-3d988afbeea1
+
+          '
+      - name: system_debug.conf
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 3ccd60bc-c4dc-4e8d-b265-94fff47ae39f
+
+          '
+      - name: auth_config.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content fbe7b956-e605-4f0c-a57e-54b5f280ca2e
+
+          '
+    - name: doc_39
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: lib_trace.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 83c6e028-0d33-4974-ba72-38337e442d89
+
+          '
+      - name: cache_user.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content bb55fd4d-13eb-4340-8628-3b944cd7e6e4
+
+          '
+      - name: backup_security.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content acc3cf65-cc53-4138-8e8f-3a9fb3f278a9
+
+          '
+      - name: utils_client.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a3daa3e7-6994-4c57-8dbe-0e2804812a5d
+
+          '
+      - name: temp_cache.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 66c2eaca-93bf-4010-96e3-2dd327510be2
+
+          '
+    - name: doc_40
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: system_client.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b848caa3-3ffa-49a9-99ed-847b863f1711
+
+          '
+      - name: error_system.cpp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 6a7100f0-42c0-4992-ab44-5f2d2f847d5e
+
+          '
+      - name: settings_utils.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 553ac708-d992-4db4-9eb3-f963d2bcf592
+
+          '
+      - name: backup_app.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content f78a6dda-e59e-46b6-801d-6e841320f8dd
+
+          '
+      - name: core_system.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 47903561-125d-44ee-9666-951a7b9cf9d5
+
+          '
+    - name: doc_41
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: core_warn.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 498537c9-0306-4330-a22e-1aaa7e6d5e94
+
+          '
+      - name: module_core.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 5fd9b99d-683b-42c7-b71f-64f3e01502b5
+
+          '
+      - name: settings_audit.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a8da3469-66e7-406a-8cae-a48798497709
+
+          '
+      - name: security_utils.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ff55c80d-818c-48f4-8efb-d6ce887c2262
+
+          '
+      - name: system_tools.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 14d22b6a-f436-4f34-91e8-1d732cf1d433
+
+          '
+    - name: doc_42
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: core_system.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a891995c-43c8-4e5a-ab4b-d733c524b00b
+
+          '
+      - name: audit_trace.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content bbc577c0-c57d-45ec-b4ce-84340168e568
+
+          '
+      - name: error_backup.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 8ad4fd5e-8f39-4846-ae86-20f76025957f
+
+          '
+      - name: temp_module.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ebe39fca-f9ad-4db2-8771-3283415fcc7e
+
+          '
+      - name: plugin_default.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a8b8f946-fd16-4145-ba73-6670a1499b22
+
+          '
+    - name: doc_43
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: common_temp.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ef8d3b86-2a30-46c6-92ed-4c4c9f9d8ce9
+
+          '
+      - name: plugin_trace.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ab65c054-5be6-4510-ac31-ee0602cfdacd
+
+          '
+      - name: debug_plugin.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 9799e293-d394-432d-bfcd-7a8279814410
+
+          '
+      - name: security_access.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 416a04fe-936b-4ff3-8681-49d2a4644782
+
+          '
+      - name: cache_trace.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 0c280992-c337-4c8a-a059-964b01d3abce
+
+          '
+    - name: doc_44
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: info_config.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 95cbf916-8b8a-4eaa-a932-2df51bc2df97
+
+          '
+      - name: core_backup.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 05879ce3-9059-4498-8d07-2e4f513570be
+
+          '
+      - name: data_auth.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a3fa4afa-49c2-4013-bee8-85fd6797e0be
+
+          '
+      - name: warn_security.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d83f61c1-1aea-4533-a237-d72eae708da7
+
+          '
+      - name: data_backup.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 56323cd8-8f2e-4b42-a4bf-d88a641a1116
+
+          '
+    - name: doc_45
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: server_app.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 318f9254-d9e7-4a27-83bd-d374909220a5
+
+          '
+      - name: config_user.xml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content d961e90c-8c00-4677-95fa-3d17d2b182c0
+
+          '
+      - name: plugin_system.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 8cb530da-10a4-403f-8529-2f62b810b262
+
+          '
+      - name: debug_client.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content b5d3984c-a59e-465b-9d3c-2d15ea3f7fa1
+
+          '
+      - name: warn_trace.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7437e9b5-41bd-4798-9d54-90041ac6ed24
+
+          '
+    - name: doc_46
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: common_config.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 86062ebb-d6b2-4d65-a929-28774008be7a
+
+          '
+      - name: info_server.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 16d4f129-3d5e-467a-9026-0a83ed1fa586
+
+          '
+      - name: utils_auth.tmp
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7db1d896-0c0a-4d68-9829-948393ce4906
+
+          '
+      - name: temp_error.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 8da1aa1f-0e96-48af-a565-25060c9443c3
+
+          '
+      - name: debug_backup.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ded1b043-6d8a-4ac2-8968-486f5e337b15
+
+          '
+    - name: doc_47
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: trace_client.bak
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a5ed97c2-05e8-4a47-8c87-f0d9aa9927a1
+
+          '
+      - name: debug_warn.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 0b870e7b-0b0e-4392-823c-a68ed446297f
+
+          '
+      - name: module_data.py
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 2d0c8795-1c97-4d91-b62b-b6c341646920
+
+          '
+      - name: settings_lib.old
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 5480edbd-09b8-4382-b949-fce940a9b187
+
+          '
+      - name: trace_auth.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 7ff0e5d7-0b9e-4e70-aaee-8500d09e5aa2
+
+          '
+    - name: doc_48
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: core_plugin.c
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content c460f1c2-a2bb-40fa-a858-d6b783e22be0
+
+          '
+      - name: module_auth.h
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 48e87c10-d39c-4b24-bb42-dc3bee07df2d
+
+          '
+      - name: module_auth.o
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 33322c73-56df-4a3a-8554-334ef6e00bdf
+
+          '
+      - name: common_utils.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 76075706-d6bc-4e60-b569-07f6cfea42ac
+
+          '
+      - name: warn_auth.log
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 5f5f2553-d47c-4272-9116-1d5afcd17062
+
+          '
+    - name: doc_49
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: info_debug.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content ecf89a70-6afb-499b-87b6-760354cb33c5
+
+          '
+      - name: utils_client.json
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 444b6d8b-c7d4-4285-bd83-080ba2d5b3de
+
+          '
+      - name: utils_system.so
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content a2d21af9-11ef-4ad3-bff9-d32b1f5632cc
+
+          '
+      - name: core_auth.sh
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content 67b59a1f-ce54-43f9-90f1-704cfa6a7119
+
+          '
+      - name: user_user.yml
+        type: file
+        perm: -rw-r--r--
+        owner: root
+        group: root
+        content: 'Random content eb761aa9-714c-4018-b984-30b49ca35e8e
+
+          '
+  - name: lib
+    type: directory
+    perm: drwxr-xr-x
+    owner: root
+    group: root
+    children:
+    - name: libc.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libc.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libc.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libc.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libssl.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libssl.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libssl.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libssl.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libcrypto.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libcrypto.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libcrypto.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libcrypto.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libz.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libz.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libz.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libz.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libpng.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libpng.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libpng.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libpng.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libjpeg.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libjpeg.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libjpeg.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libjpeg.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxml2.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxml2.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxml2.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxml2.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libcurl.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libcurl.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libcurl.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libcurl.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: librpm.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: librpm.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: librpm.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: librpm.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libyum.so
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libyum.so.1.0.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libyum.so.1.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libyum.so.2.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-2.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-1.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-6.so.3
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-8.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-4.so.2
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-3.so.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-1.so.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-6.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-7.so.2
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-5.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-1.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-7.so.2
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-3.so.3
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-1.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-9.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-6.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-2.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-1.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-8.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-6.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-2.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-5.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-4.so.3
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-3.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-9.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-6.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-1.so.2
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-1.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-2.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-7.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-9.so.3
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-1.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-6.so.3
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-2.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-1.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-1.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-0.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-9.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-8.so.2
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-2.so.2
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-1.so.3
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-1.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libxcb-9.so.2
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-4.so.2
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-5.so.1
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-7.so.5
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-2.so.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libX11-7.so.0
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libgtk-2.so.3
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+    - name: libglib-8.so.4
+      type: file
+      perm: -rw-r--r--
+      owner: root
+      group: root
+      content: ''
+  - name: share
+    type: directory
+    perm: drwxr-xr-x
+    owner: root
+    group: root
+    children:
+    - name: man
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children:
+      - name: man1
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: page0.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page1.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page2.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page3.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page4.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page5.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page6.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page7.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page8.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page9.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page10.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page11.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page12.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page13.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page14.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page15.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page16.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page17.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page18.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page19.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page20.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page21.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page22.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page23.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page24.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page25.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page26.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page27.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page28.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page29.1.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+      - name: man2
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: page0.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page1.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page2.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page3.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page4.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page5.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page6.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page7.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page8.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page9.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page10.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page11.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page12.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page13.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page14.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page15.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page16.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page17.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page18.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page19.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page20.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page21.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page22.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page23.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page24.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page25.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page26.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page27.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page28.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page29.2.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+      - name: man3
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: page0.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page1.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page2.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page3.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page4.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page5.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page6.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page7.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page8.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page9.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page10.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page11.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page12.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page13.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page14.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page15.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page16.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page17.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page18.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page19.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page20.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page21.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page22.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page23.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page24.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page25.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page26.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page27.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page28.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page29.3.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+      - name: man4
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: page0.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page1.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page2.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page3.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page4.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page5.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page6.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page7.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page8.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page9.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page10.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page11.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page12.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page13.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page14.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page15.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page16.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page17.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page18.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page19.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page20.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page21.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page22.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page23.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page24.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page25.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page26.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page27.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page28.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page29.4.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+      - name: man5
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: page0.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page1.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page2.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page3.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page4.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page5.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page6.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page7.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page8.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page9.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page10.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page11.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page12.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page13.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page14.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page15.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page16.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page17.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page18.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page19.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page20.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page21.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page22.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page23.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page24.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page25.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page26.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page27.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page28.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page29.5.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+      - name: man6
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: page0.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page1.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page2.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page3.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page4.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page5.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page6.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page7.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page8.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page9.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page10.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page11.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page12.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page13.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page14.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page15.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page16.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page17.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page18.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page19.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page20.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page21.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page22.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page23.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page24.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page25.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page26.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page27.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page28.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page29.6.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+      - name: man7
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: page0.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page1.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page2.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page3.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page4.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page5.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page6.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page7.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page8.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page9.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page10.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page11.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page12.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page13.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page14.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page15.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page16.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page17.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page18.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page19.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page20.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page21.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page22.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page23.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page24.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page25.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page26.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page27.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page28.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page29.7.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+      - name: man8
+        type: directory
+        perm: drwxr-xr-x
+        owner: root
+        group: root
+        children:
+        - name: page0.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page1.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page2.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page3.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page4.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page5.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page6.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page7.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page8.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page9.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page10.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page11.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page12.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page13.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page14.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page15.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page16.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page17.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page18.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page19.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page20.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page21.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page22.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page23.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page24.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page25.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page26.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page27.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page28.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+        - name: page29.8.gz
+          type: file
+          perm: -rw-r--r--
+          owner: root
+          group: root
+          content: ''
+- name: var
+  type: directory
+  perm: drwxr-xr-x
+  children:
+  - name: log
+    type: directory
+    children:
+    - name: auth.log
+      type: file
+      perm: -rw-r-----
+      group: adm
+      content: ''
+    - name: syslog
+      type: file
+      perm: -rw-r-----
+      group: adm
+      content: ''
+    - name: syslog
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.1.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.2.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.3.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.4.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.5.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.6.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.7.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.8.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: syslog.9.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.1.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.2.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.3.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.4.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.5.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.6.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.7.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.8.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: kern.log.9.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.1.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.2.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.3.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.4.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.5.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.6.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.7.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.8.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: yum.log.9.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.1.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.2.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.3.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.4.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.5.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.6.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.7.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.8.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: cron.9.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.1.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.2.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.3.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.4.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.5.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.6.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.7.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.8.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: maillog.9.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.1.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.2.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.3.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.4.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.5.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.6.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.7.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.8.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.9.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.1.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.2.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.3.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.4.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.5.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.6.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.7.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.8.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: messages.9.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.1.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.2.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.3.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.4.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.5.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.6.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.7.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.8.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+    - name: secure.9.gz
+      type: file
+      perm: -rw-r-----
+      owner: root
+      group: adm
+      content: ''
+  - name: www
+    type: directory
+    children:
+    - name: html
+      type: directory
+      children:
+      - name: index.html
+        type: file
+        content: <html><body><h1>It Works!</h1></body></html>
+  - name: lib
+    type: directory
+    children:
+    - name: yum
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children: []
+    - name: rpm
+      type: directory
+      perm: drwxr-xr-x
+      owner: root
+      group: root
+      children: []

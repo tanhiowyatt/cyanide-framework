@@ -4,10 +4,9 @@
 
 Utilities for managing the persistence of the Fake Filesystem.
 
-### `pickle.py`
-Methods for saving and loading the filesystem state.
-*   `save_fs(fs_root, path)`: Serializes the filesystem tree to a pickle file.
-*   `load_fs(path)`: Deserializes the filesystem.
+### `yaml_fs.py`
+Methods for loading the filesystem state from YAML.
+*   `load_fs(path)`: Loads and parses the filesystem tree from a YAML file.
 
 ---
 
