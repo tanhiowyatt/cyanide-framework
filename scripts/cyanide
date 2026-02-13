@@ -107,7 +107,6 @@ def stats():
         except:
             pass
 
-        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
         with urllib.request.urlopen(f"http://localhost:{port}/stats") as response:
             data = json.load(response)
             
