@@ -14,7 +14,9 @@ def server_config(tmp_path):
         "ssh": {"enabled": True, "port": 0, "backend_mode": "emulated"}, # Port 0 for dynamic
         "telnet": {"enabled": True, "port": 0, "backend_mode": "emulated"},
         "metrics": {"enabled": False}, # Disable metrics for now to avoid port conflict
-        "log_path": str(tmp_path / "logs"),
+        "logging": {
+            "directory": str(tmp_path / "logs")
+        },
         "quarantine_path": str(tmp_path / "quarantine"),
         "users": [{"user": "root", "pass": "toor"}, {"user": "admin", "pass": "admin"}],
         "ml": {"enabled": False} 

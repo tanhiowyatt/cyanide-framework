@@ -1,6 +1,4 @@
 import pytest
-import asyncio
-from unittest.mock import MagicMock
 from cyanide.commands.file_ops import TouchCommand, MkdirCommand, RmCommand, CpCommand, MvCommand
 from cyanide.core.shell_emulator import ShellEmulator
 

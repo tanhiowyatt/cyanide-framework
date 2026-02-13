@@ -1,8 +1,5 @@
 import pytest
-from pathlib import Path
 from cyanide.core.config import load_config
-import sys
-from unittest.mock import patch
 
 @pytest.fixture
 def valid_config(tmp_path):

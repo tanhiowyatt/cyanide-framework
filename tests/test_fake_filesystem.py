@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import Mock
 from cyanide.core.fake_filesystem import FakeFilesystem
-from cyanide.core.filesystem_nodes import Directory, File
 
 @pytest.fixture
 def fs():

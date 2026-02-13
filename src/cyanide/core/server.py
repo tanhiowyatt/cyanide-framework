@@ -3,7 +3,6 @@ Advanced SSH/Telnet Honeypot Server Implementation.
 """
 import asyncio
 import asyncssh
-import datetime
 import os
 import uuid
 import time
@@ -22,13 +21,11 @@ from .vt_scanner import VTScanner
 from .stats import StatsManager
 from cyanide.proxy.tcp_proxy import TCPProxy
 from .vm_pool import VMPool
-from .geoip import GeoIP
 from prometheus_client import generate_latest
 from .system_profiles import PROFILES
 
 from .services.session_manager import SessionManager
 from .services.quarantine import QuarantineService
-from .services.analytics import AnalyticsService
 from .services.analytics import AnalyticsService
 from .services.telnet_handler import TelnetHandler
 from .async_logger import AsyncLogger
@@ -342,7 +339,6 @@ class HoneypotServer:
                     
                     # If enabled in config but server is None, that's an issue (unless starting up)
                     # For now, just report status
-                    status_code = 200
                     status_data = {
                         "status": "healthy",
                         "ssh": ssh_status,
@@ -749,7 +745,7 @@ class SSHSession(asyncssh.SSHServerSession):
     def _ensure_tty_log(self):
         # Setup TTY logging (scriptreplay + JSONL)
         folder_name = f"ssh_{self.src_ip}_{self.session_id}"
-        log_dir = Path("var/log/cyanide/tty") / folder_name
+        log_dir = Path(self.honeypot.logger.log_dir) / "tty" / folder_name
         log_dir.mkdir(parents=True, exist_ok=True)
         
         self.tty_log_path_jsonl = log_dir / f"{folder_name}.jsonl"

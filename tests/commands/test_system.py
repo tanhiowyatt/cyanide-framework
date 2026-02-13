@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from cyanide.commands.uname import UnameCommand
 from cyanide.commands.whoami import WhoamiCommand
 from cyanide.commands.id import IdCommand

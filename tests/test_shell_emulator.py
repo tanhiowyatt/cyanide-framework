@@ -1,8 +1,5 @@
 import pytest
-import asyncio
-from unittest.mock import MagicMock
 from cyanide.core.shell_emulator import ShellEmulator
-from cyanide.core.fake_filesystem import FakeFilesystem
 
 # --- Mocks ---
 
@@ -12,7 +9,6 @@ class MockCommand:
         self.emulator = emulator
         
     async def execute(self, args, input_data=""):
-        cmd_name = "testcmd"
         if args and args[0] == "fail":
             return "", "command failed\n", 1
         elif args and args[0] == "echo":

@@ -1,7 +1,7 @@
 import json
 import datetime
 import asyncio
-from typing import Dict, Any, Optional
+from typing import Dict
 
 # Import dependencies (handle circular imports carefully if needed)
 # Here we assume these are available

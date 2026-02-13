@@ -1,21 +1,20 @@
 import pytest
-import asyncio
 import sys
 import os
-from unittest.mock import MagicMock, AsyncMock
-from pathlib import Path
+from unittest.mock import AsyncMock
 
 # Add src to path so we can import modules if not installed as package
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from cyanide.core.fake_filesystem import FakeFilesystem
-from cyanide.core.filesystem_nodes import Directory, File
 
 @pytest.fixture
 def mock_config():
     """Return a standard test configuration dictionary."""
     return {
-        "log_path": "var/log/cyanide_test",
+        "logging": {
+            "directory": "var/log/cyanide_test"
+        },
         "quarantine_path": "var/lib/cyanide/quarantine_test",
         "quarantine_max_size_mb": 100,
         "os_profile": "custom",

@@ -1,6 +1,5 @@
 import requests
 import sys
-import json
 
 HEALTH_URL = "http://127.0.0.1:9090/health"
 

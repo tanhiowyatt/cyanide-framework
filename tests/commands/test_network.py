@@ -1,6 +1,4 @@
 import pytest
-import asyncio
-from unittest.mock import MagicMock
 from cyanide.commands.curl import CurlCommand
 from cyanide.core.shell_emulator import ShellEmulator
 

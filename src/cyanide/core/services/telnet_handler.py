@@ -1,10 +1,9 @@
 import time
 import asyncio
-import uuid
 import traceback
 import random
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict
 
 from cyanide.core.shell_emulator import ShellEmulator
 
@@ -37,7 +36,7 @@ class TelnetHandler:
         
         # Setup TTY logging
         folder_name = f"telnet_{src_ip}_{session_id}"
-        log_dir = Path("var/log/cyanide/tty") / folder_name
+        log_dir = Path(self.logger.log_dir) / "tty" / folder_name
         log_dir.mkdir(parents=True, exist_ok=True)
         
         tty_log_path = log_dir / f"{folder_name}.jsonl"
@@ -96,9 +95,6 @@ class TelnetHandler:
             # Shell Setup
             fs = self.server.get_filesystem(session_id, src_ip)
             
-            def quarantine_hook(f, c):
-                self.services.quarantine.save_file(f, c, session_id, src_ip)
-                
             def quarantine_hook(f, c):
                 self.services.quarantine.save_file(f, c, session_id, src_ip)
                 

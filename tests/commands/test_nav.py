@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from cyanide.commands.cd import CdCommand
 from cyanide.commands.pwd import PwdCommand
 from cyanide.commands.ls import LsCommand

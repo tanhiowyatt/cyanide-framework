@@ -1,8 +1,7 @@
-import os
 import time
 import asyncio
 from pathlib import Path
-from typing import Dict, Optional, Any
+from typing import Dict, Optional
 
 class QuarantineService:
     """

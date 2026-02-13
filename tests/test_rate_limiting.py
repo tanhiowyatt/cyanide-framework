@@ -1,4 +1,3 @@
-import pytest
 import time
 from cyanide.core.services.session_manager import SessionManager
 

@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from cyanide.commands.cat import CatCommand
 from cyanide.commands.text_ops import HeadCommand, TailCommand
 from cyanide.core.shell_emulator import ShellEmulator
