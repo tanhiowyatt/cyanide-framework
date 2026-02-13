@@ -32,9 +32,21 @@ class CurlCommand(Command):
                  return "", "curl: try 'curl --help' for more information\n", 1
                  
         # Security: Validate URL
-        is_valid, error = self.validate_url(url)
+        is_valid, error, resolved_ip = self.validate_url(url)
         if not is_valid:
             return "", f"curl: (1) {error}\n", 1
+             
+        # Use resolved IP to prevent DNS rebinding
+        request_url = url
+        headers = {}
+        if resolved_ip:
+            from urllib.parse import urlparse
+            p = urlparse(url)
+            port = p.port or (80 if p.scheme == 'http' else 443)
+            request_url = f"{p.scheme}://{resolved_ip}:{port}{p.path}"
+            if p.query:
+                request_url += f"?{p.query}"
+            headers['Host'] = p.hostname
              
         # Determine output mode
         save_to_file = False
@@ -53,15 +65,15 @@ class CurlCommand(Command):
         try:
             async with aiohttp.ClientSession() as session:
                 if parsed.head:
-                    async with session.head(url, timeout=10) as resp:
+                    async with session.head(request_url, headers=headers, timeout=10) as resp:
                          # Format headers like curl
-                         headers = f"HTTP/{resp.version.major}.{resp.version.minor} {resp.status} {resp.reason}\r\n"
+                         headers_out = f"HTTP/{resp.version.major}.{resp.version.minor} {resp.status} {resp.reason}\r\n"
                          for k, v in resp.headers.items():
-                             headers += f"{k}: {v}\r\n"
-                         headers += "\r\n"
-                         return headers, "", 0
+                             headers_out += f"{k}: {v}\r\n"
+                         headers_out += "\r\n"
+                         return headers_out, "", 0
                 else:
-                    async with session.get(url, timeout=10) as resp:
+                    async with session.get(request_url, headers=headers, timeout=10) as resp:
                         if resp.status >= 400:
                              if not parsed.silent:
                                  return "", f"curl: (22) The requested URL returned error: {resp.status}\n", 22

@@ -16,8 +16,9 @@ Connection handling settings.
 *   `max_sessions`: Global connection limit.
 *   `session_timeout`: Inactivity timeout in seconds.
 *   `os_profile`: OS personality (`ubuntu_22_04`, `debian_11`, `centos_7`, or `random`).
-    *   The honeypot selects a filesystem from `config/fs-config/` based on this profile.
-    *   Metadata (banners, uname) is loaded directly from the selected YAML.
+    *   The honeypot selects a filesystem from `config/fs-config/` based on this profile name (e.g., `fs.ubuntu_22_04.yaml`).
+    -   Metadata (banners, uname, etc.) is loaded directly from the `metadata:` section within the selected YAML.
+    -   If the YAML lacks a `metadata:` section, hardcoded defaults from `src/cyanide/core/defaults.py` are used.
 
 ## [ssh]
 SSH Service settings.

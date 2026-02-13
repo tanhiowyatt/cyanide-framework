@@ -31,7 +31,7 @@ async def test_curl_validate_url_scheme(mock_emulator):
         # We just want to ensure it didn't fail with validation error
         
         # Actually, let's just test the validate_url method directly since we added it to base
-        is_valid, error = cmd.validate_url("http://google.com")
+        is_valid, error, ip = cmd.validate_url("http://google.com")
         assert is_valid
         assert error == ""
 
@@ -43,7 +43,7 @@ async def test_curl_validate_private_ip(mock_emulator):
         # Mock DNS to return private IP
         mock_dns.return_value = [(0, 0, 0, '', ('192.168.1.1', 80))]
         
-        is_valid, error = cmd.validate_url("http://internal-service")
+        is_valid, error, ip = cmd.validate_url("http://internal-service")
         assert not is_valid
         assert "Access to private/local resource" in error
 
@@ -66,7 +66,7 @@ async def test_curl_allow_local_network(mock_emulator):
         # Mock DNS to return private IP
         mock_dns.return_value = [(0, 0, 0, '', ('192.168.1.1', 80))]
         
-        is_valid, error = cmd.validate_url("http://internal-service")
+        is_valid, error, ip = cmd.validate_url("http://internal-service")
         # Should be valid now
         assert is_valid
         assert error == ""

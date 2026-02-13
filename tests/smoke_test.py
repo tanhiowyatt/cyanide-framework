@@ -36,19 +36,18 @@ def smoke_test():
             
     # Check /health endpoint
     try:
-        import urllib.request
-        import json
-        with urllib.request.urlopen(f"http://{host}:9090/health", timeout=5) as response:
-            if response.status == 200:
-                data = json.loads(response.read().decode())
-                if data.get("status") == "healthy":
-                    print("[+] Health Endpoint: OK")
-                else:
-                    print(f"[-] Health Endpoint: UNHEALTHY ({data})")
-                    all_passed = False
+        import requests
+        response = requests.get(f"http://{host}:9090/health", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "healthy":
+                print("[+] Health Endpoint: OK")
             else:
-                print(f"[-] Health Endpoint: {response.status}")
+                print(f"[-] Health Endpoint: UNHEALTHY ({data})")
                 all_passed = False
+        else:
+            print(f"[-] Health Endpoint: {response.status_code}")
+            all_passed = False
     except Exception as e:
         print(f"[-] Health Endpoint Error: {e}")
         all_passed = False

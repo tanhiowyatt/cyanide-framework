@@ -112,6 +112,7 @@ metadata:
   os_name: "Ubuntu 22.04 LTS"
   ssh_banner: "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1"
   uname_r: "5.15.0-76-generic"
+  uname_a: "Linux server 5.15.0-76-generic #46-Ubuntu SMP Fri Jul 10 00:24:02 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux"
 ```
 
 ### 🎯 Ручное редактирование

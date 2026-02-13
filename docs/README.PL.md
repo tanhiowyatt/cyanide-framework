@@ -102,7 +102,7 @@ Wszystkie sesje są nagrywane w `var/log/cyanide/tty/`. Każda sesja ma własny 
  System plików honeypot jest zdefiniowany w szablonach YAML w `config/fs-config/`.
  
  ### 🌍 Profile OS
- Cyanide obsługuje kilka profili OS "out of the box". Każdy profil posiada odpowiadający mu plik YAML, zawierający zarówno strukturę systemu plików, jak i metadane OS:
+ Cyanide obsługuje kilka profili OS „out of the box”. Każdy profil odpowiada konkretnemu plikowi YAML w `config/fs-config/`, który zawiera zarówno strukturę systemu plików, jak i metadane OS (banery, wersje jądra):
  - **fs.ubuntu_22_04.yaml**: Ubuntu 22.04 LTS
  - **fs.debian_11.yaml**: Debian 11 (Bullseye)
  - **fs.centos_7.yaml**: CentOS 7
@@ -114,6 +114,7 @@ Wszystkie sesje są nagrywane w `var/log/cyanide/tty/`. Każda sesja ma własny 
    os_name: "Ubuntu 22.04 LTS"
    ssh_banner: "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1"
    uname_r: "5.15.0-76-generic"
+   uname_a: "Linux server 5.15.0-76-generic #46-Ubuntu SMP Fri Jul 10 00:24:02 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux"
  ```
  
  ### 🎯 Ręczna edycja

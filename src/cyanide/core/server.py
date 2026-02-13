@@ -22,7 +22,7 @@ from .stats import StatsManager
 from cyanide.proxy.tcp_proxy import TCPProxy
 from .vm_pool import VMPool
 from prometheus_client import generate_latest
-from .system_profiles import PROFILES
+from .defaults import DEFAULT_METADATA
 
 from .services.session_manager import SessionManager
 from .services.quarantine import QuarantineService
@@ -101,27 +101,34 @@ class HoneypotServer:
         
         # OS Profile and Filesystem config
         profile_name = config.get("os_profile", "ubuntu_22_04")
-        if profile_name == "random":
-            profile_name = random.choice(["ubuntu_22_04", "debian_11", "centos_7"])
-            
-        self.profile = PROFILES.get(profile_name, PROFILES["ubuntu_22_04"]).copy()
         self.fs_yaml_path = config.get("fs_yaml")
+        
         if not self.fs_yaml_path:
-            # Default to profile-specific FS if available
-            default_fs = f"config/fs-config/fs.{profile_name}.yaml"
-            if os.path.exists(default_fs):
-                self.fs_yaml_path = default_fs
-            else:
-                self.fs_yaml_path = "config/fs-config/fs.ubuntu_22_04.yaml" # Fallback
+            if profile_name == "random":
+                # Pick a random YAML from config/fs-config/
+                fs_dir = Path("config/fs-config")
+                if fs_dir.exists():
+                    yaml_files = list(fs_dir.glob("fs.*.yaml"))
+                    if yaml_files:
+                        self.fs_yaml_path = str(random.choice(yaml_files))
+            
+            if not self.fs_yaml_path:
+                default_fs = f"config/fs-config/fs.{profile_name}.yaml"
+                if os.path.exists(default_fs):
+                    self.fs_yaml_path = default_fs
+                else:
+                    self.fs_yaml_path = "config/fs-config/fs.ubuntu_22_04.yaml" # Fallback
                 
+        # Initial profile from fallback constants
+        self.profile = DEFAULT_METADATA.copy()
+
         # Load metadata from YAML to ensure self.profile is accurate for banners/uname
         if self.fs_yaml_path and os.path.exists(self.fs_yaml_path):
             try:
                 import yaml
                 with open(self.fs_yaml_path, 'r') as f:
-                    # We only need the top-level metadata, but safe_load is easiest
                     y_data = yaml.safe_load(f)
-                    if "metadata" in y_data:
+                    if y_data and "metadata" in y_data:
                         self.profile.update(y_data["metadata"])
                         print(f"[*] Initialized profile from {self.fs_yaml_path} metadata")
             except Exception as e:

@@ -25,12 +25,25 @@ class WgetCommand(Command):
              return "", "wget: missing URL\n", 1
              
         # Security: Validate URL
-        is_valid, error = self.validate_url(parsed.url)
+        is_valid, error, resolved_ip = self.validate_url(parsed.url)
         if not is_valid:
             print(f"URL validation failed: {error}") # Debug/Log
             return "", f"wget: error: {error}\n", 1
              
         url = parsed.url
+        # Use resolved IP to prevent DNS rebinding
+        request_url = url
+        headers = {}
+        if resolved_ip:
+            from urllib.parse import urlparse
+            p = urlparse(url)
+            # Replace hostname with IP in URL for the request
+            # But keep original Host header
+            port = p.port or (80 if p.scheme == 'http' else 443)
+            request_url = f"{p.scheme}://{resolved_ip}:{port}{p.path}"
+            if p.query:
+                request_url += f"?{p.query}"
+            headers['Host'] = p.hostname
         filename = parsed.output_document
         if not filename:
              filename = PurePosixPath(url).name
@@ -52,7 +65,7 @@ class WgetCommand(Command):
         content = b""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=10) as resp:
+                async with session.get(request_url, headers=headers, timeout=10) as resp:
                     if resp.status != 200:
                         return output_msg, f"ERROR {resp.status}: Not Found.\n", 8
                     

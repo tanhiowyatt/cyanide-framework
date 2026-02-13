@@ -30,6 +30,8 @@ def dict_to_node(data: Dict[str, Any], parent=None):
     
     raise ValueError(f"Unknown node type: {data.get('type')}")
 
+from ..core.defaults import DEFAULT_METADATA
+
 def load_fs(path: str):
     """Loads filesystem and metadata from YAML.
     
@@ -42,7 +44,10 @@ def load_fs(path: str):
     with open(path, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
     
-    metadata = data.pop("metadata", {})
+    metadata = DEFAULT_METADATA.copy()
+    if "metadata" in data:
+        metadata.update(data.pop("metadata"))
+    
     print(f"DEBUG: load_fs loaded YAML from {path}. Metadata: {list(metadata.keys())}")
     
     return dict_to_node(data), metadata

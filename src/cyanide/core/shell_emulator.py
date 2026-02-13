@@ -27,6 +27,7 @@ class ShellEmulator:
         self.config = config or {}
         # Callback(filename, content) -> void
         self.quarantine_callback = quarantine_callback
+        self.dns_cache = {}  # Cache: {hostname: (ip, expiry_timestamp)}
         self.cwd = "/home/admin" if username == "admin" else "/root" if username == "root" else f"/home/{username}"
         if not self.fs.exists(self.cwd):
             self.cwd = "/"

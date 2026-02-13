@@ -1,6 +1,9 @@
 import socket
 import ipaddress
+import time
+from typing import Optional
 from urllib.parse import urlparse
+
 class Command:
     """Base class for shell commands."""
     
@@ -21,39 +24,57 @@ class Command:
         """
         raise NotImplementedError
 
-    def validate_url(self, url: str) -> tuple[bool, str]:
+    def validate_url(self, url: str) -> tuple[bool, str, Optional[str]]:
         """Validate URL to prevent SSRF and local file access.
         
         Returns:
-            (is_valid, error_message)
+            (is_valid, error_message, resolved_ip)
         """
         try:
             parsed = urlparse(url)
             if parsed.scheme not in ('http', 'https'):
-                return False, f"Protocol '{parsed.scheme}' not supported or disabled."
+                return False, f"Protocol '{parsed.scheme}' not supported or disabled.", None
                 
             hostname = parsed.hostname
             if not hostname:
-                return False, "Invalid URL"
+                return False, "Invalid URL", None
                 
+            # Check DNS cache
+            now = time.time()
+            if hasattr(self.emulator, "dns_cache") and hostname in self.emulator.dns_cache:
+                ip_str, expiry = self.emulator.dns_cache[hostname]
+                if now < expiry:
+                    return True, "", ip_str
+
             # Resolve to IP
             try:
                 ip_list = socket.getaddrinfo(hostname, None)
-                # Check first IP
-                ip_str = ip_list[0][4][0]
-                ip_obj = ipaddress.ip_address(ip_str)
                 
-                # Check config
+                # Check ALL IPs
                 allow_local = self.emulator.config.get("allow_local_network", False) if hasattr(self.emulator, "config") else False
                 
-                if not allow_local and (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local):
-                    return False, f"Access to private/local resource '{hostname}' ({ip_str}) denied."
+                valid_ip = None
+                for item in ip_list:
+                    ip_str = item[4][0]
+                    ip_obj = ipaddress.ip_address(ip_str)
+                    
+                    if not allow_local and (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local):
+                        return False, f"Access to private/local resource '{hostname}' ({ip_str}) denied.", None
+                    
+                    if not valid_ip:
+                        valid_ip = ip_str
+                
+                # Cache the first valid IP
+                if hasattr(self.emulator, "dns_cache") and valid_ip:
+                    # 60 seconds TTL
+                    self.emulator.dns_cache[hostname] = (valid_ip, now + 60)
+                
+                return True, "", valid_ip
                     
             except socket.gaierror:
-                return False, f"Could not resolve host: {hostname}"
+                return False, f"Could not resolve host: {hostname}", None
                 
-            return True, ""
         except ValueError:
-            return False, "Invalid URL format"
+            return False, "Invalid URL format", None
         except Exception as e:
-            return False, f"URL validation error: {e}"
+            return False, f"URL validation error: {e}", None
