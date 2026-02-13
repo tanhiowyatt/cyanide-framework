@@ -56,7 +56,7 @@ def smoke_test():
                 print(f"[-] Health Endpoint: UNHEALTHY ({data})")
                 all_passed = False
         else:
-            print(f"[-] Health Endpoint: FAILED (No data)")
+            print("[-] Health Endpoint: FAILED (No data)")
             all_passed = False
     except Exception as e:
         print(f"[-] Health Endpoint Error: {e}")
