@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 # ANSI Color Codes
@@ -54,10 +53,9 @@ def print_startup_banner(config):
     max_h = max(len(logo_lines), len(info_fields))
     # Calculate width based on raw logo lines (without ANSI codes)
     raw_logo_lines = logo_path.read_text().splitlines()
-    logo_width = max(len(l) for l in raw_logo_lines) + 4
+    logo_width = max(len(line) for line in raw_logo_lines) + 4
     
     for i in range(max_h):
-        l_part = logo_lines[i] if i < len(logo_lines) else ""
         r_part = info_fields[i] if i < len(info_fields) else ""
         
         # When padding l_part, we need to account for hidden ANSI characters
