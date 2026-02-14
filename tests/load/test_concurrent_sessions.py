@@ -46,7 +46,7 @@ async def test_concurrent_sessions_load(load_test_server):
                 username="root", password="admin",
                 known_hosts=None
             ) as conn:
-                result = await conn.run("whoami", timeout=5)
+                await conn.run("whoami", timeout=5)
                 latency = time.time() - start
                 return True, latency
         except Exception as e:

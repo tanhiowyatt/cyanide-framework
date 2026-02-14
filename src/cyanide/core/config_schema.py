@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, List, Optional, Any
 
 class SSHConfig(BaseModel):
@@ -62,5 +62,4 @@ class CyanideConfig(BaseModel):
     # Auth
     users: List[Dict[str, str]] = Field(default_factory=list) # simplified from UserConfig for now as config.py uses dicts
     
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(extra="ignore")

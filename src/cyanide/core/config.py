@@ -104,7 +104,7 @@ def load_config(path: Path = Path("config/cyanide.cfg")):
         
     try:
         model = CyanideConfig(**config)
-        return model.dict()
+        return model.model_dump()
     except ValidationError as e:
         print(f"[!] Configuration Error:\n{e}")
         sys.exit(1)
