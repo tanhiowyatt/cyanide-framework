@@ -1,7 +1,10 @@
 import requests
 import sys
 
-HEALTH_URL = "http://127.0.0.1:9090/health"
+import os
+
+METRICS_PORT = os.getenv("METRICS_PORT", "9090")
+HEALTH_URL = f"http://127.0.0.1:{METRICS_PORT}/health"
 
 def check_health():
     try:

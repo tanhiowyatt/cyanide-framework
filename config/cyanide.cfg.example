@@ -208,3 +208,16 @@ enabled = true
 # Format: host:port,host:port
 # Values: String (comma-separated host:port list)
 # targets = 192.168.1.10:22,192.168.1.11:22
+
+[otel]
+# Enable OpenTelemetry tracing
+# Values: true | false
+enabled = true
+
+# Exporter type
+# Options: otlp
+exporter = otlp
+
+# Endpoint for OTLP traces (e.g., Jaeger or OTEL Collector)
+# Values: URL (e.g., http://localhost:4318/v1/traces)
+endpoint = http://localhost:4318/v1/traces

@@ -20,9 +20,24 @@ class MetricsConfig(BaseModel):
     enabled: bool = True
     port: int = 9090
 
+class SMTPConfig(BaseModel):
+    enabled: bool = False
+    listen_port: int = 25
+    target_host: str = "127.0.0.1"
+    target_port: int = 2525
+
+class TelemetryConfig(BaseModel):
+    enabled: bool = False
+    exporter: str = "otlp"
+    endpoint: Optional[str] = "http://localhost:4318/v1/traces"
+
 class RateLimitConfig(BaseModel):
     max_connections_per_minute: int = 60
     ban_duration: int = 3600
+
+class VirusTotalConfig(BaseModel):
+    enabled: bool = False
+    api_key: Optional[str] = None
 
 class UserConfig(BaseModel):
     user: str
@@ -54,6 +69,9 @@ class CyanideConfig(BaseModel):
     ssh: SSHConfig = Field(default_factory=SSHConfig)
     telnet: TelnetConfig = Field(default_factory=TelnetConfig)
     metrics: MetricsConfig = Field(default_factory=MetricsConfig)
+    smtp: SMTPConfig = Field(default_factory=SMTPConfig)
+    otel: TelemetryConfig = Field(default_factory=TelemetryConfig)
+    virustotal: VirusTotalConfig = Field(default_factory=VirusTotalConfig)
     
     # Security
     rate_limit: RateLimitConfig = Field(default_factory=RateLimitConfig)

@@ -5,8 +5,8 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk.resources import Resource
 import os
 
-def setup_telemetry(service_name: str, version: str = "1.0.0"):
-    """Initialize OpenTelemetry."""
+def setup_telemetry(service_name: str, config: dict, version: str = "1.0.0"):
+    """Initialize OpenTelemetry using configuration."""
     resource = Resource.create({
         "service.name": service_name,
         "service.version": version,
@@ -14,11 +14,12 @@ def setup_telemetry(service_name: str, version: str = "1.0.0"):
 
     provider = TracerProvider(resource=resource)
     
-    # Check if OTLP endpoint is configured
-    otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    otel_enabled = config.get("enabled", False)
+    otlp_endpoint = config.get("endpoint")
+    exporter_type = config.get("exporter", "otlp")
     
-    if otlp_endpoint:
-        exporter = OTLPSpanExporter()
+    if otel_enabled and exporter_type == "otlp" and otlp_endpoint:
+        exporter = OTLPSpanExporter(endpoint=otlp_endpoint)
         processor = BatchSpanProcessor(exporter)
         provider.add_span_processor(processor)
         print(f"[*] Telemetry: OTLP Exporter enabled ({otlp_endpoint})")
@@ -28,10 +29,6 @@ def setup_telemetry(service_name: str, version: str = "1.0.0"):
         processor = BatchSpanProcessor(exporter)
         provider.add_span_processor(processor)
         print("[*] Telemetry: Console Exporter enabled")
-    else:
-        # No-op or just provider without processors implies no export
-        # But we still set the provider so instrumentation works (just doesn't go anywhere)
-        pass
-
+    
     trace.set_tracer_provider(provider)
     return trace.get_tracer(service_name)

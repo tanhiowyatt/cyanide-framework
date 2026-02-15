@@ -1,6 +1,7 @@
 import configparser
 import os
 import sys
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 from .config_schema import CyanideConfig
@@ -45,6 +46,10 @@ def load_config(path: Path = Path("config/cyanide.cfg")):
         "quarantine_path": get_val("honeypot", "quarantine_path", "DATA_PATH", "var/lib/cyanide/quarantine"),
         "os_profile": get_val("server", "os_profile", "OS_PROFILE", "random"),
         "dns_cache_ttl": get_val("honeypot", "dns_cache_ttl", "DNS_CACHE_TTL", 60, int),
+        "max_sessions": get_val("server", "max_sessions", "MAX_SESSIONS", 100, int),
+        "max_sessions_per_ip": get_val("server", "max_sessions_per_ip", "MAX_SESSIONS_PER_IP", 5, int),
+        "session_timeout": get_val("server", "session_timeout", "SESSION_TIMEOUT", 300, int),
+        "quarantine_max_size_mb": get_val("server", "quarantine_max_size_mb", "QUARANTINE_MAX_SIZE_MB", 500, int),
         "ssh": {
             "port": get_val("ssh", "listen_port", "SSH_PORT", 2222, int),
             "enabled": get_val("ssh", "enabled", "SSH_ENABLED", True, bool),
@@ -60,11 +65,29 @@ def load_config(path: Path = Path("config/cyanide.cfg")):
             "target_port": get_val("telnet", "target_port", "TELNET_TARGET_PORT", 23, int),
             "banner": get_val("telnet", "banner", "TELNET_BANNER", None)
         },
+        "metrics": {
+            "enabled": get_val("metrics", "enabled", "METRICS_ENABLED", True, bool),
+            "port": get_val("metrics", "port", "METRICS_PORT", 9090, int)
+        },
+        "smtp": {
+            "enabled": get_val("smtp", "enabled", "SMTP_ENABLED", False, bool),
+            "listen_port": get_val("smtp", "listen_port", "SMTP_PORT", 25, int),
+            "target_host": get_val("smtp", "target_host", "SMTP_TARGET_HOST", "127.0.0.1"),
+            "target_port": get_val("smtp", "target_port", "SMTP_TARGET_PORT", 2525, int)
+        },
         "users": []
     }
     
-    # User loading - Env vars for users? USERS_ROOT=admin potentially? 
-    # For now support standard cfg sections. Env support for list of users is complex.
+    # User loading - Env vars for users
+    users_env = os.getenv("CYANIDE_USERS")
+    if users_env:
+        try:
+            env_users = json.loads(users_env)
+            if isinstance(env_users, list):
+                config["users"].extend(env_users)
+        except json.JSONDecodeError:
+            print("[!] Failed to parse CYANIDE_USERS env var (expected JSON list).")
+
     if cfg.has_section("users"):
         for username, password in cfg.items("users"):
             config["users"].append({"user": username, "pass": password})
@@ -100,6 +123,19 @@ def load_config(path: Path = Path("config/cyanide.cfg")):
     config["rate_limit"] = {
         "max_connections_per_minute": get_val("rate_limit", "max_connections_per_minute", "RATE_LIMIT_MAX", 60, int),
         "ban_duration": get_val("rate_limit", "ban_duration", "RATE_LIMIT_BAN", 3600, int)
+    }
+
+    # OpenTelemetry
+    config["otel"] = {
+        "enabled": get_val("otel", "enabled", "OTEL_ENABLED", False, bool),
+        "exporter": get_val("otel", "exporter", "OTEL_EXPORTER", "otlp"),
+        "endpoint": get_val("otel", "endpoint", "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318/v1/traces")
+    }
+
+    # VirusTotal
+    config["virustotal"] = {
+        "enabled": get_val("virustotal", "enabled", "VIRUSTOTAL_ENABLED", False, bool),
+        "api_key": get_val("virustotal", "api_key", "VIRUSTOTAL_API_KEY", None)
     }
         
     try:

@@ -41,7 +41,7 @@ The project is built on a modular principle using modern Python patterns:
 | Path | Description |
 |------|-------------|
 | `scripts/` | Management and control tools |
-| `config/` | Configuration files (`cyanide.cfg`) and FS YAMLs |
+| `config/` | Filesystem configuration YAMLs (`fs-config/`) |
 | `src/cyanide/core/` | Server core, shell emulator, and FS logic |
 | `src/cyanide/commands/` | Implementations of emulated Linux commands |
 | `var/log/cyanide/` | JSON logs and TTY recordings |
@@ -179,11 +179,7 @@ The ML engine is integrated directly into the Cyanide core. If enabled, it proce
 **Metrics**: available on the main metrics port (default `:9090/metrics`), combined with standard statistics.
 
 ### Configuration
-Enable it in `etc/cyanide.cfg`:
-```ini
-[ml]
-enabled = true
-```
+The honeypot is configured entirely via environment variables in `docker/docker-compose.yml`. No `.cfg` files are required.
 
 ### Real-time Monitoring CLI
 To watch logs and detect anomalies in real-time as they appear:

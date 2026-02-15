@@ -218,6 +218,41 @@ def replay(args):
     except Exception as e:
         print(f"Replay error: {e}", file=sys.stderr)
 
+# --- Filesystem Management ---
+
+def import_fs(args):
+    source = Path(args.source)
+    if not source.exists():
+        print(f"[!] Error: Source file {source} does not exist.")
+        return
+
+    # Determine destination name
+    name = args.name
+    if not name:
+        name = source.stem
+        # Remove 'fs.' prefix if user included it in filename
+        if name.startswith('fs.'):
+            name = name[3:]
+    
+    dest_filename = f"fs.{name}.yaml"
+    dest_path = Path(ROOT_DIR) / "config/fs-config" / dest_filename
+    
+    if dest_path.exists() and not args.force:
+        confirm = input(f"[?] File {dest_filename} already exists. Overwrite? [y/N] ")
+        if confirm.lower() != 'y':
+            print("Aborted.")
+            return
+
+    try:
+        import shutil
+        os.makedirs(dest_path.parent, exist_ok=True)
+        shutil.copy2(source, dest_path)
+        print(f"[*] Successfully imported filesystem as: \033[1;32m{name}\033[0m")
+        print(f"[*] Path: {dest_path}")
+        print(f"[*] You can now use it with: OS_PROFILE={name} or OS_PROFILE=random")
+    except Exception as e:
+        print(f"[!] Error importing filesystem: {e}")
+
 # --- Main CLI ---
 
 def main():
@@ -241,6 +276,12 @@ def main():
     replay_parser = subparsers.add_parser("replay", help="Convert TTY log to asciinema format")
     replay_parser.add_argument("log_file", help="Path to the .log file")
 
+    # Import-FS subcommand
+    import_parser = subparsers.add_parser("import-fs", help="Import a custom filesystem YAML template")
+    import_parser.add_argument("source", help="Path to the source YAML file")
+    import_parser.add_argument("--name", help="Name for the profile (default: filename)")
+    import_parser.add_argument("-f", "--force", action="store_true", help="Overwrite existing profile")
+
     args = parser.parse_args()
 
     # Handle subcommands
@@ -256,6 +297,8 @@ def main():
         clean(args)
     elif args.command == "replay":
         replay(args)
+    elif args.command == "import-fs":
+        import_fs(args)
     else:
         parser.print_help()
 

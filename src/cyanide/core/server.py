@@ -45,7 +45,7 @@ class HoneypotServer:
         """Initialize honeypot server with configuration."""
         self.config = config
         self.stats = StatsManager()
-        self.tracer = setup_telemetry("cyanide-honeypot", "1.0.0")
+        self.tracer = setup_telemetry("cyanide-honeypot", config.get("otel", {}), "1.0.0")
         
         # --- Initialize Logger ---
         log_dir = config.get("logging", {}).get("directory", "var/log/cyanide")
@@ -102,11 +102,17 @@ class HoneypotServer:
         
         # OS Profile and Filesystem config
         profile_name = config.get("os_profile", "ubuntu_22_04")
-        self.fs_yaml_path = config.get("fs_yaml")
-        
-        if not self.fs_yaml_path:
-            if profile_name == "random":
-                # Pick a random YAML from config/fs-config/
+        self.fs_yaml_path = None
+
+        if profile_name == "custom":
+            # Use specific path if provided, else look for fs.custom.yaml
+            self.fs_yaml_path = config.get("fs_yaml") or "config/fs-config/fs.custom.yaml"
+        elif profile_name == "random":
+            # 1. First priority: Check if a specific FS_YAML was provided as an override
+            self.fs_yaml_path = config.get("fs_yaml")
+            
+            # 2. If no override, pick a random YAML from config/fs-config/
+            if not self.fs_yaml_path:
                 fs_dir = Path("config/fs-config")
                 if fs_dir.exists():
                     yaml_files = list(fs_dir.glob("fs.*.yaml"))
@@ -114,11 +120,12 @@ class HoneypotServer:
                         self.fs_yaml_path = str(random.choice(yaml_files))
             
             if not self.fs_yaml_path:
-                default_fs = f"config/fs-config/fs.{profile_name}.yaml"
-                if os.path.exists(default_fs):
-                    self.fs_yaml_path = default_fs
-                else:
-                    self.fs_yaml_path = "config/fs-config/fs.ubuntu_22_04.yaml" # Fallback
+                self.fs_yaml_path = "config/fs-config/fs.ubuntu_22_04.yaml"
+        else:
+            # Use profile-specific YAML
+            self.fs_yaml_path = f"config/fs-config/fs.{profile_name}.yaml"
+            if not os.path.exists(self.fs_yaml_path):
+                self.fs_yaml_path = "config/fs-config/fs.ubuntu_22_04.yaml" # Fallback
                 
         # Initial profile from fallback constants
         self.profile = DEFAULT_METADATA.copy()
