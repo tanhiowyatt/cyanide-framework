@@ -94,7 +94,7 @@ def run_test():
     # Load Existing Model
     try:
         from cyanide.ml import CyanideML
-        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../ai_models/cyanideML"))
+        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../assets/models"))
         print(f"[*] Loading CyanideML from {model_dir}...")
         model = CyanideML(model_dir)
     except Exception as e:

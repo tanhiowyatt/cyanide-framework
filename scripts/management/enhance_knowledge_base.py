@@ -11,7 +11,7 @@ from cyanide.ml.classifier import KnowledgeBase
 
 KB_DATA_DIR = Path("data/ml_training/kb_ready")
 MAPPINGS_FILE = KB_DATA_DIR / "manual_mappings.jsonl"
-KB_MODEL_PATH = Path("ai_models/cyanideML/knowledge_base.pkl")
+KB_MODEL_PATH = Path("assets/models/knowledge_base.pkl")
 
 MANUAL_MAPPINGS = [
     # -- Reconnaissance --

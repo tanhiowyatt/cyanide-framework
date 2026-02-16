@@ -1,5 +1,6 @@
 
 import sys
+import os
 import argparse
 import time
 import numpy as np
@@ -17,7 +18,7 @@ except ImportError as e:
     sys.exit(1)
 
 # --- Configuration ---
-MODEL_DIR = "ai_models/cyanideML"
+MODEL_DIR = "assets/models"
 REPORT_DIR = "test_results"
 
 class TestReport:
@@ -67,7 +68,7 @@ class TestReport:
 class ModelValidator:
     def __init__(self, model_dir: str):
         try:
-            self.pipeline = CyanideML(model_dir)
+            self.pipeline = CyanideML("assets/models")
             print(f"[*] Loaded models from {model_dir}")
         except Exception as e:
             print(f"[!] Failed to load models: {e}")
@@ -401,6 +402,7 @@ class ModelValidator:
         
         # Generate Report
         report_str = self.report.generate(self.passed_suites, self.failed_suites)
+        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../assets/models"))
         
         # Save
         Path(REPORT_DIR).mkdir(exist_ok=True)

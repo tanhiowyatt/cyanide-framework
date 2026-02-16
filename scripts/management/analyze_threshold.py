@@ -16,7 +16,7 @@ except ImportError:
 def analyze():
     print("[*] Loading Pipeline...")
     try:
-        pipeline = CyanideML("ai_models/cyanideML")
+        pipeline = CyanideML("assets/models")
     except Exception as e:
         print(f"[!] Failed to load pipeline: {e}")
         return

@@ -23,7 +23,7 @@ def debug_detection(command: str):
     
     # Load pipeline
     try:
-        pipeline = CyanideML(Path("ai_models/cyanideML"))
+        pipeline = CyanideML("assets/models")
     except Exception as e:
         print(f"[!] Failed to load pipeline: {e}")
         return

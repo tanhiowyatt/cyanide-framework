@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.getcwd(), 'src')))
 from cyanide.ml.model import CommandAutoencoder
 from cyanide.ml.classifier import KnowledgeBase
 
-MODEL_DIR = Path("ai_models/cyanideML")
+MODEL_DIR = Path("assets/models")
 KB_DATA_DIR = Path("data/ml_training/kb_ready") 
 
 def patch_autoencoder():
