@@ -1,6 +1,6 @@
 # Cyanide
 
-![alt text](assets/branding/logoreedme.png)
+![alt text](assets/branding/name.png)
 
 **Cyanide** is a high-interaction SSH & Telnet honeypot designed to deceive and analyze attacker behavior. It combines realistic Linux filesystem emulation, advanced command simulation (pipes, redirections), and deep anti-detection mechanisms with a hybrid ML-based anomaly detection engine.
 
