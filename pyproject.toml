@@ -125,3 +125,9 @@ ignore_missing_imports = true
 check_untyped_defs = true
 files = "src"
 
+[[tool.mypy.overrides]]
+module = ["torch", "torch.*"]
+follow_imports = "skip"
+ignore_errors = true
+
+
