@@ -13,9 +13,7 @@ from cyanide.vfs.nodes import Directory, File
 class TestYamlFS(unittest.TestCase):
     def setUp(self):
         self.yaml_path = Path("test_fs.yaml")
-        with open(self.yaml_path, "w") as f:
-            f.write(
-                """
+        yaml_content = """
 name: ""
 type: directory
 perm: drwxr-xr-x
@@ -31,7 +29,8 @@ children:
         perm: "-rw-r--r--"
         content: "root:x:0:0:root:/root:/bin/bash"
 """
-            )
+        with open(self.yaml_path, "w") as f:
+            f.write(yaml_content)
 
     def tearDown(self):
         if self.yaml_path.exists():
