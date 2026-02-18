@@ -1,5 +1,6 @@
-import aiohttp
 from typing import Any, Dict, Optional, cast
+
+import aiohttp
 
 
 class GeoIP:

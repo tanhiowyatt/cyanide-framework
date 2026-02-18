@@ -1,6 +1,6 @@
 import argparse
-from typing import Dict
 from pathlib import PurePosixPath
+from typing import Dict
 
 import aiohttp
 
