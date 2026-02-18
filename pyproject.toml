@@ -18,13 +18,13 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Topic :: Security",
 ]
 requires-python = ">=3.9"
 
-# Основные зависимости (Runtime)
 dependencies = [
     "asyncssh>=2.14.2,<3.0",
     "cryptography>=41.0.0",
@@ -44,7 +44,6 @@ dependencies = [
     "torch>=2.2.0",
 ]
 
-# Группы зависимостей для разработки (замена requirements-dev.txt)
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
@@ -55,9 +54,9 @@ dev = [
     "isort>=5.12.0",
     "mypy>=1.5.0",
     "ruff>=0.1.0",
+    "pip-audit>=2.7.0",
 ]
 
-# Точка входа для CLI (команда 'cyanide' в терминале)
 [project.scripts]
 cyanide = "cyanide.main:main"
 
@@ -66,12 +65,10 @@ cyanide = "cyanide.main:main"
 "Bug Tracker" = "https://github.com/tanhiowyatt/cyanide/issues"
 "Documentation" = "https://github.com/tanhiowyatt/cyanide/tree/main/docs"
 
-# Настройка сборщика: ищем пакеты в папке src
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["cyanide*"]
 
-# Конфигурация Pytest
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-v --asyncio-mode=auto --color=yes --tb=short"
@@ -89,12 +86,19 @@ filterwarnings = [
     "ignore::cryptography.utils.CryptographyDeprecationWarning",
 ]
 
-# Настройка стиля кода (Black)
 [tool.black]
 line-length = 100
 target-version = ['py39']
 
-# Настройка сортировки импортов (isort)
 [tool.isort]
 profile = "black"
 known_first_party = ["cyanide"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+check_untyped_defs = true
+exclude = ["tests/"]
