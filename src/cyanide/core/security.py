@@ -30,6 +30,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         "collections",
         "datetime",
         "pathlib",
+        "re",
         # ML Libraries (required for model persistence)
         "numpy",
         "numpy.core.multiarray",
@@ -37,11 +38,16 @@ class RestrictedUnpickler(pickle.Unpickler):
         "numpy.dtype",
         "sklearn.cluster",
         "sklearn.cluster._kmeans",
+        "sklearn.feature_extraction.text",
         "scipy.sparse",  # Often used by sklearn
+        "scipy.sparse._csr",
         "joblib",  # Often used by sklearn
         # Internal Project Modules
+        "cyanide.ml.model",
+        "cyanide.ml.classifier",
+        "src.cyanide.ml.model",
+        "src.cyanide.ml.classifier",
         "ai_models.cyanideML.model",
-        "src.cyanideML.model",
     }
 
     def find_class(self, module, name):

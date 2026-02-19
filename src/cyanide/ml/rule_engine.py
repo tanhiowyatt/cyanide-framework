@@ -1,3 +1,4 @@
+import math
 import re
 from typing import List
 
@@ -200,6 +201,48 @@ class SecurityRuleEngine:
                 "technique": "T1059.004",
                 "confidence": 0.8,
             },
+            # --- New Rules (Fixing FNs) ---
+            {
+                "category": "discovery",
+                "pattern": r"find\s+.*\s+-perm\s+(-4000|-u\+s)",
+                "severity": "HIGH",
+                "description": "SUID file search",
+                "technique": "T1083",
+                "confidence": 0.9,
+            },
+            {
+                "category": "cred_access",
+                "pattern": r"history\s*\|\s*grep",
+                "severity": "HIGH",
+                "description": "Searching history for credentials",
+                "technique": "T1552.003",
+                "confidence": 0.9,
+            },
+            {
+                "category": "discovery",
+                "pattern": r"find\s+.*\s+-name\s+.*\.conf",
+                "severity": "MEDIUM",
+                "description": "Configuration file discovery",
+                "technique": "T1083",
+                "confidence": 0.8,
+            },
+            {
+                "category": "defense_evasion",
+                "pattern": r"base64\s+-d|openssl\s+enc\s+-d",
+                "severity": "HIGH",
+                "description": "Decoding payload (base64/openssl)",
+                "technique": "T1027",
+                "confidence": 0.95,
+            },
+            # Generic obfuscation detection (backslash insertion)
+            {
+                "category": "defense_evasion",
+                "pattern": r"\w+\\\w+",
+                "severity": "MEDIUM",
+                "description": "Command obfuscation (backslashes)",
+                "technique": "T1027",
+                "confidence": 0.75,
+            },
         ]
 
     def _compile_rules(self):
@@ -215,13 +258,28 @@ class SecurityRuleEngine:
         """
         Evaluates command against all rules.
         Returns result dict with highest confidence match.
+        Include Entropy Check.
         """
         matches = []
-        pass
-
+        
+        # 1. Regex Rules
         for rule in self.compiled_rules:
             if rule["regex"].search(command):
                 matches.append(rule)
+
+        # 2. Entropy Check
+        entropy = self._calculate_entropy(command)
+        if entropy > 4.5 and len(command) > 20:
+             # High entropy + sufficient length = likely obfuscated/encrypted
+             matches.append({
+                 "category": "obfuscation",
+                 "pattern": "high_entropy",
+                 "severity": "HIGH",
+                 "technique": "T1027",
+                 "confidence": 0.85,
+                 "description": f"High entropy command ({entropy:.2f})",
+                 "regex": None # Dummy
+             })
 
         if not matches:
             return {"matched": False}
@@ -237,10 +295,18 @@ class SecurityRuleEngine:
         return {
             "matched": True,
             "rule_type": best_match["category"],
-            "pattern": best_match["pattern"],
+            "pattern": best_match.get("pattern", "N/A"),
             "severity": best_match["severity"],
             "technique": best_match["technique"],
             "confidence": best_match["confidence"],
             "description": best_match["description"],
             "match_method": "rule_based",
         }
+
+    def _calculate_entropy(self, text: str) -> float:
+        """Calculate Shannon entropy of text."""
+        if not text:
+            return 0.0
+        prob = [float(text.count(c)) / len(text) for c in dict.fromkeys(list(text))]
+        entropy = -sum([p * math.log(p) / math.log(2.0) for p in prob])
+        return entropy
