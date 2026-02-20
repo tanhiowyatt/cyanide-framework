@@ -279,7 +279,9 @@ class ShellEmulator:
                 from typing import cast
 
                 # Use auth_and_execute instead of direct execute to handle /root protection
-                result = await self.commands[cmd_name].auth_and_execute(params, input_data=input_data)
+                result = await self.commands[cmd_name].auth_and_execute(
+                    params, input_data=input_data
+                )
                 return cast(tuple[str, str, int], result)
             except Exception as e:
                 # Fallback or error report

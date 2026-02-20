@@ -35,7 +35,9 @@ class Command:
             self.emulator.pending_input_callback = lambda pwd: self._on_password_auth(
                 pwd, args, input_data
             )
-            self.emulator.pending_input_prompt = f"[cyanide] password for {self.emulator.username}: "
+            self.emulator.pending_input_prompt = (
+                f"[cyanide] password for {self.emulator.username}: "
+            )
             return f"[cyanide] password for {self.emulator.username}: ", "", 0
 
         return await self.execute(args, input_data=input_data)
