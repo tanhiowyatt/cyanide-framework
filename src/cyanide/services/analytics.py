@@ -1,13 +1,8 @@
-import datetime
-import json
 from typing import Dict
+
 
 # Import dependencies (handle circular imports carefully if needed)
 # Here we assume these are available
-from cyanide.core.geoip import GeoIP
-from cyanide.core.stats import StatsManager
-
-
 class AnalyticsService:
     """
     Handles ML analysis, GeoIP enrichment, and statistics.
@@ -16,6 +11,11 @@ class AnalyticsService:
     def __init__(self, config: Dict, logger):
         self.config = config
         self.logger = logger
+
+        # Local imports to avoid circular dependencies
+        from cyanide.core.geoip import GeoIP
+        from cyanide.core.stats import StatsManager
+
         self.stats = StatsManager()
         self.geoip = GeoIP()
 
@@ -35,7 +35,7 @@ class AnalyticsService:
             from cyanide.ml import CyanideML
 
             config_path = self.config.get("ml", {}).get(
-                "model_path", "src/cyanide.ml/cyanideML.pkl"
+                "model_path", "src/cyanide/ml/cyanideML.pkl"
             )
             model_path = Path(config_path).parent
 
@@ -57,9 +57,12 @@ class AnalyticsService:
                 self.ml_enabled = False
                 return
 
-            self.ml_log_path = self.config.get("ml", {}).get(
-                "ml_log", "var/log/cyanide/cyanideML-log.json"
+            self.ml_log_path = Path(
+                self.config.get("ml", {}).get("ml_log", "var/log/cyanide/ml.json")
             )
+
+            # Ensure log directory exists
+            self.ml_log_path.parent.mkdir(parents=True, exist_ok=True)
 
         except (ImportError, ModuleNotFoundError) as e:
             self.logger.log_event(
@@ -81,21 +84,20 @@ class AnalyticsService:
 
             is_anomaly = result["is_anomaly"]
 
-            # Log ML 'thought'
-            ml_log_entry = {
-                "timestamp": datetime.datetime.now().isoformat(),
-                "src_ip": src_ip,
-                "session_id": session_id,
-                "verdict": "anomaly" if is_anomaly else "clean",
-                "score": result["anomaly_score"],
-                "error": result["reconstruction_error"],
-                "command": cmd,
-                "classification": result.get("classification"),
-                "severity": result.get("severity"),
-            }
-
-            with open(self.ml_log_path, "a") as f:
-                f.write(json.dumps(ml_log_entry) + "\n")
+            # Log ML 'thought' via centralized logger
+            self.logger.log_event(
+                session_id,
+                "ml_thought",
+                {
+                    "src_ip": src_ip,
+                    "verdict": "anomaly" if is_anomaly else "clean",
+                    "score": result["anomaly_score"],
+                    "error": result["reconstruction_error"],
+                    "command": cmd,
+                    "classification": result.get("classification"),
+                    "severity": result.get("severity"),
+                },
+            )
 
             if is_anomaly:
                 self.logger.log_event(
@@ -112,6 +114,52 @@ class AnalyticsService:
 
         except Exception as e:
             self.logger.log_event(session_id, "error", {"message": f"ML Error: {e}"})
+
+    def analyze_file(self, filename: str, content: bytes, session_id: str, src_ip: str):
+        """Analyze uploaded file content and filename via ML."""
+        if not self.ml_enabled or not getattr(self, "ml_pipeline", None):
+            return
+
+        try:
+            # Combine filename and snippet of content for analysis
+            # Most attackers use specific filenames or content patterns
+            sample_len = 100
+            content_snippet = content[:sample_len].decode("utf-8", "ignore")
+            analysis_str = f"FILE_UPLOAD: {filename} CONTENT: {content_snippet}"
+
+            # Analyze
+            result = self.ml_pipeline.analyze_command(analysis_str)
+            is_anomaly = result["is_anomaly"]
+
+            # Log ML 'thought' via centralized logger
+            self.logger.log_event(
+                session_id,
+                "ml_thought",
+                {
+                    "src_ip": src_ip,
+                    "verdict": "anomaly" if is_anomaly else "clean",
+                    "score": result["anomaly_score"],
+                    "error": result["reconstruction_error"],
+                    "file": filename,
+                    "type": "file_upload",
+                    "classification": result.get("classification"),
+                    "severity": result.get("severity"),
+                },
+            )
+
+            if is_anomaly:
+                self.logger.log_event(
+                    session_id,
+                    "ml_file_anomaly",
+                    {
+                        "score": result["anomaly_score"],
+                        "filename": filename,
+                        "classification": result.get("classification"),
+                        "severity": result.get("severity"),
+                    },
+                )
+        except Exception as e:
+            self.logger.log_event(session_id, "error", {"message": f"ML File Analysis Error: {e}"})
 
     async def log_geoip(self, session_id: str, ip: str, protocol: str):
         """Async GeoIP enrichment logging."""

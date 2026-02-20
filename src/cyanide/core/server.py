@@ -530,6 +530,9 @@ class HoneypotServer:
         # Start Cleanup Task
         self.background_tasks.append(asyncio.create_task(self._cleanup_loop()))
 
+        # Start Stats Logging Task
+        self.background_tasks.append(asyncio.create_task(self._stats_logging_loop()))
+
         # Keep running
         try:
             self._stop_event = asyncio.Event()
@@ -559,6 +562,19 @@ class HoneypotServer:
 
         if hasattr(self, "_stop_event"):
             self._stop_event.set()
+
+    async def _stats_logging_loop(self):
+        """Periodically log statistics to cyanide-stats.json."""
+        while True:
+            try:
+                # Log current stats
+                stats_data = self.stats.get_stats()
+                self.logger.log_event("system", "stats", stats_data)
+            except Exception as e:
+                self.logger.log_event("system", "error", {"message": f"Stats Logging Error: {e}"})
+
+            # Log every 60 seconds (or 10 for demo/dev if needed, but 60 is standard)
+            await asyncio.sleep(60)
 
     async def _cleanup_loop(self):
         """Background task for automatic file cleanup."""

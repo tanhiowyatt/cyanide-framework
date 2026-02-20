@@ -124,7 +124,7 @@ def load_config(path: Path = Path("configs/app.yaml")):
 
     config["ml"] = {
         "enabled": get_val("ml", "enabled", "ML_ENABLED", False, bool),
-        "ml_log": "var/log/cyanideML/ml.json",
+        "ml_log": "var/log/cyanide/ml.json",
         "model_path": "assets/models/cyanideML.pkl",
         "online_learning": get_val("ml", "online_learning", "ONLINE_LEARNING", False, bool),
         "retraining_interval_days": get_val(

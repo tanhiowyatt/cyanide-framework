@@ -82,9 +82,11 @@ Scripts located in `scripts/management/` help manage the honeypot:
 ## 🕵️ Data & Forensics
 
 *   **Logs**: `var/log/cyanide/`
-    *   `cyanide-log.json`: Main event log.
-    *   `cyanideML-log.json`: ML detection details.
-    *   `tty/<session_id>/`: Session recordings.
+    *   `cyanide-server.json`: System status, service lifecycle, and error logs.
+    *   `cyanide-fs.json`: Hacker interaction logs (commands, auth attempts, TTY sessions).
+    *   `cyanide-ml.json`: Machine Learning detection results and internal "thoughts".
+    *   `cyanide-stats.json`: Periodic snapshots of honeypot statistics.
+    *   `tty/<session_id>/`: Full recorded TTY session files.
 *   **Quarantine**: `var/lib/cyanide/quarantine/`
     *   Downloaded malware and uploaded files.
 
