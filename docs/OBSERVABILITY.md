@@ -28,18 +28,34 @@ Interactive SSH/Telnet sessions are recorded in two formats:
 
 ## 1. Metrics (Prometheus)
 
-The project includes an internal HTTP metrics server (default port `9090`) managed by `StatsManager`.
+The project Cyanide includes a built-in HTTP server for health checks, metrics, and log access. By default, it listens on port `9090`.
 
 ### Endpoints
 *   **`/metrics`**: Prometheus-compatible text format. Includes both core stats and ML metrics.
 *   **`/stats`**: Full system state as a raw JSON object (useful for custom web UIs).
 *   **`/health`**: Returns `200 OK` if the core SSH/Telnet services are running.
+*   **`/logs`**: Interactive log browser. Allows listing and viewing files in the honeypot log directory (e.g., `/logs/cyanide.json`, `/logs/tty/`).
 
-### Key Metrics
-*   `cyanide_active_sessions`: Gauge of currently active connections.
-*   `cyanide_total_sessions_total`: Counter for all connections since startup.
-*   `cyanide_honeytoken_hits_total`: Counter grouped by `{path="..."}` for tripwire triggers.
-*   `cyanide_malware_scans_total`: Number of files scanned by the integrated VT engine.
+### Prometheus Metrics
+
+Cyanide exposes the following metrics on `:9090/metrics`:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `cyanide_active_sessions` | Gauge | Currently active SSH/Telnet sessions |
+| `cyanide_total_sessions_total` | Counter | Total connections since startup |
+| `cyanide_unique_attackers_total` | Counter | Total unique attacker IP addresses |
+| `cyanide_uptime_seconds` | Counter | Honeypot uptime in seconds |
+| `cyanide_auth_success_total` | Counter | Successful login attempts |
+| `cyanide_auth_failures_total` | Counter | Failed login attempts |
+| `cyanide_protocols_total` | Counter | Connections per protocol (ssh/telnet) |
+| `cyanide_honeytoken_hits_total` | Counter | Filesystem access to sensitive paths |
+| `cyanide_file_ops_total` | Counter | File operations (read, write, delete) |
+| `cyanide_traffic_bytes_in_total` | Counter | Total inbound traffic in bytes |
+| `cyanide_traffic_bytes_out_total` | Counter | Total outbound traffic in bytes |
+| `cyanide_command_not_found_total` | Counter | Count of "command not found" errors |
+| `cyanide_malware_scans_total` | Counter | Total files scanned by VT/ML |
+| `cyanide_malicious_files_total` | Counter | Total malicious files detected |
 
 ---
 

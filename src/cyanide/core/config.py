@@ -35,8 +35,14 @@ def load_config(path: Path = Path("configs/app.yaml")):
         print(f"[*] Config file not found at {path}, using .env and defaults.")
 
     def get_val(section, key, env_var, default, cast=str):
-        # Priority: Env > Config File (Nested) > Default
-        val = os.getenv(env_var)
+        # Priority: Env (Full Name) > Env (Simplified) > Config File (Nested) > Default
+        # support both REDIS_HOST and CYANIDE_REDIS__HOST
+        full_env_var = f"CYANIDE_{section.upper()}__" + (
+            env_var if env_var not in (key.upper(), key) else key.upper()
+        )
+        val = os.getenv(full_env_var)
+        if val is None:
+            val = os.getenv(env_var)
 
         # Deep lookup in config_data
         if val is None:

@@ -17,11 +17,12 @@ class FakeFilesystem:
     that mimic a realistic Linux system. Used by ShellEmulator for file operations.
     """
 
-    def __init__(self, root=None, audit_callback=None, profile=None):
+    def __init__(self, root=None, audit_callback=None, profile=None, stats=None):
         """Initialize fake filesystem with realistic directory structure and files."""
         self.root = root or Directory("/")
         self.audit_callback = audit_callback
         self.profile = profile
+        self.stats = stats
         self._init_fs()
 
     def _init_fs(self):
@@ -160,6 +161,8 @@ class FakeFilesystem:
         if parent and isinstance(parent, Directory):
             f = File(filename, parent=parent, content=content, owner=owner, group=group, perm=perm)
             parent.add_child(f)
+            if self.stats:
+                self.stats.on_file_op("write", path)
             return f
         return None
 
@@ -186,6 +189,8 @@ class FakeFilesystem:
                 # Audit
                 if self.audit_callback:
                     self.audit_callback("delete", resolved)
+                if self.stats:
+                    self.stats.on_file_op("delete", resolved)
                 return parent.remove_child(name)
         return False
 
@@ -270,6 +275,8 @@ class FakeFilesystem:
         if isinstance(node, File):
             if self.audit_callback:
                 self.audit_callback("read", path)
+            if self.stats:
+                self.stats.on_file_op("read", path)
             return node.content
         return ""
 

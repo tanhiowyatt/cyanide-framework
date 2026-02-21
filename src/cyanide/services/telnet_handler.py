@@ -83,12 +83,18 @@ class TelnetHandler:
 
             # Simple auth
             writer.write(b"login: ")
+            self.stats.on_traffic("out", len(b"login: "))
             await writer.drain()
-            username = (await reader.readuntil(b"\n")).decode().strip()
+            login_data = await reader.readuntil(b"\n")
+            self.stats.on_traffic("in", len(login_data))
+            username = login_data.decode().strip()
 
             writer.write(b"Password: ")
+            self.stats.on_traffic("out", len(b"Password: "))
             await writer.drain()
-            password = (await reader.readuntil(b"\n")).decode().strip()
+            pass_data = await reader.readuntil(b"\n")
+            self.stats.on_traffic("in", len(pass_data))
+            password = pass_data.decode().strip()
 
             # Auth Check (delegated back to server or we move is_valid_user to a service?)
             # Server still holds users config for now.
@@ -124,6 +130,7 @@ class TelnetHandler:
 
             prompt = f"{username}@server:~$ "
             writer.write(prompt.encode())
+            self.stats.on_traffic("out", len(prompt))
             self.server._log_tty(
                 tty_state, "OUT", prompt
             )  # Keep using server's helper for now or move it?
@@ -137,9 +144,11 @@ class TelnetHandler:
                     line = await asyncio.wait_for(
                         reader.readuntil(b"\n"), timeout=self.session_timeout
                     )
+                    self.stats.on_traffic("in", len(line))
                     cmd = line.decode().strip()
                     if not cmd:
                         writer.write(prompt.encode())
+                        self.stats.on_traffic("out", len(prompt))
                         await writer.drain()
                         continue
 
@@ -166,6 +175,7 @@ class TelnetHandler:
                     stdout, stderr, rc = await shell.execute(cmd)
 
                     if rc == 127:
+                        self.stats.on_command_not_found(cmd)
                         await self.logger.log_event_async(
                             {"event": "command_not_found", "session_id": session_id, "cmd": cmd}
                         )
@@ -173,6 +183,7 @@ class TelnetHandler:
                     output = stdout + stderr
                     resp = output.replace("\n", "\r\n").encode()
                     writer.write(resp)
+                    self.stats.on_traffic("out", len(resp))
                     self.server._log_tty(tty_state, "OUT", resp)
 
                     # Update prompt
@@ -184,6 +195,7 @@ class TelnetHandler:
 
                     prompt = f"{username}@server:{cwd}$ "
                     writer.write(prompt.encode())
+                    self.stats.on_traffic("out", len(prompt))
                     await writer.drain()
 
                 except asyncio.TimeoutError:

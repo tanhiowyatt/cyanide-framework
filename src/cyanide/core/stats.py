@@ -13,6 +13,7 @@ class StatsManager:
 
         # Counters
         self.ips: Counter[str] = Counter()
+        self.unique_ips: set[str] = set()
         self.usernames: Counter[str] = Counter()
         self.passwords: Counter[str] = Counter()
         self.commands: Counter[str] = Counter()
@@ -23,6 +24,20 @@ class StatsManager:
         self.dns_cache_hits = 0
         self.dns_cache_misses = 0
 
+        # Confusion
+        self.command_not_found = 0
+
+        # Detailed Auth
+        self.auth_success = 0
+        self.auth_failures = 0
+
+        # File Operations
+        self.file_ops: Counter[str] = Counter()  # e.g., {"read": 10, "write": 5, "delete": 2}
+
+        # Traffic
+        self.bytes_in = 0
+        self.bytes_out = 0
+
         # Recent activity (FIFO)
         self.recent_commands: List[Dict[str, Any]] = []
         self.max_recent = 50
@@ -32,6 +47,7 @@ class StatsManager:
         self.total_sessions += 1
         self.protocols[protocol] += 1
         self.ips[ip] += 1
+        self.unique_ips.add(ip)
 
     def on_disconnect(self, protocol: str, ip: str):
         self.active_sessions = max(0, self.active_sessions - 1)
@@ -39,6 +55,10 @@ class StatsManager:
     def on_auth(self, protocol: str, ip: str, username: str, password: str, success: bool):
         self.usernames[username] += 1
         self.passwords[password] += 1
+        if success:
+            self.auth_success += 1
+        else:
+            self.auth_failures += 1
 
     def on_command(self, protocol: str, ip: str, username: str, command: str):
         self.commands[command] += 1
@@ -65,6 +85,21 @@ class StatsManager:
         if is_malicious:
             self.malicious_files[filename] += 1
 
+    def on_file_op(self, operation: str, path: str):
+        """Track file operations (read, write, delete)."""
+        self.file_ops[operation] += 1
+
+    def on_command_not_found(self, cmd: str):
+        """Track 'command not found' events (confusion metric)."""
+        self.command_not_found += 1
+
+    def on_traffic(self, direction: str, size: int):
+        """Track traffic metrics."""
+        if direction == "in":
+            self.bytes_in += size
+        else:
+            self.bytes_out += size
+
     def get_stats(self) -> Dict[str, Any]:
         """Return statistics as a dictionary."""
         uptime = int(time.time() - self.start_time)
@@ -72,6 +107,9 @@ class StatsManager:
             "uptime_seconds": uptime,
             "active_sessions": self.active_sessions,
             "total_sessions": self.total_sessions,
+            "unique_attackers": len(self.unique_ips),
+            "auth_success": self.auth_success,
+            "auth_failures": self.auth_failures,
             "top_ips": dict(self.ips.most_common(10)),
             "top_usernames": dict(self.usernames.most_common(10)),
             "top_commands": dict(self.commands.most_common(10)),
@@ -79,6 +117,9 @@ class StatsManager:
             "honeytoken_hits": dict(self.honeytoken_triggers),
             "malware_scans": sum(self.malware_scans.values()),
             "malicious_detected": sum(self.malicious_files.values()),
+            "file_operations": dict(self.file_ops),
+            "command_not_found": self.command_not_found,
+            "traffic": {"bytes_in": self.bytes_in, "bytes_out": self.bytes_out},
         }
 
     def to_prometheus(self) -> str:
@@ -92,21 +133,63 @@ class StatsManager:
         lines.append("# TYPE cyanide_total_sessions_total counter")
         lines.append(f"cyanide_total_sessions_total {self.total_sessions}")
 
+        lines.append("# HELP cyanide_unique_attackers_total Total number of unique attacker IPs")
+        lines.append("# TYPE cyanide_unique_attackers_total counter")
+        lines.append(f"cyanide_unique_attackers_total {len(self.unique_ips)}")
+
         lines.append("# HELP cyanide_uptime_seconds Honeypot uptime in seconds")
         lines.append("# TYPE cyanide_uptime_seconds counter")
         lines.append(f"cyanide_uptime_seconds {int(time.time() - self.start_time)}")
 
+        # Auth
+        lines.append("# HELP cyanide_auth_success_total Total successful login attempts")
+        lines.append("# TYPE cyanide_auth_success_total counter")
+        lines.append(f"cyanide_auth_success_total {self.auth_success}")
+
+        lines.append("# HELP cyanide_auth_failures_total Total failed login attempts")
+        lines.append("# TYPE cyanide_auth_failures_total counter")
+        lines.append(f"cyanide_auth_failures_total {self.auth_failures}")
+
         # Protocols
+        lines.append("# HELP cyanide_protocols_total Total connections per protocol")
+        lines.append("# TYPE cyanide_protocols_total counter")
         for proto, count in self.protocols.items():
             lines.append(f'cyanide_protocols_total{{protocol="{proto}"}} {count}')
 
         # Honeytokens
+        lines.append("# HELP cyanide_honeytoken_hits_total Total hits on honeytoken paths")
+        lines.append("# TYPE cyanide_honeytoken_hits_total counter")
         for path, count in self.honeytoken_triggers.items():
             lines.append(f'cyanide_honeytoken_hits_total{{path="{path}"}} {count}')
 
         # Malware
+        lines.append("# HELP cyanide_malware_scans_total Total malware scans performed")
+        lines.append("# TYPE cyanide_malware_scans_total counter")
         lines.append(f"cyanide_malware_scans_total {sum(self.malware_scans.values())}")
+
+        lines.append("# HELP cyanide_malicious_files_total Total malicious files detected")
+        lines.append("# TYPE cyanide_malicious_files_total counter")
         lines.append(f"cyanide_malicious_files_total {sum(self.malicious_files.values())}")
+
+        # File Ops
+        lines.append("# HELP cyanide_file_ops_total Total filesystem operations by type")
+        lines.append("# TYPE cyanide_file_ops_total counter")
+        for op, count in self.file_ops.items():
+            lines.append(f'cyanide_file_ops_total{{op="{op}"}} {count}')
+
+        # Traffic
+        lines.append("# HELP cyanide_traffic_bytes_in_total Total inbound traffic in bytes")
+        lines.append("# TYPE cyanide_traffic_bytes_in_total counter")
+        lines.append(f"cyanide_traffic_bytes_in_total {self.bytes_in}")
+
+        lines.append("# HELP cyanide_traffic_bytes_out_total Total outbound traffic in bytes")
+        lines.append("# TYPE cyanide_traffic_bytes_out_total counter")
+        lines.append(f"cyanide_traffic_bytes_out_total {self.bytes_out}")
+
+        # Confusion
+        lines.append("# HELP cyanide_command_not_found_total Total count of commands not found")
+        lines.append("# TYPE cyanide_command_not_found_total counter")
+        lines.append(f"cyanide_command_not_found_total {self.command_not_found}")
 
         # DNS Cache
         lines.append("# HELP cyanide_dns_cache_hits_total Total DNS cache hits")

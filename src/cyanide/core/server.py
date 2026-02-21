@@ -223,14 +223,16 @@ class HoneypotServer:
                 if metadata:
                     current_profile.update(metadata)
 
-                fs = FakeFilesystem(root=root, audit_callback=audit_hook, profile=current_profile)
+                fs = FakeFilesystem(
+                    root=root, audit_callback=audit_hook, profile=current_profile, stats=self.stats
+                )
                 return fs
             except Exception as e:
                 self.logger.log_event(
                     session_id, "error", {"message": f"Error loading YAML FS: {e}"}
                 )
                 traceback.print_exc()
-        return FakeFilesystem(audit_callback=audit_hook, profile=self.profile)
+        return FakeFilesystem(audit_callback=audit_hook, profile=self.profile, stats=self.stats)
 
     async def _scan_and_log(
         self, filename: str, content: bytes, session_id="unknown", src_ip="unknown"
@@ -320,32 +322,31 @@ class HoneypotServer:
 
         async def handle_request(reader, writer):
             try:
-                # Read request line with timeout
-                try:
-                    line = await asyncio.wait_for(reader.readline(), timeout=2.0)
-                except asyncio.TimeoutError:
-                    writer.close()
-                    return
-
-                if not line:
-                    writer.close()
-                    return
-
-                request_parts = line.decode().split()
-                if len(request_parts) < 2:
-                    writer.close()
-                    return
-
-                path = request_parts[1]
-
-                # Drain headers
-                try:
-                    while True:
-                        header = await asyncio.wait_for(reader.readline(), timeout=1.0)
-                        if header in (b"\r\n", b"\n", b""):
+                # Read headers robustly
+                header_data = b""
+                while True:
+                    try:
+                        line = await asyncio.wait_for(reader.readline(), timeout=5.0)
+                        if not line or line in (b"\r\n", b"\n"):
                             break
-                except asyncio.TimeoutError:
-                    pass
+                        header_data += line
+                    except asyncio.TimeoutError:
+                        break
+
+                if not header_data:
+                    writer.close()  # Added writer.close() here for consistency with original logic
+                    return
+
+                try:
+                    request_line = header_data.decode("utf-8").splitlines()[0]
+                    parts = request_line.split()
+                    if len(parts) < 2:
+                        writer.close()  # Added writer.close() here for consistency with original logic
+                        return
+                    path = parts[1]
+                except (IndexError, UnicodeDecodeError):
+                    writer.close()  # Added writer.close() here for consistency with original logic
+                    return
 
                 if path == "/metrics":
                     content = self.stats.to_prometheus()
@@ -388,20 +389,67 @@ class HoneypotServer:
                     }
                     content = json.dumps(status_data)
                     content_type = "application/json"
+                elif path.startswith("/logs"):
+                    log_base = Path(self.config.get("log_path", "var/log/cyanide")).resolve()
+                    requested_subpath = path.replace("/logs", "", 1).lstrip("/")
+                    target_path = (log_base / requested_subpath).resolve()
+
+                    # Security check: ensure target is within log_base
+                    if not str(target_path).startswith(str(log_base)):
+                        content = "403 Forbidden: Path traversal detected."
+                        content_type = "text/plain"
+                    elif not target_path.exists():
+                        content = f"404 Not Found: {requested_subpath}"
+                        content_type = "text/plain"
+                    elif target_path.is_dir():
+                        # Directory listing
+                        try:
+                            items = os.listdir(target_path)
+                            # Create a simple HTML listing
+                            html_lines = [f"<h1>Index of {path}</h1><ul>"]
+                            if requested_subpath:
+                                parent = "/".join(path.rstrip("/").split("/")[:-1])
+                                if not parent.startswith("/logs"):
+                                    parent = "/logs"
+                                html_lines.append(f'<li><a href="{parent}">..</a></li>')
+                            for item in sorted(items):
+                                item_path = os.path.join(path.rstrip("/"), item)
+                                html_lines.append(f'<li><a href="{item_path}">{item}</a></li>')
+                            html_lines.append("</ul>")
+                            content = "\n".join(html_lines)
+                            content_type = "text/html"
+                        except Exception as e:
+                            content = f"500 Internal Server Error: {e}"
+                            content_type = "text/plain"
+                    else:
+                        # File serving
+                        try:
+                            with open(target_path, "r", errors="ignore") as f:
+                                content = f.read()
+                            if target_path.suffix == ".json" or target_path.suffix == ".jsonl":
+                                content_type = "application/json"
+                            else:
+                                content_type = "text/plain"
+                        except Exception as e:
+                            content = f"500 Internal Server Error: {e}"
+                            content_type = "text/plain"
                 else:
-                    content = "Cyanide Honeypot Metrics Server. Use /metrics, /stats or /health."
+                    content = (
+                        "Cyanide Honeypot Metrics Server. Use /metrics, /stats, /health or /logs."
+                    )
                     content_type = "text/plain"
 
-                response = (
+                payload = content.encode("utf-8", "ignore") if isinstance(content, str) else content
+
+                response_header = (
                     f"HTTP/1.1 200 OK\r\n"
                     f"Content-Type: {content_type}\r\n"
-                    f"Content-Length: {len(content)}\r\n"
+                    f"Content-Length: {len(payload)}\r\n"
                     f"Connection: close\r\n"
                     f"\r\n"
-                    f"{content}"
                 ).encode()
 
-                writer.write(response)
+                writer.write(response_header + payload)
                 await writer.drain()
             except Exception as e:
                 self.logger.log_event(
@@ -671,6 +719,7 @@ class SSHServerFactory(asyncssh.SSHServer):
 
     def validate_password(self, username, password):
         success = self.honeypot.is_valid_user(username, password)
+        self.honeypot.stats.on_auth("ssh", self.src_ip, username, password, success)
         asyncio.create_task(
             self.honeypot.logger.log_event_async(
                 {
@@ -937,6 +986,7 @@ class SSHSession(asyncssh.SSHServerSession):
 
             # Traffic
             self.bytes_in += len(data)
+            self.honeypot.stats.on_traffic("in", len(data))
 
             if isinstance(data, bytes):
                 data = data.decode("utf-8", errors="ignore")
@@ -1031,6 +1081,7 @@ class SSHSession(asyncssh.SSHServerSession):
 
                 # Confusion Metric
                 if rc == 127:  # Command not found
+                    self.honeypot.stats.on_command_not_found(cmd)
                     asyncio.create_task(
                         self.honeypot.logger.log_event_async(
                             {
@@ -1046,11 +1097,13 @@ class SSHSession(asyncssh.SSHServerSession):
 
                 self.channel.write(response)
                 self.bytes_out += len(response)
+                self.honeypot.stats.on_traffic("out", len(response))
                 self._log_tty("OUT", response)
 
                 curr_prompt = self._get_prompt()
                 self.channel.write(curr_prompt)
                 self.bytes_out += len(curr_prompt)
+                self.honeypot.stats.on_traffic("out", len(curr_prompt))
                 self._log_tty("OUT", curr_prompt)
                 self._log_tty("IN", cmd + "\n")
 
@@ -1100,10 +1153,12 @@ class SSHSession(asyncssh.SSHServerSession):
         stdout, stderr, rc = await shell.execute(command)
 
         self.channel.write(stdout)
+        self.honeypot.stats.on_traffic("out", len(stdout))
         self.honeypot._log_tty(self, "OUT", stdout)
 
         if stderr:
             self.channel.write_stderr(stderr)
+            self.honeypot.stats.on_traffic("out", len(stderr))
             self.honeypot._log_tty(self, "OUT", stderr)
 
         self.channel.write_eof()
