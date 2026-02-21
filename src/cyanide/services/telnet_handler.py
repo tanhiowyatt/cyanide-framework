@@ -81,6 +81,33 @@ class TelnetHandler:
             asyncio.create_task(self.services.analytics.log_geoip(session_id, src_ip, "telnet"))
             self.stats.on_connect("telnet", src_ip)
 
+            # Create VFS early — we need it for /etc/issue banner and will reuse it for the shell
+            fs = self.server.get_filesystem(session_id, src_ip)
+
+            # --- /etc/issue pre-login banner (read from VFS, just like a real Linux host) ---
+            try:
+                from cyanide.vfs.nodes import File as VFSFile
+
+                hostname = self.config.get("hostname", "server")
+                issue_node = fs.get_node("/etc/issue")
+                if issue_node and isinstance(issue_node, VFSFile):
+                    raw = issue_node.content or ""
+                else:
+                    # Fallback: build from profile metadata
+                    profile = getattr(self.server, "profile", {}) or {}
+                    os_name = profile.get("os_name", "")
+                    raw = f"{os_name} \\n \\l\n" if os_name else ""
+                if raw:
+                    # Expand /etc/issue escape sequences: \n = hostname, \l = tty line
+                    raw = raw.replace("\\n", hostname).replace("\\l", "pts/0")
+                    banner = raw.replace("\n", "\r\n")
+                    if not banner.endswith("\r\n"):
+                        banner += "\r\n"
+                    writer.write(banner.encode())
+                    await writer.drain()
+            except Exception:
+                pass  # silently skip banner if unreadable
+
             # Simple auth
             writer.write(b"login: ")
             self.stats.on_traffic("out", len(b"login: "))
@@ -96,8 +123,7 @@ class TelnetHandler:
             self.stats.on_traffic("in", len(pass_data))
             password = pass_data.decode().strip()
 
-            # Auth Check (delegated back to server or we move is_valid_user to a service?)
-            # Server still holds users config for now.
+            # Auth Check
             success = self.server.is_valid_user(username, password)
             self.stats.on_auth("telnet", src_ip, username, password, success)
             await self.logger.log_event_async(
@@ -118,9 +144,7 @@ class TelnetHandler:
                 writer.close()
                 return
 
-            # Shell Setup
-            fs = self.server.get_filesystem(session_id, src_ip)
-
+            # Reuse the VFS created above for the shell session
             def quarantine_hook(f, c):
                 self.services.quarantine.save_file(f, c, session_id, src_ip)
 

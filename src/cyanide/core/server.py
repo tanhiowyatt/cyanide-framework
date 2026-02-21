@@ -27,7 +27,6 @@ from cyanide.vfs.provider import FakeFilesystem
 from .async_logger import AsyncLogger
 from .defaults import DEFAULT_METADATA
 from .fs_utils import resolve_fs_path, validate_fs_config
-from .sftp import CyanideSFTPServer
 from .stats import StatsManager
 from .telemetry import setup_telemetry
 from .vm_pool import VMPool
@@ -744,18 +743,7 @@ class SSHServerFactory(asyncssh.SSHServer):
         )
         return success
 
-    def sftp_factory(self, channel):
-        """Create SFTP server instance sharing the connection's filesystem."""
-
-        # Use conn_id for SFTP since it's pre-shell
-        def q_hook(f, c):
-            self.honeypot.save_quarantine_file(f, c, "sftp_" + self.conn_id, self.src_ip)
-
-        return CyanideSFTPServer(channel, self.fs, q_hook)
-
     def subsystem_requested(self, subsystem):  # type: ignore
-        if subsystem == "sftp":
-            return self.sftp_factory
         return super().subsystem_requested(subsystem)  # type: ignore
 
     def session_requested(self):
@@ -1142,6 +1130,7 @@ class SSHSession(asyncssh.SSHServerSession):
                 client_version=self.client_version,
             )
         )
+
         asyncio.create_task(self._async_exec(command))
         return True
 

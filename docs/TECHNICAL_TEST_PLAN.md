@@ -16,11 +16,6 @@ This guide provides a granular breakdown of how to test every major internal mod
 - **Method**: `telnet localhost 2223`.
 - **Validation**: Pass standard character-at-a-time (IAC) options. Verify command echoing works without double characters.
 
-### 1.3 SFTP Support (`src/cyanide/core/sftp.py`)
-- **Test Case**: Remote file browsing.
-- **Method**: Use an SFTP client (e.g., FileZilla or `sftp -P 2222 root@localhost`).
-- **Validation**: List directories, attempt to upload/download a file. Verify that uploads are handled by the `QuarantineService`.
-
 ---
 
 ## 2. Virtual Filesystem (VFS) & Shell
@@ -73,7 +68,7 @@ This guide provides a granular breakdown of how to test every major internal mod
 
 ### 4.2 Quarantine Flow (`src/cyanide/services/quarantine.py`)
 - **Test Case**: Malware capture.
-- **Method**: Upload any file via SFTP or `scp`.
+- **Method**: Trigger downloads via `wget` or `curl`.
 - **Validation**: File must be moved to `var/lib/cyanide/quarantine/`, renamed with a UUID, and a VirusTotal scan task should be queued (if API key is present).
 
 ### 4.3 Audit Logging (`src/cyanide/logger.py`)
@@ -156,7 +151,7 @@ This guide provides a granular breakdown of how to test every major internal mod
 ### 10.2 VirusTotal Robustness (`src/cyanide/core/vt_scanner.py`)
 - **Test Case**: API Failure handling.
 - **Method**: Set an invalid API key and upload a file.
-- **Verify**: The server must log the API error but NOT crash or block the user's SFTP session. The file should still be quarantined locally.
+- **Verify**: The server must log the API error but NOT crash. The file should still be quarantined locally.
 
 ---
 

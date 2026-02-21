@@ -9,7 +9,6 @@ services:
     ports:
       - "2222:2222" # SSH
       - "2223:2223" # Telnet  
-      - "2525:2525" # SMTP 
       - "9090:9090" # Metrics / API
 
     volumes:

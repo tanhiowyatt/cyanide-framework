@@ -24,7 +24,7 @@ Cyanide wykorzystuje 3-warstwowy silnik do identyfikacji zagrożeń:
 *   **Nagrywanie TTY**: Pełny zapis sesji kompatybilny z `scriptreplay`.
 *   **Logi JSON**: Szczegółowe zdarzenia dla ELK/Splunk.
 *   **Biometria Klawiatury**: Analiza rytmu pisania.
-*   **Kwarantanna**: Automatyczna izolacja pobranego malware (`wget`, `scp`).
+*   **Kwarantanna**: Automatyczna izolacja pobranego malware (`wget`).
 *   **VirusTotal**: Automatyczne skanowanie plików w kwarantannie.
 
 ---

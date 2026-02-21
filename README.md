@@ -32,7 +32,7 @@ Cyanide employs a 3-layer detection engine to identify malicious intent:
 *   **TTY Recording**: Full session replay compatible with `scriptreplay` (timing + data).
 *   **JSON Structured Logs**: Detailed events for ELK/Splunk integration.
 *   **Keystroke Biometrics**: Typing rhythm analysis.
-*   **Quarantine**: Automatic isolation of downloaded malware (`wget`, `scp`).
+*   **Quarantine**: Automatic isolation of downloaded malware (`wget`).
 *   **VirusTotal Integration**: Automatic scanning of quarantined files.
 
 ---

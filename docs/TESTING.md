@@ -66,7 +66,7 @@ For a granular breakdown of how to test every internal module (ML, VFS, Security
 ### 5.5 Security & Forensics
 - **Honeytokens**: `cat /etc/shadow` (Check `var/log/cyanide/cyanide.log` for critical alerts).
 - **ML Detection**: Run an anomaly (e.g., base64 encoded strings) and verify the score in logs.
-- **Quarantine**: `scp -P 2222 payload.exe root@127.0.0.1:/tmp/` (Verify file is moved to `var/lib/cyanide/quarantine/`).
+- **Quarantine**: Trigger a download via `wget` (Verify file is moved to `var/lib/cyanide/quarantine/`).
 
 ### 5.6 Operational
 - **Metrics**: Visit `http://localhost:9090/metrics`.
