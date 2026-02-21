@@ -121,8 +121,8 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
-                "w": 24,
+                "h": 4,
+                "w": 8,
                 "x": 0,
                 "y": 8
             },
@@ -145,6 +145,197 @@
                 {
                     "expr": "cyanide_malicious_files_total",
                     "refId": "A"
+                }
+            ]
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 8,
+                "y": 8
+            },
+            "id": 4,
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "title": "Unique Attackers",
+            "type": "stat",
+            "targets": [
+                {
+                    "expr": "cyanide_unique_attackers_total",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 16,
+                "y": 8
+            },
+            "id": 5,
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "title": "Command Not Found",
+            "type": "stat",
+            "targets": [
+                {
+                    "expr": "cyanide_command_not_found_total",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 12
+            },
+            "id": 6,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            },
+            "title": "Authentication Activity",
+            "type": "timeseries",
+            "targets": [
+                {
+                    "expr": "rate(cyanide_auth_success_total[5m])",
+                    "legendFormat": "Success",
+                    "refId": "A"
+                },
+                {
+                    "expr": "rate(cyanide_auth_failures_total[5m])",
+                    "legendFormat": "Failure",
+                    "refId": "B"
+                }
+            ]
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 12
+            },
+            "id": 7,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            },
+            "title": "File Operations",
+            "type": "timeseries",
+            "targets": [
+                {
+                    "expr": "rate(cyanide_file_ops_total[5m])",
+                    "legendFormat": "{{op}}",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "decbytes",
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 20
+            },
+            "id": 8,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            },
+            "title": "Traffic Throughput",
+            "type": "timeseries",
+            "targets": [
+                {
+                    "expr": "rate(cyanide_traffic_bytes_in_total[5m])",
+                    "legendFormat": "Bytes In",
+                    "refId": "A"
+                },
+                {
+                    "expr": "rate(cyanide_traffic_bytes_out_total[5m])",
+                    "legendFormat": "Bytes Out",
+                    "refId": "B"
                 }
             ]
         }

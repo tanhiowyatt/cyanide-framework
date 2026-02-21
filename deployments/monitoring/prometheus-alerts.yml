@@ -27,3 +27,30 @@ groups:
         annotations:
           summary: "Honeypot session surge on {{ $labels.instance }}"
           description: "Connection rate is higher than 2 per second for 5 minutes."
+
+      - alert: BruteForceAttempt
+        expr: rate(cyanide_auth_failures_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Brute force attempt detected on {{ $labels.instance }}"
+          description: "Authentication failure rate is higher than 1 per second."
+
+      - alert: ExcessiveFileOps
+        expr: rate(cyanide_file_ops_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Excessive file operations on {{ $labels.instance }}"
+          description: "File operation rate is higher than 10 per second, possible mass deletion or data dumping."
+
+      - alert: CommandConfusionSpike
+        expr: rate(cyanide_command_not_found_total[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Spike in unknown commands on {{ $labels.instance }}"
+          description: "Attackers are running many commands that the honeypot doesn't recognize."
