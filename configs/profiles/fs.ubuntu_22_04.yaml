@@ -735,9 +735,7 @@ children:
     type: file
     perm: -rw-r--r--
     content: 'root:x:0:0:root:/root:/bin/bash
-
       admin:x:1000:1000:admin:/home/admin:/bin/bash
-
       '
   - name: shadow
     type: file
@@ -745,29 +743,79 @@ children:
     owner: root
     group: shadow
     content: 'root:$6$.....:19000:0:99999:7:::
-
       admin:$6$.....:19000:0:99999:7:::
-
       '
   - name: hostname
     type: file
     perm: -rw-r--r--
-    content: 'server01
-
+    content: 'ubuntu-server
       '
   - name: hosts
     type: file
     perm: -rw-r--r--
     content: '127.0.0.1 localhost
-
-      127.0.1.1 server01
-
+      127.0.1.1 ubuntu-server
       '
+  - name: os-release
+    type: file
+    perm: -rw-r--r--
+    content: |
+      PRETTY_NAME="Ubuntu 22.04.3 LTS"
+      NAME="Ubuntu"
+      VERSION_ID="22.04"
+      VERSION="22.04.3 LTS (Jammy Jellyfish)"
+      ID=ubuntu
+      ID_LIKE=debian
+      HOME_URL="https://www.ubuntu.com/"
+      SUPPORT_URL="https://help.ubuntu.com/"
+      BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+      PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+      UBUNTU_CODENAME=jammy
+  - name: lsb-release
+    type: file
+    perm: -rw-r--r--
+    content: |
+      DISTRIB_ID=Ubuntu
+      DISTRIB_RELEASE=22.04
+      DISTRIB_CODENAME=jammy
+      DISTRIB_DESCRIPTION="Ubuntu 22.04.3 LTS"
+  - name: apt
+    type: directory
+    perm: drwxr-xr-x
+    children:
+    - name: sources.list
+      type: file
+      perm: -rw-r--r--
+      content: |
+        deb http://archive.ubuntu.com/ubuntu jammy main restricted
+        deb http://archive.ubuntu.com/ubuntu jammy-updates main restricted
+        deb http://archive.ubuntu.com/ubuntu jammy universe
+        deb http://archive.ubuntu.com/ubuntu jammy-updates universe
+        deb http://archive.ubuntu.com/ubuntu jammy multiverse
+        deb http://archive.ubuntu.com/ubuntu jammy-updates multiverse
+        deb http://archive.ubuntu.com/ubuntu jammy-backports main restricted universe multiverse
+        deb http://security.ubuntu.com/ubuntu jammy-security main restricted
+        deb http://security.ubuntu.com/ubuntu jammy-security universe
+        deb http://security.ubuntu.com/ubuntu jammy-security multiverse
+  - name: issue
+    type: file
+    perm: -rw-r--r--
+    content: |
+      Ubuntu 22.04.3 LTS \n \l
+  - name: network
+    type: directory
+    perm: drwxr-xr-x
+    children:
+    - name: interfaces
+      type: file
+      perm: -rw-r--r--
+      content: |
+        auto lo
+        iface lo inet loopback
   - name: detect_me
     type: file
     perm: -rw-r--r--
     content: 'If you are reading this, you are in a honeypot!
-
       '
 - name: home
   type: directory
@@ -1013,7 +1061,101 @@ children:
 - name: proc
   type: directory
   perm: dr-xr-xr-x
-  children: []
+  children:
+  - name: cpuinfo
+    type: file
+    perm: -r--r--r--
+    content: |
+      processor	: 0
+      vendor_id	: GenuineIntel
+      cpu family	: 6
+      model		: 158
+      model name	: Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz
+      stepping	: 10
+      microcode	: 0xca
+      cpu MHz		: 3696.000
+      cache size	: 12288 KB
+      physical id	: 0
+      siblings	: 12
+      core id		: 0
+      cpu cores	: 6
+      apicid		: 0
+      initial apicid	: 0
+      fpu		: yes
+      fpu_exception	: yes
+      cpuid level	: 22
+      wp		: yes
+      flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+      bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+      bogomips	: 7392.00
+      clflush size	: 64
+      cache_alignment	: 64
+      address sizes	: 39 bits physical, 48 bits virtual
+      power management:
+  - name: meminfo
+    type: file
+    perm: -r--r--r--
+    content: |
+      MemTotal:        8144344 kB
+      MemFree:         4213456 kB
+      MemAvailable:    6123456 kB
+      Buffers:          123456 kB
+      Cached:          1876544 kB
+      SwapCached:            0 kB
+      Active:          2134567 kB
+      Inactive:        1234567 kB
+      Active(anon):     987654 kB
+      Inactive(anon):    12345 kB
+      Active(file):    1146913 kB
+      Inactive(file):  1222222 kB
+      Unevictable:           0 kB
+      Mlocked:               0 kB
+      SwapTotal:       2097148 kB
+      SwapFree:        2097148 kB
+      Dirty:                24 kB
+      Writeback:             0 kB
+      AnonPages:        999999 kB
+      Mapped:           234567 kB
+      Shmem:             12345 kB
+      Slab:             234567 kB
+      SReclaimable:     187654 kB
+      SUnreclaim:        46913 kB
+      KernelStack:       12345 kB
+      PageTables:        23456 kB
+      NFS_Unstable:          0 kB
+      Bounce:                0 kB
+      WritebackTmp:          0 kB
+      CommitLimit:     6169320 kB
+      Committed_AS:    3456789 kB
+      VmallocTotal:   34359738367 kB
+      VmallocUsed:           0 kB
+      VmallocChunk:          0 kB
+      Percpu:             4096 kB
+      HardwareCorrupted:     0 kB
+      AnonHugePages:         0 kB
+      ShmemHugePages:        0 kB
+      ShmemPmdMapped:        0 kB
+      FileHugePages:         0 kB
+      FilePmdMapped:         0 kB
+      HugePages_Total:       0
+      HugePages_Free:        0
+      HugePages_Rsvd:        0
+      HugePages_Surp:        0
+      Hugepagesize:       2048 kB
+      Hugetlb:               0 kB
+      DirectMap4k:      234567 kB
+      DirectMap2M:     5678912 kB
+      DirectMap1G:     3145728 kB
+  - name: version
+    type: file
+    perm: -r--r--r--
+    content: |
+      Linux version 5.15.0-76-generic (buildd@lcy02-amd64-015) (gcc (Ubuntu 11.3.0-1ubuntu1~22.04.1) 11.3.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #81-Ubuntu SMP Wed Jun 14 14:23:44 UTC 2023
+  - name: uptime
+    type: file
+    perm: -r--r--r--
+    content: |
+      12345.67 98765.43
 - name: root
   type: directory
   perm: drwx------
@@ -1593,6 +1735,18 @@ children:
       group: root
       content: ''
     - name: ifconfig
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: apt
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: dpkg
       type: file
       perm: -rwxr-xr-x
       owner: root

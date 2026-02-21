@@ -727,9 +727,7 @@ children:
     type: file
     perm: -rw-r--r--
     content: 'root:x:0:0:root:/root:/bin/bash
-
       admin:x:1000:1000:admin:/home/admin:/bin/bash
-
       '
   - name: shadow
     type: file
@@ -737,29 +735,56 @@ children:
     owner: root
     group: shadow
     content: 'root:$6$.....:19000:0:99999:7:::
-
       admin:$6$.....:19000:0:99999:7:::
-
       '
   - name: hostname
     type: file
     perm: -rw-r--r--
-    content: 'server01
-
+    content: 'debian-server
       '
   - name: hosts
     type: file
     perm: -rw-r--r--
     content: '127.0.0.1 localhost
-
-      127.0.1.1 server01
-
+      127.0.1.1 debian-server
       '
+  - name: debian_version
+    type: file
+    perm: -rw-r--r--
+    content: |
+      11.7
+  - name: os-release
+    type: file
+    perm: -rw-r--r--
+    content: |
+      PRETTY_NAME="Debian GNU/Linux 11 (bullseye)"
+      NAME="Debian GNU/Linux"
+      VERSION_ID="11"
+      VERSION="11 (bullseye)"
+      ID=debian
+      HOME_URL="https://www.debian.org/"
+      SUPPORT_URL="https://www.debian.org/support"
+      BUG_REPORT_URL="https://bugs.debian.org/"
+  - name: apt
+    type: directory
+    perm: drwxr-xr-x
+    children:
+    - name: sources.list
+      type: file
+      perm: -rw-r--r--
+      content: |
+        deb http://deb.debian.org/debian bullseye main
+        deb http://security.debian.org/debian-security bullseye-security main
+        deb http://deb.debian.org/debian bullseye-updates main
+  - name: issue
+    type: file
+    perm: -rw-r--r--
+    content: |
+      Debian GNU/Linux 11 \n \l
   - name: detect_me
     type: file
     perm: -rw-r--r--
     content: 'If you are reading this, you are in a honeypot!
-
       '
 - name: home
   type: directory
@@ -1005,7 +1030,101 @@ children:
 - name: proc
   type: directory
   perm: dr-xr-xr-x
-  children: []
+  children:
+  - name: cpuinfo
+    type: file
+    perm: -r--r--r--
+    content: |
+      processor	: 0
+      vendor_id	: GenuineIntel
+      cpu family	: 6
+      model		: 85
+      model name	: Intel(R) Xeon(R) Platinum 8171M CPU @ 2.60GHz
+      stepping	: 4
+      microcode	: 0xffffffff
+      cpu MHz		: 2593.905
+      cache size	: 36608 KB
+      physical id	: 0
+      siblings	: 1
+      core id		: 0
+      cpu cores	: 1
+      apicid		: 0
+      initial apicid	: 0
+      fpu		: yes
+      fpu_exception	: yes
+      cpuid level	: 22
+      wp		: yes
+      flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti fsgsbase bmi1 avx2 smep bmi2 erms invpcid xsaveopt md_clear
+      bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit
+      bogomips	: 5187.81
+      clflush size	: 64
+      cache_alignment	: 64
+      address sizes	: 46 bits physical, 48 bits virtual
+      power management:
+  - name: meminfo
+    type: file
+    perm: -r--r--r--
+    content: |
+      MemTotal:        4026344 kB
+      MemFree:         2123456 kB
+      MemAvailable:    3212345 kB
+      Buffers:           87654 kB
+      Cached:          1234567 kB
+      SwapCached:            0 kB
+      Active:          1234567 kB
+      Inactive:         876543 kB
+      Active(anon):     876543 kB
+      Inactive(anon):     1234 kB
+      Active(file):     358024 kB
+      Inactive(file):   875309 kB
+      Unevictable:           0 kB
+      Mlocked:               0 kB
+      SwapTotal:       4194300 kB
+      SwapFree:        4194300 kB
+      Dirty:                32 kB
+      Writeback:             0 kB
+      AnonPages:        876543 kB
+      Mapped:           234567 kB
+      Shmem:              1234 kB
+      Slab:             123456 kB
+      SReclaimable:      87654 kB
+      SUnreclaim:        35802 kB
+      KernelStack:       12288 kB
+      PageTables:        12345 kB
+      NFS_Unstable:          0 kB
+      Bounce:                0 kB
+      WritebackTmp:          0 kB
+      CommitLimit:     6207472 kB
+      Committed_AS:    1234567 kB
+      VmallocTotal:   34359738367 kB
+      VmallocUsed:           0 kB
+      VmallocChunk:          0 kB
+      Percpu:             4096 kB
+      HardwareCorrupted:     0 kB
+      AnonHugePages:         0 kB
+      ShmemHugePages:        0 kB
+      ShmemPmdMapped:        0 kB
+      FileHugePages:         0 kB
+      FilePmdMapped:         0 kB
+      HugePages_Total:       0
+      HugePages_Free:        0
+      HugePages_Rsvd:        0
+      HugePages_Surp:        0
+      Hugepagesize:       2048 kB
+      Hugetlb:               0 kB
+      DirectMap4k:      234567 kB
+      DirectMap2M:     3791872 kB
+      DirectMap1G:           0 kB
+  - name: version
+    type: file
+    perm: -r--r--r--
+    content: |
+      Linux version 5.10.0-23-amd64 (debian-kernel@lists.debian.org) (gcc (Debian 10.2.1-6) 10.2.1 20210110) #1 SMP Debian 5.10.179-1 (2023-05-12)
+  - name: uptime
+    type: file
+    perm: -r--r--r--
+    content: |
+      98765.43 34567.89
 - name: root
   type: directory
   perm: drwx------
@@ -1585,6 +1704,18 @@ children:
       group: root
       content: ''
     - name: ifconfig
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: apt
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: dpkg
       type: file
       perm: -rwxr-xr-x
       owner: root

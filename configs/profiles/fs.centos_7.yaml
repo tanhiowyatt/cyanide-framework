@@ -725,9 +725,7 @@ children:
     type: file
     perm: -rw-r--r--
     content: 'root:x:0:0:root:/root:/bin/bash
-
       admin:x:1000:1000:admin:/home/admin:/bin/bash
-
       '
   - name: shadow
     type: file
@@ -735,29 +733,76 @@ children:
     owner: root
     group: shadow
     content: 'root:$6$.....:19000:0:99999:7:::
-
       admin:$6$.....:19000:0:99999:7:::
-
       '
   - name: hostname
     type: file
     perm: -rw-r--r--
-    content: 'server01
-
+    content: 'centos-server
       '
   - name: hosts
     type: file
     perm: -rw-r--r--
     content: '127.0.0.1 localhost
-
-      127.0.1.1 server01
-
+      127.0.1.1 centos-server
       '
+  - name: centos-release
+    type: file
+    perm: -rw-r--r--
+    content: |
+      CentOS Linux release 7.9.2009 (Core)
+  - name: redhat-release
+    type: file
+    perm: -rw-r--r--
+    content: |
+      CentOS Linux release 7.9.2009 (Core)
+  - name: os-release
+    type: file
+    perm: -rw-r--r--
+    content: |
+      NAME="CentOS Linux"
+      VERSION="7 (Core)"
+      ID="centos"
+      ID_LIKE="rhel fedora"
+      VERSION_ID="7"
+      PRETTY_NAME="CentOS Linux 7 (Core)"
+      ANSI_COLOR="0;31"
+      CPE_NAME="cpe:/o:centos:centos:7"
+      HOME_URL="https://www.centos.org/"
+      BUG_REPORT_URL="https://bugs.centos.org/"
+
+      CENTOS_MANTISBT_PROJECT="CentOS-7"
+      CENTOS_MANTISBT_PROJECT_VERSION="7"
+      REDHAT_SUPPORT_PRODUCT="centos"
+      REDHAT_SUPPORT_PRODUCT_VERSION="7"
+  - name: yum.repos.d
+    type: directory
+    perm: drwxr-xr-x
+    children:
+    - name: CentOS-Base.repo
+      type: file
+      perm: -rw-r--r--
+      content: |
+        [base]
+        name=CentOS-$releasever - Base
+        mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os&infra=$infra
+        #baseurl=http://mirror.centos.org/centos/$releasever/os/$basearch/
+        gpgcheck=1
+        gpgkey=file:///etc/pki/tls/certs/RPM-GPG-KEY-CentOS-7
+  - name: sysconfig
+    type: directory
+    perm: drwxr-xr-x
+    children:
+    - name: network
+      type: file
+      perm: -rw-r--r--
+      content: |
+        NETWORKING=yes
+        HOSTNAME=centos-server
   - name: detect_me
     type: file
     perm: -rw-r--r--
     content: 'If you are reading this, you are in a honeypot!
-
       '
 - name: home
   type: directory
@@ -1003,7 +1048,101 @@ children:
 - name: proc
   type: directory
   perm: dr-xr-xr-x
-  children: []
+  children:
+  - name: cpuinfo
+    type: file
+    perm: -r--r--r--
+    content: |
+      processor	: 0
+      vendor_id	: GenuineIntel
+      cpu family	: 6
+      model		: 79
+      model name	: Intel(R) Xeon(R) CPU E5-2673 v4 @ 2.30GHz
+      stepping	: 1
+      microcode	: 0xffffffff
+      cpu MHz		: 2294.686
+      cache size	: 51200 KB
+      physical id	: 0
+      siblings	: 1
+      core id		: 0
+      cpu cores	: 1
+      apicid		: 0
+      initial apicid	: 0
+      fpu		: yes
+      fpu_exception	: yes
+      cpuid level	: 20
+      wp		: yes
+      flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti fsgsbase bmi1 avx2 smep bmi2 erms invpcid xsaveopt md_clear
+      bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit
+      bogomips	: 4589.37
+      clflush size	: 64
+      cache_alignment	: 64
+      address sizes	: 46 bits physical, 48 bits virtual
+      power management:
+  - name: meminfo
+    type: file
+    perm: -r--r--r--
+    content: |
+      MemTotal:        1882064 kB
+      MemFree:          123456 kB
+      MemAvailable:    1123456 kB
+      Buffers:           65432 kB
+      Cached:           876544 kB
+      SwapCached:            0 kB
+      Active:           876543 kB
+      Inactive:         543210 kB
+      Active(anon):     456789 kB
+      Inactive(anon):     1234 kB
+      Active(file):     419754 kB
+      Inactive(file):   541976 kB
+      Unevictable:           0 kB
+      Mlocked:               0 kB
+      SwapTotal:       1048572 kB
+      SwapFree:        1048572 kB
+      Dirty:                12 kB
+      Writeback:             0 kB
+      AnonPages:        458012 kB
+      Mapped:           123456 kB
+      Shmem:              1234 kB
+      Slab:             123456 kB
+      SReclaimable:      87654 kB
+      SUnreclaim:        35802 kB
+      KernelStack:        8192 kB
+      PageTables:        12345 kB
+      NFS_Unstable:          0 kB
+      Bounce:                0 kB
+      WritebackTmp:          0 kB
+      CommitLimit:     1989604 kB
+      Committed_AS:     987654 kB
+      VmallocTotal:   34359738367 kB
+      VmallocUsed:           0 kB
+      VmallocChunk:          0 kB
+      Percpu:             2048 kB
+      HardwareCorrupted:     0 kB
+      AnonHugePages:         0 kB
+      ShmemHugePages:        0 kB
+      ShmemPmdMapped:        0 kB
+      FileHugePages:         0 kB
+      FilePmdMapped:         0 kB
+      HugePages_Total:       0
+      HugePages_Free:        0
+      HugePages_Rsvd:        0
+      HugePages_Surp:        0
+      Hugepagesize:       2048 kB
+      Hugetlb:               0 kB
+      DirectMap4k:      123456 kB
+      DirectMap2M:     1456789 kB
+      DirectMap1G:      524288 kB
+  - name: version
+    type: file
+    perm: -r--r--r--
+    content: |
+      Linux version 3.10.0-1160.108.1.el7.x86_64 (mockbuild@kbuilder.bsys.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-44) (GCC) ) #1 SMP Thu Jan 25 16:17:31 UTC 2024
+  - name: uptime
+    type: file
+    perm: -r--r--r--
+    content: |
+      54321.09 98765.43
 - name: root
   type: directory
   perm: drwx------
@@ -1583,6 +1722,18 @@ children:
       group: root
       content: ''
     - name: ifconfig
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: yum
+      type: file
+      perm: -rwxr-xr-x
+      owner: root
+      group: root
+      content: ''
+    - name: rpm
       type: file
       perm: -rwxr-xr-x
       owner: root
