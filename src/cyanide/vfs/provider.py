@@ -1,302 +1,346 @@
 import datetime
+import fnmatch
+import os
 import posixpath
 import random
 import time
-from pathlib import PurePosixPath
-from typing import Optional
+import yaml
+from pathlib import Path, PurePosixPath
+from typing import Any, Dict, List, Optional, Set, Union
 
-from .nodes import Directory, DynamicFile, File, Node
+from jinja2 import Template
 
-# print(f"DEBUG: Loading FakeFilesystem from {__file__}")
+from .context import Context
+from .providers import PROVIDERS
+from .nodes import Node, File, Directory
+
+
+class VirtualFile(File):
+    """Proxy for a file node."""
+    def __init__(self, name: str, path: str, fs: 'FakeFilesystem', config: Dict[str, Any] = None):
+        super().__init__(name, **(config or {}))
+        self.path = path
+        self.fs = fs
+
+    @property
+    def content(self) -> str:
+        return self.fs.get_content(self.path)
+
+class VirtualDirectory(Directory):
+    """Proxy for a directory node."""
+    def __init__(self, name: str, path: str, fs: 'FakeFilesystem', config: Dict[str, Any] = None):
+        # Pass a lambda to nodes.Directory to lazy-load children
+        super().__init__(name, children_getter=lambda: self._lazy_children(), **(config or {}))
+        self.path = path
+        self.fs = fs
+
+    def _lazy_children(self) -> Dict[str, Node]:
+        """Lazy-load children as needed by ls."""
+        names = self.fs.list_dir(self.path)
+        result = {}
+        for name in names:
+            child_path = posixpath.join(self.path, name)
+            node = self.fs.get_node(child_path)
+            if node:
+                result[name] = node
+        return result
+
+    def get_child(self, name: str) -> Optional[Node]:
+        return self.children.get(name)
 
 
 class FakeFilesystem:
-    """Simulated Linux filesystem for honeypot.
+    """Modern Simulated Linux filesystem using Template + Context model."""
 
-    Provides a fake directory structure with pre-populated files and directories
-    that mimic a realistic Linux system. Used by ShellEmulator for file operations.
-    """
-
-    def __init__(self, root=None, audit_callback=None, profile=None, stats=None):
-        """Initialize fake filesystem with realistic directory structure and files."""
-        self.root = root or Directory("/")
+    def __init__(self, os_profile: str = None, root_dir: str = "/app/configs/profiles", audit_callback=None, stats=None):
+        self.root_dir = Path(root_dir)
         self.audit_callback = audit_callback
-        self.profile = profile
         self.stats = stats
-        self._init_fs()
+        
+        self.os_profile = os_profile or os.getenv("OS_PROFILE", "ubuntu")
+        self.profile_path = self.root_dir / self.os_profile
+        
+        self.context: Optional[Context] = None
+        self.dynamic_files: Dict[str, Any] = {}
+        self.static_manifest: Dict[str, Any] = {}
+        self.pattern_manifest: List[tuple[str, Dict[str, Any]]] = []
+        
+        # Memory Layer (Writes during session)
+        self.memory_overlay: Dict[str, Dict[str, Any]] = {}
+        self.deleted_paths: Set[str] = set()
 
-    def _init_fs(self):
-        """Populate filesystem with dynamic/metadata files.
+        self._load_profile()
 
-        Injects magic files like /proc/version and /etc/issue if they are defined
-        in the profile metadata but missing from the loaded YAML structure.
-        """
-        if not self.profile:
-            return
+    def _load_profile(self):
+        """Load profile configuration."""
+        base_file = self.profile_path / "base.yaml"
+        if not base_file.exists():
+            # Fallback to current directory for local tests/dev
+            self.profile_path = Path("configs/profiles") / self.os_profile
+            base_file = self.profile_path / "base.yaml"
+            
+        if not base_file.exists():
+            raise FileNotFoundError(f"Base config not found for profile: {self.os_profile}")
 
-        # --- 1. /proc/version ---
-        if "proc_version" in self.profile:
-            if not self.exists("/proc/version"):
-                self.mkdir_p("/proc")
-                self.mkfile("/proc/version", content=self.profile["proc_version"])
+        with open(base_file, "r") as f:
+            base_data = yaml.safe_load(f)
+            
+        meta = base_data.get("metadata", {})
+        self.context = Context(**meta)
+        self.dynamic_files = base_data.get("dynamic_files", {})
 
-        # --- 2. /etc/issue ---
-        if "etc_issue" in self.profile:
-            if not self.exists("/etc/issue"):
-                self.mkdir_p("/etc")
-                self.mkfile("/etc/issue", content=self.profile["etc_issue"])
-        elif "os_name" in self.profile and not self.exists("/etc/issue"):
-            self.mkdir_p("/etc")
-            self.mkfile("/etc/issue", content=f"{self.profile['os_name']} \\n \\l\n")
-
-        # --- 3. /etc/os-release (enriched generation) ---
-        if "os_id" in self.profile or "os_name" in self.profile:
-            self.mkdir_p("/etc")
-            lines = []
-
-            # Use os_pretty_name or fall back to os_name
-            pretty_name = self.profile.get("os_pretty_name", self.profile.get("os_name", "Linux"))
-            lines.append(f'PRETTY_NAME="{pretty_name}"')
-
-            # Name
-            name = self.profile.get("os_name", "Linux")
-            lines.append(f'NAME="{name}"')
-
-            # ID
-            os_id = self.profile.get("os_id", name.lower().split()[0])
-            lines.append(f"ID={os_id}")
-
-            # ID_LIKE
-            if "os_id_like" in self.profile:
-                lines.append(f'ID_LIKE="{self.profile["os_id_like"]}"')
-
-            # VERSION_ID
-            if "os_version_id" in self.profile:
-                lines.append(f'VERSION_ID="{self.profile["os_version_id"]}"')
-
-            # VERSION
-            if "os_version" in self.profile:
-                lines.append(f'VERSION="{self.profile["os_version"]}"')
-
-            # ANSI_COLOR
-            if "os_ansi_color" in self.profile:
-                lines.append(f'ANSI_COLOR="{self.profile["os_ansi_color"]}"')
-
-            content = "\n".join(lines) + "\n"
-            self.mkfile("/etc/os-release", content=content)
-
-        # --- 4. /proc dynamic files ---
-        self._init_proc_files()
-
-        # --- 5. Set historical timestamps if install_date is present (at the end to cover dynamic files) ---
-        install_date_str = self.profile.get("install_date")
-        if install_date_str:
-            try:
-                # Support ISO format
-                base_time = datetime.datetime.fromisoformat(install_date_str.replace("Z", "+00:00"))
-                self._apply_historical_timestamps(self.root, base_time)
-            except Exception:
-                pass
-
-    def _apply_historical_timestamps(self, node: Node, base_time: datetime.datetime):
-        """Recursively apply historical timestamps to nodes."""
-        # Random offset to look realistic (e.g., +/- 30 days around install date for system files)
-        # But directories and core files should be close to base_time.
-        offset_seconds = random.randint(-86400 * 5, 86400 * 30)  # Mostly after install
-        node.mtime = base_time + datetime.timedelta(seconds=offset_seconds)
-
-        if isinstance(node, Directory):
-            for child in node.children.values():
-                self._apply_historical_timestamps(child, base_time)
-
-    def _init_proc_files(self):
-        """Initialize dynamic /proc files."""
-        self.mkdir_p("/proc")
-
-        # /proc/uptime
-        start_time = time.time() - random.randint(3600, 86400 * 30)  # Random uptime 1h to 30d
-
-        def gen_uptime():
-            uptime_sec = time.time() - start_time
-            idle_sec = uptime_sec * 0.9  # Fake idle time
-            return f"{uptime_sec:.2f} {idle_sec:.2f}\n"
-
-        # /proc/meminfo (Simplified)
-        total_mem = random.choice([4096, 8192, 16384]) * 1024  # KB
-
-        def gen_meminfo():
-            free_mem = int(total_mem * random.uniform(0.1, 0.6))
-            buffers = int(total_mem * 0.05)
-            cached = int(total_mem * 0.2)
-            return (
-                f"MemTotal:       {total_mem} kB\n"
-                f"MemFree:        {free_mem} kB\n"
-                f"MemAvailable:   {free_mem + cached} kB\n"
-                f"Buffers:        {buffers} kB\n"
-                f"Cached:         {cached} kB\n"
-            )
-
-        proc_dir = self.root.get_child("proc")
-        if isinstance(proc_dir, Directory):
-            proc_dir.add_child(DynamicFile("uptime", gen_uptime))
-            proc_dir.add_child(DynamicFile("meminfo", gen_meminfo))
-
-    def mkdir_p(self, path: str, owner="root", group="root", perm="drwxr-xr-x"):
-        """Create a directory and all its parents (public)."""
-        parts = [p for p in path.split("/") if p]
-        current = self.root
-        for part in parts:
-            child = current.get_child(part)
-            if not child:
-                child = Directory(part, parent=current, perm=perm, owner=owner, group=group)
-                current.add_child(child)
-            current = child
-        return current
-
-    def mkfile(self, path: str, content="", owner="root", group="root", perm="-rw-r--r--"):
-        """Create a file at the specified path (public)."""
-        parent_path = str(PurePosixPath(path).parent)
-        filename = PurePosixPath(path).name
-        parent = self.get_node(parent_path)
-        if parent and isinstance(parent, Directory):
-            f = File(filename, parent=parent, content=content, owner=owner, group=group, perm=perm)
-            parent.add_child(f)
-            if self.stats:
-                self.stats.on_file_op("write", path)
-            return f
-        return None
-
-    def remove(self, path: str) -> bool:
-        """Remove a file or directory.
-
-        Args:
-            path: Path to remove.
-
-        Returns:
-            bool: True if successful, False if not found or permissions error (mocked).
-        """
-        resolved = self.resolve(path)
-        if resolved == "/":
-            return False  # Cannot remove root
-
-        parent_path = str(PurePosixPath(resolved).parent)
-        name = PurePosixPath(resolved).name
-
-        parent = self.get_node(parent_path)
-        if isinstance(parent, Directory):
-            # Check if it exists first
-            if parent.get_child(name):
-                # Audit
-                if self.audit_callback:
-                    self.audit_callback("delete", resolved)
-                if self.stats:
-                    self.stats.on_file_op("delete", resolved)
-                return parent.remove_child(name)
-        return False
+        static_file = self.profile_path / "static.yaml"
+        if static_file.exists():
+            with open(static_file, "r") as f:
+                static_data = yaml.safe_load(f) or {}
+                raw_static = static_data.get("static", {})
+                for path, config in raw_static.items():
+                    if "**" in path or "*" in path:
+                        self.pattern_manifest.append((path, config))
+                    else:
+                        self.static_manifest[self.resolve(path)] = config
 
     def get_node(self, path: str) -> Optional[Node]:
-        """Retrieve a node from the filesystem tree."""
-        resolved = self.resolve(path)
-        if resolved == "/":
-            return self.root
+        """Backward compatible node retrieval."""
+        path = self.resolve(path)
+        if path in self.deleted_paths:
+            return None
 
-        parts = [p for p in resolved.split("/") if p]
-        current = self.root
-        for part in parts:
-            if isinstance(current, Directory):
-                child = current.get_child(part)
-                if child:
-                    current = child
-                else:
-                    return None
-            else:
-                return None
-        return current
+        # 1. Check Memory Overlay
+        if path in self.memory_overlay:
+            config = self.memory_overlay[path]
+            return VirtualDirectory(os.path.basename(path), path, self, config) if config.get("type") == "dir" else VirtualFile(os.path.basename(path), path, self, config)
+
+        # 2. Check Static/Dynamic Manifests
+        if path in self.dynamic_files:
+            return VirtualFile(os.path.basename(path), path, self, self.dynamic_files[path])
+        if path in self.static_manifest:
+            config = self.static_manifest[path]
+            return VirtualFile(os.path.basename(path), path, self, config)
+
+        # 3. Check Patterns & Directory structure
+        if self.is_dir(path):
+            return VirtualDirectory(os.path.basename(path) or "/", path, self)
+        
+        if self.exists(path):
+            return VirtualFile(os.path.basename(path), path, self)
+
+        return None
 
     def exists(self, path: str) -> bool:
-        """Check if a path exists.
-
-        Args:
-            path: Path to check.
-
-        Returns:
-            bool: True if path exists, False otherwise.
-        """
-        return self.get_node(path) is not None
+        path = self.resolve(path)
+        if path in self.deleted_paths:
+            return False
+        if path == "/" or path in self.memory_overlay or path in self.dynamic_files or path in self.static_manifest:
+            return True
+        
+        # Patterns (Globs)
+        for pattern, config in self.pattern_manifest:
+            if fnmatch.fnmatch(path, pattern):
+                if "**" in pattern:
+                    base_pattern = pattern.split("**")[0].rstrip("/")
+                    rel_path = path[len(base_pattern):].lstrip("/")
+                    source = config.get("source")
+                    if source:
+                        return (self.profile_path.parent / source / rel_path).exists()
+                return True
+        
+        # Parent directories of any defined file
+        all_paths = list(self.dynamic_files.keys()) + list(self.static_manifest.keys()) + list(self.memory_overlay.keys())
+        for p in all_paths:
+            if p.startswith(path.rstrip("/") + "/"):
+                return True
+        return False
 
     def is_dir(self, path: str) -> bool:
-        """Check if path is a directory.
-
-        Args:
-            path: Path to check.
-
-        Returns:
-            bool: True if path refers to a directory.
-        """
-        node = self.get_node(path)
-        return isinstance(node, Directory)
-
+        path = self.resolve(path)
+        if path in self.deleted_paths:
+            return False
+        if path == "/":
+            return True
+        if path in self.memory_overlay:
+            return self.memory_overlay[path].get("type") == "dir"
+            
+        # Check patterns for directories
+        for pattern, config in self.pattern_manifest:
+            if fnmatch.fnmatch(path, pattern):
+                source = config.get("source")
+                if source:
+                    base_pattern = pattern.split("**")[0].rstrip("/")
+                    rel_path = path[len(base_pattern):].lstrip("/")
+                    full_path = self.profile_path.parent / source / rel_path
+                    return full_path.is_dir()
+        
+        # If it's a parent of any file, it's a dir
+        all_paths = list(self.dynamic_files.keys()) + list(self.static_manifest.keys()) + list(self.memory_overlay.keys())
+        prefix = path.rstrip("/") + "/"
+        for p in all_paths:
+            if p.startswith(prefix):
+                return True
+        return False
     def is_file(self, path: str) -> bool:
-        """Check if path is a file.
+        path = self.resolve(path)
+        if path in self.deleted_paths:
+            return False
+        if path in self.memory_overlay:
+            return self.memory_overlay[path].get("type") == "file"
+        if path in self.dynamic_files or path in self.static_manifest:
+            return True
+        for pattern, _ in self.pattern_manifest:
+            if fnmatch.fnmatch(path, pattern):
+                # If it matches a pattern and it's not a dir, it's a file (simplification)
+                return not self.is_dir(path)
+        return False
 
-        Args:
-            path: Path to check.
-
-        Returns:
-            bool: True if path refers to a file.
-        """
-        node = self.get_node(path)
-        return isinstance(node, File)
-
-    def list_dir(self, path: str) -> list:
-        """List contents of a directory.
-
-        Args:
-            path: Absolute path to directory.
-
-        Returns:
-            list: List of filenames/directory names in the directory.
-        """
-        node = self.get_node(path)
-        if isinstance(node, Directory):
-            return sorted(node.children.keys())
-        return []
+    def list_dir(self, path: str) -> List[str]:
+        path = self.resolve(path)
+        if path in self.deleted_paths or not self.is_dir(path):
+            return []
+            
+        contents = set()
+        prefix = path.rstrip("/") + "/"
+        
+        # 1. Memory and Manifest
+        all_paths = list(self.dynamic_files.keys()) + list(self.static_manifest.keys()) + list(self.memory_overlay.keys())
+        for p in all_paths:
+            if p.startswith(prefix) and p not in self.deleted_paths:
+                rel = p[len(prefix):].split("/")[0]
+                contents.add(rel)
+        
+        # 2. Root Mappings
+        for pattern, config in self.pattern_manifest:
+            if fnmatch.fnmatch(path, pattern) or fnmatch.fnmatch(path + "/", pattern):
+                source = config.get("source")
+                if source:
+                    base_pattern = pattern.split("**")[0].rstrip("/")
+                    rel_path = path[len(base_pattern):].lstrip("/")
+                    full_path = self.profile_path.parent / source / rel_path
+                    if full_path.is_dir():
+                        for item in full_path.iterdir():
+                            # Only add if not explicitly deleted in session
+                            item_path = posixpath.join(path, item.name)
+                            if item_path not in self.deleted_paths:
+                                contents.add(item.name)
+        
+        # Remove deleted items that might have been added by parent logic
+        return sorted([c for c in contents if posixpath.join(path, c) not in self.deleted_paths])
 
     def get_content(self, path: str) -> str:
-        """Get file content.
+        path = self.resolve(path)
+        if path in self.deleted_paths:
+            return ""
+        
+        if self.audit_callback:
+            self.audit_callback("read", path)
+        if self.stats:
+            self.stats.on_file_op("read", path)
 
-        Args:
-            path: Path to file.
+        # 1. Memory Overlay
+        if path in self.memory_overlay:
+            return self.memory_overlay[path].get("content", "")
 
-        Returns:
-            str: Content of the file, or empty string if not a file/not found.
-        """
-        node = self.get_node(path)
-        if isinstance(node, File):
-            if self.audit_callback:
-                self.audit_callback("read", path)
-            if self.stats:
-                self.stats.on_file_op("read", path)
-            return node.content
+        # 2. Dynamic Files
+        if path in self.dynamic_files:
+            config = self.dynamic_files[path]
+            provider = PROVIDERS.get(config.get("provider"))
+            if provider:
+                return provider(self.context, config.get("args", {}))
+            if "content" in config:
+                return self._render(config["content"])
+            return ""
+
+        # 3. Static Manifest
+        if path in self.static_manifest:
+            return self._process_node_content(path, self.static_manifest[path])
+
+        # 4. Pattern Mapping
+        for pattern, config in self.pattern_manifest:
+            if fnmatch.fnmatch(path, pattern):
+                return self._process_node_content(path, config, pattern)
+
         return ""
 
+    def mkfile(self, path: str, content="", owner="root", group="root", perm="-rw-r--r--"):
+        path = self.resolve(path)
+        self.memory_overlay[path] = {
+            "type": "file",
+            "content": content,
+            "owner": owner,
+            "group": group,
+            "perm": perm,
+            "mtime": datetime.datetime.now()
+        }
+        if path in self.deleted_paths:
+            self.deleted_paths.remove(path)
+        if self.stats:
+            self.stats.on_file_op("write", path)
+
+    def mkdir_p(self, path: str, owner="root", group="root", perm="drwxr-xr-x"):
+        path = self.resolve(path)
+        parts = [p for p in path.split("/") if p]
+        current = "/"
+        for part in parts:
+            current = posixpath.join(current, part)
+            if not self.exists(current) or self.is_file(current):
+                self.memory_overlay[current] = {
+                    "type": "dir",
+                    "owner": owner,
+                    "group": group,
+                    "perm": perm,
+                    "mtime": datetime.datetime.now()
+                }
+                if current in self.deleted_paths:
+                    self.deleted_paths.remove(current)
+        return True
+
+    def remove(self, path: str) -> bool:
+        path = self.resolve(path)
+        if not self.exists(path):
+            return False
+        
+        self.deleted_paths.add(path)
+        if path in self.memory_overlay:
+            del self.memory_overlay[path]
+            
+        if self.audit_callback:
+            self.audit_callback("delete", path)
+        if self.stats:
+            self.stats.on_file_op("delete", path)
+        return True
+
     def resolve(self, path: str) -> str:
-        """Normalize and resolve filesystem path.
-
-        Args:
-            path: Path to resolve (may contain .., ., //).
-
-        Returns:
-            str: Normalized absolute path.
-
-        Note:
-            Handles parent directory (..) and current directory (.) references.
-            Removes duplicate slashes and ensures proper path formatting.
-        """
-        # This is a simplified resolver
         if not path:
             return "/"
-        res = posixpath.normpath(str(PurePosixPath(path)))
-        if res.startswith("//") and not res.startswith("///"):
-            res = res[1:]
+        res = posixpath.normpath(path)
+        if not res.startswith("/"):
+            res = "/" + res
         return res
+
+    def _process_node_content(self, path: str, config: Dict[str, Any], matched_pattern: str = None) -> str:
+        if "content" in config:
+            return self._render(config["content"])
+        
+        source = config.get("source")
+        if source:
+            if matched_pattern and "**" in matched_pattern:
+                base_pattern = matched_pattern.split("**")[0].rstrip("/")
+                rel_path = path[len(base_pattern):].lstrip("/")
+                full_path = self.profile_path.parent / source / rel_path
+            else:
+                full_path = self.profile_path.parent / source
+                
+            if full_path.is_file():
+                try:
+                    with open(full_path, "r", errors="replace") as f:
+                        return f.read()
+                except Exception:
+                    return ""
+        return ""
+
+    def _render(self, content: str) -> str:
+        if not self.context:
+            return content
+        try:
+            return Template(content).render(**self.context.to_dict())
+        except Exception:
+            return content

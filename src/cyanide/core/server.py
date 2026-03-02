@@ -26,7 +26,6 @@ from cyanide.vfs.provider import FakeFilesystem
 
 from .async_logger import AsyncLogger
 from .defaults import DEFAULT_METADATA
-from .fs_utils import resolve_fs_path, validate_fs_config
 from .stats import StatsManager
 from .telemetry import setup_telemetry
 from .vm_pool import VMPool
@@ -100,43 +99,22 @@ class HoneypotServer:
 
         self.async_logger = AsyncLogger()
 
-        # OS Profile and Filesystem config
-        profile_name = config.get("os_profile", "ubuntu_22_04")
-
-        # Use new flexible resolution logic
-        self.fs_yaml_path = resolve_fs_path(profile_name)
-
-        # Derive real profile display name from resolved path (handles 'random' case)
-        if self.fs_yaml_path:
-            resolved_filename = Path(self.fs_yaml_path).stem  # e.g. "fs.ubuntu_22_04"
-            # Strip "fs." prefix if present
-            if resolved_filename.startswith("fs."):
-                resolved_filename = resolved_filename[3:]
-            self.resolved_profile_name = resolved_filename
-        else:
-            self.resolved_profile_name = profile_name
-
-        # Initial profile from fallback constants
-        self.profile = DEFAULT_METADATA.copy()
-
-        # Load metadata from YAML to ensure self.profile is accurate for banners/uname
-        if self.fs_yaml_path and os.path.exists(self.fs_yaml_path):
-            is_valid, err = validate_fs_config(Path(self.fs_yaml_path))
-            if not is_valid:
-                print(f"[!] Invalid filesystem config: {err}")
-                # Fallback to safe default? Or allow it to crash later?
-                # User requirement says "Provide clear error messages", which we did.
-
-            try:
-                import yaml
-
-                with open(self.fs_yaml_path, "r") as f:
-                    y_data = yaml.safe_load(f)
-                    if y_data and "metadata" in y_data:
-                        self.profile.update(y_data["metadata"])
-                        print(f"[*] Initialized profile from {self.fs_yaml_path} metadata")
-            except Exception as e:
-                print(f"[!] Error loading metadata from {self.fs_yaml_path}: {e}")
+        # OS Profile and VFS root
+        from .fs_utils import resolve_os_profile
+        self.os_profile = resolve_os_profile(config.get("os_profile", "ubuntu"))
+        self.vfs_root = config.get("vfs_root", "configs/profiles")
+        
+        # Initialize initial profile from VFS (lazy or explicitly here)
+        # We create a dummy FS to grab the context metadata for banners
+        try:
+            temp_fs = FakeFilesystem(os_profile=self.os_profile, root_dir=self.vfs_root)
+            self.profile = temp_fs.context.to_dict()
+            self.resolved_profile_name = self.os_profile
+            print(f"[*] Initialized VFS profile: {self.os_profile}")
+        except Exception as e:
+            print(f"[!] Error initializing VFS profile {self.os_profile}: {e}")
+            self.profile = DEFAULT_METADATA.copy()
+            self.resolved_profile_name = "ubuntu"
 
         self.users = config.get("users", [])
 
@@ -214,33 +192,21 @@ class HoneypotServer:
         def audit_hook(action, path):
             self._fs_audit_hook(action, path, session_id, src_ip)
 
-        if self.fs_yaml_path and os.path.isfile(self.fs_yaml_path):
-            try:
-                from cyanide.fs.yaml_fs import load_fs
-
-                root, metadata = load_fs(self.fs_yaml_path)
-                self.logger.log_event(
-                    session_id,
-                    "system_status",
-                    {"message": f"Loaded filesystem from {self.fs_yaml_path}"},
-                )
-
-                # If YAML has metadata, we can use it to override/set profile for this session
-                # or just use the server default. For consistency, we use YAML metadata if it matches.
-                current_profile = self.profile.copy()
-                if metadata:
-                    current_profile.update(metadata)
-
-                fs = FakeFilesystem(
-                    root=root, audit_callback=audit_hook, profile=current_profile, stats=self.stats
-                )
-                return fs
-            except Exception as e:
-                self.logger.log_event(
-                    session_id, "error", {"message": f"Error loading YAML FS: {e}"}
-                )
-                traceback.print_exc()
-        return FakeFilesystem(audit_callback=audit_hook, profile=self.profile, stats=self.stats)
+        try:
+            fs = FakeFilesystem(
+                os_profile=self.os_profile,
+                root_dir=self.vfs_root,
+                audit_callback=audit_hook,
+                stats=self.stats
+            )
+            return fs
+        except Exception as e:
+            self.logger.log_event(
+                session_id, "error", {"message": f"Error initializing new VFS: {e}"}
+            )
+            traceback.print_exc()
+            # Absolute fallback
+            return FakeFilesystem(audit_callback=audit_hook, stats=self.stats)
 
     async def _scan_and_log(
         self, filename: str, content: bytes, session_id="unknown", src_ip="unknown"

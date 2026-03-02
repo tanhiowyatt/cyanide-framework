@@ -37,58 +37,35 @@ Cyanide employs a 3-layer detection engine to identify malicious intent:
 
 ---
 
-## 🚀 Deployment
+## 📚 Documentation Suite
 
-**Cyanide is designed to be run as a containerized service.**
+For detailed technical guides, please refer to our specialized documentation:
 
-### 🐳 Docker Compose (Recommended)
-
-```bash
-# 1. Start the full stack (Honeypot + MailHog + Jaeger)
-docker-compose -f deployments/docker/docker-compose.yml up --build -d
-
-# 2. Monitor logs
-docker-compose -f deployments/docker/docker-compose.yml logs -f cyanide
-
-# 3. Stop
-docker-compose -f deployments/docker/docker-compose.yml down
-```
-
-### 🔧 Configuration
-
-Configuration is managed via **YAML** files in `configs/`:
-
-| File | Purpose |
-|------|---------|
-| `configs/app.yaml` | Main configuration (ports, timeouts, ML settings, enabling/disabling services). |
-| `configs/profiles/*.yaml` | OS Personalities. Defines the fake filesystem structure, file contents, and system metadata. |
-| `configs/fs.yaml` | (Optional) Custom filesystem template if you want to override the random profile selection. |
-
-**Environment Variables** in `docker-compose.yml` override `app.yaml` settings.
+| Document | Description |
+|----------|-------------|
+| 🏛️ [**Architecture**](docs/ARCHITECTURE.md) | Deep dive into the Engine, Shell Emulator, and VFS model. |
+| 🔧 [**Development**](docs/DEVELOPMENT.md) | Setup, testing protocols, and how to contribute code. |
+| 📊 [**Operations**](docs/OPERATIONS.md) | Logging, Monitoring, Forensics, and Replay tools. |
 
 ---
 
-## 🛠️ Management & Tools
+## 🚀 Quick Start
 
-Scripts located in `scripts/management/` help manage the honeypot:
+**Cyanide is designed to be run as a containerized service.**
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| **Stats** | `python3 scripts/management/stats.py` | View real-time uptime, session counts, and attacker IPs. |
-| **Replay** | `scriptreplay <timing> <log>` | Replay a recorded TTY session (files in `var/log/cyanide/tty/`). |
+```bash
+# 1. Start the full stack
+docker-compose -f deployments/docker/docker-compose.yml up --build -d
+
+# 2. Monitor attacker activity
+docker-compose -f deployments/docker/docker-compose.yml logs -f cyanide
+```
 
 ---
 
 ## 🕵️ Data & Forensics
 
-*   **Logs**: `var/log/cyanide/`
-    *   `cyanide-server.json`: System status, service lifecycle, and error logs.
-    *   `cyanide-fs.json`: Hacker interaction logs (commands, auth attempts, TTY sessions).
-    *   `cyanide-ml.json`: Machine Learning detection results and internal "thoughts".
-    *   `cyanide-stats.json`: Periodic snapshots of honeypot statistics.
-    *   `tty/<session_id>/`: Full recorded TTY session files.
-*   **Quarantine**: `var/lib/cyanide/quarantine/`
-    *   Downloaded malware and uploaded files.
+Attacker interactions are recorded in `var/log/cyanide/` as structured JSON events and full TTY session replays. See the [Operations Guide](docs/OPERATIONS.md) for more details.
 
 ---
 

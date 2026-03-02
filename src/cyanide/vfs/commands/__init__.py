@@ -54,6 +54,7 @@ from .systemctl import SystemctlCommand
 from .tail import TailCommand
 from .touch import TouchCommand
 from .uname import UnameCommand
+from .uptime import UptimeCommand
 from .visudo import VisudoCommand
 from .w import WCommand
 from .wget import WgetCommand
@@ -127,6 +128,7 @@ COMMAND_MAP = {
     "curl": CurlCommand,
     "wget": WgetCommand,
     "ping": PingCommand,
+    "uptime": UptimeCommand,
     "vi": EditorCommand,
     "vim": EditorCommand,
     "nano": EditorCommand,

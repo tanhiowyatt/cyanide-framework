@@ -1,0 +1,4 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+export PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+alias ls='ls --color=auto'
+alias ll='ls -alF'
