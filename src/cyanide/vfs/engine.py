@@ -9,8 +9,8 @@ import yaml
 from jinja2 import Template
 
 from .context import Context
-from .nodes import Directory, File, Node
 from .dynamic import PROVIDERS
+from .nodes import Directory, File, Node
 
 
 class VirtualFile(File):

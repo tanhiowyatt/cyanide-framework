@@ -4,7 +4,8 @@ Cyanide Emulated Commands
 Registry of all available shell commands and their respective implementations.
 """
 
-from .alias import AliasCommand
+from .alias import AliasCommand, UnaliasCommand
+from .apt import AptCommand
 from .awk import AwkCommand
 from .bash import BashCommand
 from .cat import CatCommand
@@ -14,6 +15,7 @@ from .cp import CpCommand
 from .crontab import CrontabCommand
 from .curl import CurlCommand
 from .doas import DoasCommand
+from .dpkg import DpkgCommand
 from .echo import EchoCommand
 from .editor import EditorCommand
 from .env import EnvCommand
@@ -47,6 +49,7 @@ from .python import PythonCommand
 from .rm import RmCommand
 from .rmdir import RmdirCommand
 from .route import RouteCommand
+from .rpm import RpmCommand
 from .ss import SsCommand
 from .su import SuCommand
 from .sudo import SudoCommand
@@ -60,6 +63,7 @@ from .w import WCommand
 from .wget import WgetCommand
 from .who import WhoCommand
 from .whoami import WhoamiCommand
+from .yum import YumCommand
 
 # Central command registry
 COMMAND_MAP = {
@@ -110,6 +114,14 @@ COMMAND_MAP = {
     "crontab": CrontabCommand,
     "free": FreeCommand,
     "alias": AliasCommand,
+    "unalias": UnaliasCommand,
+    # Package Managers
+    "apt": AptCommand,
+    "apt-get": AptCommand,
+    "dpkg": DpkgCommand,
+    "yum": YumCommand,
+    "dnf": YumCommand,
+    "rpm": RpmCommand,
     # Dev Tools
     "python": PythonCommand,
     "python3": PythonCommand,

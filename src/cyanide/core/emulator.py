@@ -44,6 +44,12 @@ class ShellEmulator:
         self.pending_input_callback = None
         self.pending_input_prompt = None
         self.history: list[str] = []
+        self.aliases: dict[str, str] = {
+            "l": "ls -CF",
+            "la": "ls -A",
+            "ll": "ls -alF",
+            "ls": "ls --color=auto",
+        }
 
         self._register_commands()
 
@@ -276,6 +282,19 @@ class ShellEmulator:
 
         cmd_name = args[0]
         params = args[1:]
+
+        if cmd_name in self.aliases:
+            # Simple alias replacement. We don't do full recursive resolution
+            # to avoid infinite loops, just a single expansion.
+            alias_val = self.aliases[cmd_name]
+            try:
+                alias_args = shlex.split(alias_val)
+                # Ensure alias isn't expanding to itself as the only token
+                if alias_args and alias_args[0] != cmd_name:
+                    cmd_name = alias_args[0]
+                    params = alias_args[1:] + params
+            except ValueError:
+                pass
 
         if cmd_name in self.commands:
             # All commands must be async now
