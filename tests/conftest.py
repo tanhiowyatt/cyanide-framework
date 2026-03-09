@@ -16,7 +16,7 @@ def mock_config():
     """Return a standard test configuration dictionary."""
     return {
         "logging": {"directory": "var/log/cyanide_test"},
-        "quarantine_path": "var/lib/cyanide/quarantine_test",
+        "quarantine_path": "var/quarantine_test",
         "quarantine_max_size_mb": 100,
         "os_profile": "custom",
         "custom_profile": {

@@ -35,7 +35,7 @@ rate_limit:
 honeypot:
   hostname: server01
   log_path: var/log/cyanide
-  quarantine_path: var/lib/cyanide/quarantine
+  quarantine_path: var/quarantine
   
 metrics:
   enabled: true
@@ -71,7 +71,7 @@ ssh:
 honeypot:
   hostname: server01
   log_path: var/log/cyanide
-  quarantine_path: var/lib/cyanide/quarantine
+  quarantine_path: var/quarantine
   
 server:
   max_sessions: 100

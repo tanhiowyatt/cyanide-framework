@@ -64,7 +64,7 @@ class CyanideConfig(BaseModel):
     hostname: str = "server01"
     log_path: str = "var/log/cyanide"
     fs_yaml: Optional[str] = None
-    quarantine_path: str = "var/lib/cyanide/quarantine"
+    quarantine_path: str = "var/quarantine"
     quarantine_max_size_mb: int = 500
     os_profile: str = "random"
     dns_cache_ttl: int = 60

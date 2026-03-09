@@ -370,14 +370,9 @@ async def main():
     dst_port = 2222
     listen_port = 2220
 
-    # Generate host key if not exists
-    if not os.path.exists("ssh_host_key"):
-        # Create a dummy key for testing efficiently without shell command
-        from asyncssh import generate_private_key
-
-        key = generate_private_key("ssh-rsa")
-        with open("ssh_host_key", "w") as f:
-            f.write(key.export_private_key().decode())
+    # Generate host key in memory instead of saving to disk
+    from asyncssh import generate_private_key
+    key = generate_private_key("ssh-rsa")
 
     print(f"Starting SSH Proxy on 0.0.0.0:{listen_port} -> {dst_host}:{dst_port}...")
 
@@ -389,7 +384,7 @@ async def main():
     def factory():
         return HoneypotSSHServer(dst_host, dst_port, fs)
 
-    await asyncssh.create_server(factory, "0.0.0.0", listen_port, server_host_keys=["ssh_host_key"])
+    await asyncssh.create_server(factory, "0.0.0.0", listen_port, server_host_keys=[key])
 
     await stop_event.wait()
 

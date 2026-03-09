@@ -79,7 +79,7 @@ def load_config(path: Path = Path("configs/app.yaml")):
         ),
         "log_path": "var/log/cyanide",
         "listen_ip": get_val("server", "host", "HOST", "0.0.0.0"),
-        "quarantine_path": "var/lib/cyanide/quarantine",
+        "quarantine_path": "var/quarantine",
         "os_profile": get_val("server", "os_profile", "OS_PROFILE", None)
         or get_val("vfs", "profile", "VFS_PROFILE", None)
         or os.getenv("CYANIDE_VFS__PROFILE")
@@ -160,7 +160,7 @@ def load_config(path: Path = Path("configs/app.yaml")):
         "enabled": get_val("cleanup", "enabled", "CLEANUP_ENABLED", True, bool),
         "interval": get_val("cleanup", "interval", "CLEANUP_INTERVAL", 3600, int),
         "retention_days": get_val("cleanup", "retention_days", "CLEANUP_RETENTION_DAYS", 7, int),
-        "paths": ["var/log/cyanide", "var/lib/cyanide"],
+        "paths": ["var/log/cyanide", "var/lib/cyanide", "var/quarantine"],
     }
 
     # Load Custom Profile metadata

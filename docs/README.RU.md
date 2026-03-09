@@ -79,7 +79,7 @@ docker-compose -f deployments/docker/docker-compose.yml down
     *   `cyanide-ml.json`: Результаты работы ML и детальные "мысли" системы.
     *   `cyanide-stats.json`: Периодические срезы статистики ханипота.
     *   `tty/<session_id>/`: Файлы полной записи TTY сессий.
-*   **Карантин**: `var/lib/cyanide/quarantine/`
+*   **Карантин**: `var/quarantine/`
     *   Скачанные и загруженные файлы.
 
 ---

@@ -52,7 +52,7 @@ scriptreplay var/log/cyanide/tty/<session_id>/timing var/log/cyanide/tty/<sessio
 
 ### Quarantine Service
 Any file downloaded by an attacker (via `wget` or `curl`) is automatically:
-1.  **Intercepted**: The actual file is moved to `var/lib/cyanide/quarantine/`.
+1.  **Intercepted**: The actual file is moved to `var/quarantine/`.
 2.  **Hashed**: MD5/SHA256 calculations for threat intelligence.
 3.  **Analyzed**: Automatically submitted to VirusTotal if an API key is configured.
 4.  **Emulated**: A fake, benign file of the same name and size is placed in the VFS to avoid suspicious behavior alerts.
