@@ -73,7 +73,8 @@ def load_config(path: Path = Path("configs/app.yaml")):
                         
                     sub_remainder = remainder[len(top_key)+1:]
                     
-                    # 2a. Exact match on second level (e.g. CYANIDE_SERVER_MAX_SESSIONS)
+                    # 2a. Direct match (e.g. CYANIDE_SSH_ENABLED -> data['ssh']['enabled'])
+                    # OR match with sub_key (e.g. CYANIDE_OUTPUT_SQLITE_ENABLED)
                     if sub_remainder in top_val:
                         top_val[sub_remainder] = parse_val(env_val)
                         mapped = True
@@ -93,10 +94,8 @@ def load_config(path: Path = Path("configs/app.yaml")):
 
     config_data = apply_env_overrides(config_data)
 
-    # Function 17: Retrieves val data.
     def get_val(section, key, env_var, default, cast=str):
         # Priority: Env (Full Name) > Env (Simplified) > Config File (Nested) > Default
-        # support both REDIS_HOST and CYANIDE_REDIS__HOST
         full_env_var = f"CYANIDE_{section.upper()}__" + (
             env_var if env_var not in (key.upper(), key) else key.upper()
         )
@@ -104,11 +103,12 @@ def load_config(path: Path = Path("configs/app.yaml")):
         if val is None:
             val = os.getenv(env_var)
 
-        # Deep lookup in config_data
         if val is None:
             if section in config_data and isinstance(config_data[section], dict):
                 val = config_data[section].get(key)
-
+        
+        # print(f"DEBUG: get_val({section}, {key}) => {val} (raw)")
+        
         if val is None:
             return default
 
@@ -161,12 +161,21 @@ def load_config(path: Path = Path("configs/app.yaml")):
             "target_port": get_val("ssh", "target_port", "SSH_TARGET_PORT", 22222, int),
             "rsa_keying": get_val("ssh", "rsa_keying", "SSH_RSA_KEYING", True, bool),
             "version": get_val("ssh", "version", "SSH_VERSION", None),
-            "ciphers": get_val("ssh", "ciphers", "SSH_CIPHERS", []),
-            "macs": get_val("ssh", "macs", "SSH_MACS", []),
-            "compression": get_val("ssh", "compression", "SSH_COMPRESSION", []),
-            "kex_algs": get_val("ssh", "kex_algs", "SSH_KEX_ALGS", []),
-            "host_key_algs": get_val("ssh", "host_key_algs", "SSH_HOST_KEY_ALGS", []),
-            "public_key_algs": get_val("ssh", "public_key_algs", "SSH_PUBLIC_KEY_ALGS", []),
+            "ciphers": get_val("ssh", "ciphers", "SSH_CIPHERS", [
+                "aes256-gcm@openssh.com", "aes128-gcm@openssh.com", "chacha20-poly1305@openssh.com"
+            ]),
+            "macs": get_val("ssh", "macs", "SSH_MACS", [
+                "hmac-sha2-512-etm@openssh.com", "hmac-sha2-256-etm@openssh.com"
+            ]),
+            "compression": get_val("ssh", "compression", "SSH_COMPRESSION", ["none", "zlib@openssh.com"]),
+            "kex_algs": get_val("ssh", "kex_algs", "SSH_KEX_ALGS", ["curve25519-sha256"]),
+            "host_key_algs": get_val("ssh", "host_key_algs", "SSH_HOST_KEY_ALGS", ["ssh-ed25519", "rsa-sha2-512", "rsa-sha2-256"]),
+            "public_key_algs": get_val("ssh", "public_key_algs", "SSH_PUBLIC_KEY_ALGS", ["ssh-ed25519", "rsa-sha2-512", "rsa-sha2-256"]),
+            "data_path": get_val("ssh", "data_path", "SSH_DATA_PATH", "var/lib/cyanide/keys"),
+            "auth_tries": get_val("ssh", "auth_tries", "SSH_AUTH_TRIES", 3, int),
+            "login_timeout": get_val("ssh", "login_timeout", "SSH_LOGIN_TIMEOUT", 60, int),
+            "idle_timeout": get_val("ssh", "idle_timeout", "SSH_IDLE_TIMEOUT", 3600, int),
+            "rekey_limit": get_val("ssh", "rekey_limit", "SSH_REKEY_LIMIT", "1G"),
             "forwarding_enabled": get_val("ssh", "forwarding_enabled", "SSH_FORWARDING_ENABLED", False, bool),
             "forward_redirect_enabled": get_val("ssh", "forward_redirect_enabled", "SSH_FORWARD_REDIRECT_ENABLED", False, bool),
             "forward_redirect_rules": get_val("ssh", "forward_redirect_rules", "SSH_FORWARD_REDIRECT_RULES", {}),

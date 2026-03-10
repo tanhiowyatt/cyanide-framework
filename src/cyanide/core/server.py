@@ -521,14 +521,64 @@ class CyanideServer:
                 "system", "metrics_server_error", {"message": f"Metrics Server Error: {e}"}
             )
 
+    # Function 51: Retrieves host keys from disk or generates them if missing.
+    def _get_host_keys(self) -> List[asyncssh.SSHKey]:
+        """Load host keys from storage or generate persistent ones."""
+        ssh_conf = self.config.get("ssh", {})
+        data_dir = Path(ssh_conf.get("data_path", "var/lib/cyanide/keys"))
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Key types to support (Mimicry)
+        key_types = ["ssh-rsa", "ssh-ed25519", "ecdsa-sha2-nistp256"]
+        loaded_keys = []
+
+        for ktype in key_types:
+            # Filename based on type (e.g., host_key_ssh-rsa)
+            key_path = data_dir / f"host_key_{ktype}"
+            
+            if key_path.exists():
+                try:
+                    key = asyncssh.read_private_key(str(key_path))
+                    loaded_keys.append(key)
+                except Exception as e:
+                    self.logger.log_event(
+                        "system", 
+                        "key_error", 
+                        {"message": f"Failed to load {ktype}: {e}"}
+                    )
+            else:
+                try:
+                    self.logger.log_event(
+                        "system", 
+                        "key_gen", 
+                        {"message": f"Generating new persistent {ktype} host key"}
+                    )
+                    key = asyncssh.generate_private_key(ktype)
+                    key.write_private_key(str(key_path))
+                    # Set permissions to 600
+                    key_path.chmod(0o600)
+                    loaded_keys.append(key)
+                except Exception as e:
+                    self.logger.log_event(
+                        "system", 
+                        "key_error", 
+                        {"message": f"Failed to generate {ktype}: {e}"}
+                    )
+
+        if not loaded_keys:
+            # Emergency fallback: generate a non-persistent RSA key
+            return [asyncssh.generate_private_key("ssh-rsa")]
+            
+        return loaded_keys
+
     # Function 52: Performs operations related to start.
     async def start(self):
         """Start all honeypot services and enter main event loop."""
         # Start Async Logger
         await self.async_logger.start()
 
-        # Generate SSH Host Key
-        ssh_key = asyncssh.generate_private_key("ssh-rsa")
+        # Load/Persistence SSH Host Keys
+        host_keys = self._get_host_keys()
 
         # Initialize VM Pool if needed
         self.vm_pool = VMPool(self.config)
@@ -551,12 +601,25 @@ class CyanideServer:
                     "system", "system_status", {"message": f"SSH Banner: {chosen_version}"}
                 )
 
+                # Helper for rekey limit parsing
+                def parse_rekey(limit: str) -> int:
+                    if not limit: return 1024**3 # 1G
+                    limit = str(limit).upper()
+                    if limit.endswith("G"): return int(limit[:-1]) * 1024**3
+                    if limit.endswith("M"): return int(limit[:-1]) * 1024**2
+                    if limit.endswith("K"): return int(limit[:-1]) * 1024
+                    return int(limit)
+
                 # Build algorithm lists if configured
                 ssh_opts = {
-                    "server_host_keys": [ssh_key],
+                    "server_host_keys": host_keys,
                     "server_factory": lambda: SSHServerFactory(self),
                     "reuse_address": True,
                     "server_version": chosen_version,
+                    # Cowrie-grade security limits
+                    "login_timeout": ssh_conf.get("login_timeout", 60),
+                    "max_auth_tries": ssh_conf.get("auth_tries", 3),
+                    "rekey_bytes": parse_rekey(ssh_conf.get("rekey_limit", "1G")),
                 }
 
                 # Map user config keys to asyncssh.listen kwargs
@@ -757,6 +820,28 @@ class SSHServerFactory(asyncssh.SSHServer):
         self.src_ip = conn.get_extra_info("peername")[0]
         self.src_port = conn.get_extra_info("peername")[1]
 
+        # Log connection details (Cowrie-style KEXINIT analysis)
+        client_version = conn.get_extra_info("client_version", "unknown")
+        
+        # Negotiated algorithms are available after handshake, 
+        # but for now we log those that the transport already established.
+        algos = conn.get_extra_info("algorithms") or {}
+        
+        self.honeypot.logger.log_event(
+            "conn_" + self.conn_id,
+            "ssh.connect",
+            {
+                "src_ip": self.src_ip,
+                "src_port": self.src_port,
+                "client_version": client_version,
+                "kex_alg": algos.get("kex_algo"),
+                "key_alg": algos.get("host_key_algo"),
+                "cipher": algos.get("encryption_algo"),
+                "mac": algos.get("mac_algo"),
+                "compression": algos.get("compression_algo")
+            }
+        )
+
         with self.honeypot.tracer.start_as_current_span("ssh_connection_setup") as span:
             span.set_attribute("net.peer.ip", self.src_ip)
             span.set_attribute("net.peer.port", self.src_port)
@@ -784,7 +869,7 @@ class SSHServerFactory(asyncssh.SSHServer):
         # Transport level cleanup - handle leaks here
         self.honeypot.services.session.unregister_session(self.src_ip)
         self.honeypot.logger.log_event(
-            "system",
+            "conn_" + self.conn_id,
             "ssh_connection_lost",
             {
                 "src_ip": self.src_ip,
@@ -795,6 +880,29 @@ class SSHServerFactory(asyncssh.SSHServer):
     # Function 60: Performs operations related to password auth supported.
     def password_auth_supported(self):
         return True
+
+    # Function 60.1: Performs operations related to publickey auth supported.
+    def publickey_auth_supported(self):
+        """Enable publickey auth to collect and log keys from attackers."""
+        return True
+
+    # Function 60.2: Validates publickey and logs it.
+    def validate_publickey(self, username, key):
+        """Log public key attempt and always fail to force password auth (Cowrie behavior)."""
+        fingerprint = key.get_fingerprint()
+        raw_key = key.export_public_key().decode()
+        
+        self.honeypot.logger.log_event(
+            "conn_" + self.conn_id,
+            "auth.publickey",
+            {
+                "username": username,
+                "fingerprint": fingerprint,
+                "key": raw_key,
+                "success": False
+            }
+        )
+        return False
 
     # Function 61: Performs operations related to validate password.
     def validate_password(self, username, password):

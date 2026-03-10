@@ -13,12 +13,34 @@ class SSHConfig(BaseModel):
     target_port: Optional[int] = 22222
 
     # Algorithm negotiation
-    ciphers: Optional[List[str]] = None
-    macs: Optional[List[str]] = None
-    compression: Optional[List[str]] = None
-    kex_algs: Optional[List[str]] = None
-    host_key_algs: Optional[List[str]] = None
-    public_key_algs: Optional[List[str]] = None
+    ciphers: List[str] = Field(default_factory=lambda: [
+        "aes256-gcm@openssh.com", "aes128-gcm@openssh.com",
+        "chacha20-poly1305@openssh.com", "aes256-ctr", "aes192-ctr", "aes128-ctr"
+    ])
+    macs: List[str] = Field(default_factory=lambda: [
+        "hmac-sha2-512-etm@openssh.com", "hmac-sha2-256-etm@openssh.com",
+        "umac-128-etm@openssh.com", "hmac-sha2-512", "hmac-sha2-256", "umac-128@openssh.com"
+    ])
+    compression: List[str] = Field(default_factory=lambda: ["none", "zlib@openssh.com"])
+    kex_algs: List[str] = Field(default_factory=lambda: [
+        "curve25519-sha256", "curve25519-sha256@libssh.org",
+        "ecdh-sha2-nistp256", "ecdh-sha2-nistp384", "ecdh-sha2-nistp521",
+        "diffie-hellman-group-exchange-sha256", "diffie-hellman-group16-sha512",
+        "diffie-hellman-group18-sha512", "diffie-hellman-group14-sha256"
+    ])
+    host_key_algs: List[str] = Field(default_factory=lambda: [
+        "ssh-ed25519", "rsa-sha2-512", "rsa-sha2-256", "ecdsa-sha2-nistp256"
+    ])
+    public_key_algs: List[str] = Field(default_factory=lambda: [
+        "ssh-ed25519", "rsa-sha2-512", "rsa-sha2-256", "ecdsa-sha2-nistp256"
+    ])
+
+    # Security & Persistence
+    data_path: str = "var/lib/cyanide/keys"
+    auth_tries: int = 3
+    login_timeout: int = 60
+    idle_timeout: int = 3600
+    rekey_limit: str = "1G"
 
     # Port Forwarding
     forwarding_enabled: bool = False

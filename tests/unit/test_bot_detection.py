@@ -23,7 +23,7 @@ def mock_honeypot():
 # Function 422: Runs unit tests for the bot_detection_by_timing functionality.
 @pytest.mark.asyncio
 async def test_bot_detection_by_timing(mock_honeypot):
-    session = SSHSession(mock_honeypot, MagicMock(), "1.1.1.1", 1234)
+    session = SSHSession(mock_honeypot, MagicMock(), "1.1.1.1", 1234, "test-id")
     session.channel = MagicMock()
 
     # Simulate rapid keystrokes properly
@@ -41,7 +41,7 @@ async def test_bot_detection_by_timing(mock_honeypot):
 # Function 423: Runs unit tests for the bot_detection_by_paste functionality.
 @pytest.mark.asyncio
 async def test_bot_detection_by_paste(mock_honeypot):
-    session = SSHSession(mock_honeypot, MagicMock(), "1.1.1.1", 1234)
+    session = SSHSession(mock_honeypot, MagicMock(), "1.1.1.1", 1234, "test-id")
     session.channel = MagicMock()
 
     # Simulate a paste
@@ -54,7 +54,7 @@ async def test_bot_detection_by_paste(mock_honeypot):
 # Function 424: Runs unit tests for the human_typing_timing functionality.
 @pytest.mark.asyncio
 async def test_human_typing_timing(mock_honeypot):
-    session = SSHSession(mock_honeypot, MagicMock(), "1.1.1.1", 1234)
+    session = SSHSession(mock_honeypot, MagicMock(), "1.1.1.1", 1234, "test-id")
     session.channel = MagicMock()
 
     # Set slow keystrokes (100ms gap)

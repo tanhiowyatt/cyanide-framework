@@ -169,3 +169,32 @@
       - CYANIDE_OUTPUT_SLACK_ENABLED=true
       - CYANIDE_OUTPUT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
       - CYANIDE_OUTPUT_SLACK_USERNAME=Cyanide Alerts
+      
+      # =======================================================================
+      # J. NEW SSH SECURITY, ALGORITHMS & PERSISTENCE
+      # =======================================================================
+      
+      # Advanced Algorithm Control (Mimicry)
+      - CYANIDE_SSH_MACS=["hmac-sha2-512-etm@openssh.com", "hmac-sha2-256-etm@openssh.com", "hmac-sha2-512", "hmac-sha2-256"]
+      - CYANIDE_SSH_COMPRESSION=["none", "zlib@openssh.com"]
+      - CYANIDE_SSH_KEX_ALGS=["curve25519-sha256", "ecdh-sha2-nistp256", "diffie-hellman-group-exchange-sha256"]
+      - CYANIDE_SSH_HOST_KEY_ALGS=["ssh-ed25519", "rsa-sha2-512", "rsa-sha2-256"]
+      - CYANIDE_SSH_PUBLIC_KEY_ALGS=["ssh-ed25519", "rsa-sha2-512", "rsa-sha2-256"]
+
+      # Persistence & Security Limits
+      - CYANIDE_SSH_DATA_PATH=/app/var/lib/cyanide/keys
+      - CYANIDE_SSH_AUTH_TRIES=3
+      - CYANIDE_SSH_LOGIN_TIMEOUT=60
+      - CYANIDE_SSH_IDLE_TIMEOUT=3600
+      - CYANIDE_SSH_REKEY_LIMIT=1G
+
+      # Advanced Port Forwarding (Tunnels)
+      - CYANIDE_SSH_FORWARD_TUNNEL_ENABLED=false
+      - 'CYANIDE_SSH_FORWARD_TUNNEL_RULES={"3306": "mysql-sandbox:3306"}'
+
+      # =======================================================================
+      # K. CORE VFS & HONEYPOT FEATURES
+      # =======================================================================
+      - CYANIDE_HONEYPOT_FS_YAML=/app/configs/custom_manifest.yaml
+      - CYANIDE_HONEYPOT_DNS_CACHE_TTL=60
+      - CYANIDE_HONEYPOT_ALLOW_LOCAL_NETWORK=false
