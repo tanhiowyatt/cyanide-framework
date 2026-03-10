@@ -68,10 +68,6 @@ class QuarantineService:
             # Trigger ML Analysis
             if hasattr(self.logger, "services") and hasattr(self.logger.services, "analytics"):
                 self.logger.services.analytics.analyze_file(filename, content, session_id, src_ip)
-            # Fallback for when services are not in logger (legacy/tests)
-            elif hasattr(self, "analytics_svc"):
-                self.analytics_svc.analyze_file(filename, content, session_id, src_ip)
-
             return str(target_path)
         except Exception as e:
             self.logger.log_event(

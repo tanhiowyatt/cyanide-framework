@@ -110,6 +110,7 @@ class CyanideServer:
                 analytics=analytics_svc,
                 telnet=None,
             )
+            self.logger.services = self.services
             print("[*] CyanideServer: Services registered.")
         except Exception as e:
             print(f"[!] CyanideServer: Failed to register Services: {e}")
@@ -154,12 +155,6 @@ class CyanideServer:
             self.profile = DEFAULT_METADATA.copy()
             self.resolved_profile_name = "ubuntu"
 
-    # Function 39: Performs operations related to active sessions.
-    @property
-    def active_sessions(self):
-        """Compatibility property for old code."""
-        return self.services.session.active_sessions
-
     # Function 40: Performs operations related to analyze command.
     def _analyze_command(self, cmd, username, src_ip, session_id, protocol, is_bot=False):
         """Delegated to AnalyticsService."""
@@ -178,11 +173,6 @@ class CyanideServer:
     async def log_geoip(self, session_id, ip, protocol):
         """Delegated to AnalyticsService."""
         await self.services.analytics.log_geoip(session_id, ip, protocol)
-
-    # Function 42: Performs operations related to load users.
-    def _load_users(self, config_users):
-        """Load user credentials from configuration."""
-        return config_users
 
     # Function 43: Checks condition: is valid user.
     def is_valid_user(self, username, password):
@@ -745,7 +735,7 @@ class SSHServerFactory(asyncssh.SSHServer):
         self.honeypot.logger.log_event(
             "system",
             "ssh_connection_lost",
-            {"src_ip": self.src_ip, "active_sessions": self.honeypot.active_sessions},
+            {"src_ip": self.src_ip, "active_sessions": self.honeypot.services.session.active_sessions},
         )
 
     # Function 60: Performs operations related to password auth supported.

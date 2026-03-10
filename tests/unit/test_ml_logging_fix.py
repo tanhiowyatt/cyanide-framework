@@ -111,8 +111,9 @@ async def test_quarantine_triggers_ml(mock_logger, analytics_svc):
         "quarantine_max_size_mb": 10,
     }
     q_svc = QuarantineService(config, mock_logger)
-    # Inject analytics service manually for the test
-    q_svc.analytics_svc = analytics_svc
+    # Mock services on logger (modern pattern)
+    mock_logger.services = MagicMock()
+    mock_logger.services.analytics = analytics_svc
 
     await q_svc.save_file("test_file.txt", b"some content", "sess3", "3.3.3.3")
 
