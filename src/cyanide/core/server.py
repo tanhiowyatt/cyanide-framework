@@ -32,6 +32,10 @@ from .telemetry import setup_telemetry
 from .vm_pool import VMPool
 from .vt_scanner import VTScanner
 
+# Protocol Handlers
+from cyanide.vfs.scp import SCPHandler
+from cyanide.vfs.rsync import RsyncHandler
+
 
 class ServiceRegistry:
     # Function 37: Initializes the class instance and its attributes.
@@ -623,6 +627,7 @@ class CyanideServer:
                     "server_factory": lambda: SSHServerFactory(self),
                     "reuse_address": True,
                     "server_version": chosen_version,
+                    "encoding": None,  # Cyanide requires raw bytes for SCP/rsync
                     # Cyanide-grade security limits
                     "login_timeout": ssh_conf.get("login_timeout", 60),
                     "rekey_bytes": parse_rekey(ssh_conf.get("rekey_limit", "1G")),
@@ -632,6 +637,98 @@ class CyanideServer:
                     from cyanide.vfs.sftp import CyanideSFTPHandler
                     ssh_opts["sftp_factory"] = CyanideSFTPHandler
 
+                # process_factory handles exec/shell requests (correct asyncssh API).
+                # It receives an SSHServerProcess with .command, .stdin, .stdout, etc.
+                honeypot_ref = self
+                ssh_conf_ref = ssh_conf
+
+                async def cyanide_process_factory(process):
+                    """Route exec/shell to our honeypot handlers."""
+                    import sys, traceback
+                    try:
+                        conn = process.channel.get_connection()
+                        # Retrieve the per-connection factory that SSHServerFactory stores
+                        factory = getattr(conn, "cyanide_factory", None)
+                        if factory is None:
+                            process.exit(1)
+                            return
+
+                        command = process.command  # None for shell, str for exec
+                        print(f"DEBUG process_factory: command={command!r} pid={id(process)}", flush=True)
+
+                        if command is None:
+                            # Shell request — delegate to SSHSession shell handler
+                            sess = factory.sessions.get(factory.conn_id)
+                            if sess:
+                                sess.channel = process.channel
+                                sess.session_started()
+                                # Hand off stdin processing to SSHSession
+                                async for data in process.stdin:
+                                    sess.data_received(data, None)
+                                sess.session_ended()
+                            else:
+                                process.exit(1)
+                            return
+
+                        # Log command
+                        honeypot_ref.logger.log_event(
+                            "conn_" + factory.conn_id,
+                            "command.input",
+                            {
+                                "protocol": "ssh",
+                                "src_ip": factory.src_ip,
+                                "username": factory.username,
+                                "input": command,
+                                "client_version": factory.client_version,
+                            },
+                        )
+
+                        # SCP interception
+                        if command.startswith("scp ") and ssh_conf_ref.get("scp_enabled", True):
+                            from cyanide.vfs.scp import SCPHandler
+                            scp = SCPHandler(factory, process=process)
+                            rc = await scp.handle(command)
+                            process.exit(rc)
+                            return
+
+                        # rsync interception
+                        if command.startswith("rsync ") and ssh_conf_ref.get("rsync_enabled", True):
+                            from cyanide.vfs.rsync import RsyncHandler
+                            rsync = RsyncHandler(factory, process=process)
+                            rc = await rsync.handle(command)
+                            process.exit(rc)
+                            return
+
+                        # Regular exec → ShellEmulator
+                        fs = factory.fs or honeypot_ref.get_filesystem(factory.src_ip)
+
+                        def q_hook(f, c):
+                            honeypot_ref.save_quarantine_file(f, c, "conn_" + factory.conn_id, factory.src_ip)
+
+                        shell = ShellEmulator(
+                            fs,
+                            factory.username,
+                            quarantine_callback=q_hook,
+                            config=honeypot_ref.config,
+                        )
+                        stdout, stderr, rc = await shell.execute(command)
+                        print(f"DEBUG process_factory exec done rc={rc} out={stdout!r}", flush=True)
+                        process.stdout.write(stdout.encode("utf-8") if isinstance(stdout, str) else stdout)
+                        if stderr:
+                            process.stderr.write(stderr.encode("utf-8") if isinstance(stderr, str) else stderr)
+                        process.exit(rc)
+
+                    except Exception as exc:
+                        print(f"DEBUG process_factory EXCEPTION: {exc}", flush=True)
+                        traceback.print_exc(file=sys.stdout)
+                        sys.stdout.flush()
+                        try:
+                            process.exit(1)
+                        except Exception:
+                            pass
+
+                ssh_opts["process_factory"] = cyanide_process_factory
+
                 # Map user config keys to asyncssh.listen kwargs
                 algo_map = {
                     "kex_algs": "kex_algs",
@@ -640,7 +737,6 @@ class CyanideServer:
                     "compression": "compression_algs",
                     "public_key_algs": "signature_algs",
                 }
-
                 for cfg_key, opt_key in algo_map.items():
                     val = ssh_conf.get(cfg_key)
                     if val:
@@ -824,6 +920,10 @@ class SSHServerFactory(asyncssh.SSHServer):
         # Set max auth tries (Cyanide style)
         ssh_conf = self.honeypot.config.get("ssh", {})
         self._max_auth_tries = ssh_conf.get("auth_tries", 3)
+        self.sessions = {}
+        self.background_tasks = []
+        self.username = "root"
+        self.client_version = "unknown"
 
     # Function 58: Performs operations related to connection made.
     def connection_made(self, conn):
@@ -831,9 +931,11 @@ class SSHServerFactory(asyncssh.SSHServer):
         conn.cyanide_factory = self
         self.src_ip = conn.get_extra_info("peername")[0]
         self.src_port = conn.get_extra_info("peername")[1]
+        
+        # Initialize session filesystem
+        self.fs = self.honeypot.get_filesystem(self.src_ip)
 
-        # Log connection details (Cyanide-style KEXINIT analysis)
-        client_version = conn.get_extra_info("client_version", "unknown")
+        self.client_version = conn.get_extra_info("client_version", "unknown")
 
         # Negotiated algorithms are available after handshake,
         # but for now we log those that the transport already established.
@@ -845,7 +947,7 @@ class SSHServerFactory(asyncssh.SSHServer):
             {
                 "src_ip": self.src_ip,
                 "src_port": self.src_port,
-                "client_version": client_version,
+                "client_version": self.client_version,
                 "kex_alg": algos.get("kex_algo"),
                 "key_alg": algos.get("host_key_algo"),
                 "cipher": algos.get("encryption_algo"),
@@ -913,6 +1015,7 @@ class SSHServerFactory(asyncssh.SSHServer):
 
     # Function 61: Performs operations related to validate password.
     def validate_password(self, username, password):
+        self.username = username  # store for process_factory
         success = self.honeypot.is_valid_user(username, password)
         self.honeypot.stats.on_auth("ssh", self.src_ip, username, password, success)
         self.honeypot.logger.log_event(
@@ -928,12 +1031,12 @@ class SSHServerFactory(asyncssh.SSHServer):
         )
         return success
 
-        return super().subsystem_requested(subsystem)
-
     # Function 63: Performs operations related to session requested.
     def session_requested(self):
         print(f"DEBUG: session_requested for {self.src_ip}")
-        return SSHSession(self.honeypot, self.fs, self.src_ip, self.src_port, self.conn_id)
+        sess = SSHSession(self.honeypot, self.fs, self.src_ip, self.src_port, self.conn_id)
+        self.sessions[self.conn_id] = sess
+        return sess
 
     # Function 62.1: Handles direct-tcpip requests (-L).
     def direct_tcpip_requested(self, dest_host, dest_port, src_host, src_port):
@@ -1429,91 +1532,127 @@ class SSHSession(asyncssh.SSHServerSession):
 
     # Function 79: Performs operations related to exec requested.
     def exec_requested(self, command):
-        self.honeypot.logger.log_event(
-            self.session_id, "debug", {"message": f"exec_requested: {command}"}
-        )
-        self.commands.append(command)
-        self.honeypot.logger.log_event(
-            self.session_id,
-            "command.input",
-            {
-                "protocol": "ssh",
-                "src_ip": self.src_ip,
-                "username": self.username,
-                "input": command,
-                "client_version": self.client_version,
-            },
-        )
+        print(f"DEBUG exec_requested CALLED: {command!r}", flush=True)
+        try:
+            self.honeypot.logger.log_event(
+                self.session_id, "debug", {"message": f"exec_requested: {command}"}
+            )
+            self.commands.append(command)
+            self.honeypot.logger.log_event(
+                self.session_id,
+                "command.input",
+                {
+                    "protocol": "ssh",
+                    "src_ip": self.src_ip,
+                    "username": self.username,
+                    "input": command,
+                    "client_version": self.client_version,
+                },
+            )
+        except Exception as e:
+            print(f"DEBUG exec_requested LOGGING ERROR: {e}", flush=True)
+            import traceback, sys
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
 
         # SCP/rsync Interception
         ssh_conf = self.honeypot.config.get("ssh", {})
-        if command.startswith("scp ") and ssh_conf.get("scp_enabled", True):
-            from cyanide.vfs.scp import SCPHandler
-            scp = SCPHandler(self)
-            asyncio.create_task(self._run_scp(scp, command))
-            return True
+        try:
+            if command.startswith("scp ") and ssh_conf.get("scp_enabled", True):
+                scp = SCPHandler(self)
+                asyncio.create_task(self._run_scp(scp, command))
+                return True
 
-        if command.startswith("rsync ") and ssh_conf.get("rsync_enabled", True):
-            from cyanide.vfs.rsync import RsyncHandler
-            rsync = RsyncHandler(self)
-            asyncio.create_task(self._run_rsync(rsync, command))
-            return True
+            if command.startswith("rsync ") and ssh_conf.get("rsync_enabled", True):
+                rsync = RsyncHandler(self)
+                asyncio.create_task(self._run_rsync(rsync, command))
+                return True
+        except Exception as e:
+            print(f"DEBUG exec_requested INTERCEPT ERROR: {e}", flush=True)
+            import traceback, sys
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
 
+        print(f"DEBUG exec_requested creating _async_exec task", flush=True)
         asyncio.create_task(self._async_exec(command))
         return True
 
     # Function 79.1: Runs SCP handler and handles exit.
     async def _run_scp(self, scp, command):
-        rc = await scp.handle(command)
-        self.channel.exit(rc)
-        self.channel.close()
+        try:
+            rc = await scp.handle(command)
+            self.channel.exit(rc)
+            self.channel.close()
+        except Exception as e:
+            self.honeypot.logger.log_event(
+                self.session_id, "error", {"message": f"SCP handler crashed: {e}"}
+            )
+            traceback.print_exc()
+            self.channel.exit(1)
+            self.channel.close()
 
     # Function 79.2: Runs rsync handler and handles exit.
     async def _run_rsync(self, rsync, command):
-        rc = await rsync.handle(command)
-        self.channel.exit(rc)
-        self.channel.close()
+        try:
+            rc = await rsync.handle(command)
+            self.channel.exit(rc)
+            self.channel.close()
+        except Exception as e:
+            self.honeypot.logger.log_event(
+                self.session_id, "error", {"message": f"Rsync handler crashed: {e}"}
+            )
+            traceback.print_exc()
+            self.channel.exit(1)
+            self.channel.close()
 
     # Function 80: Performs operations related to async exec.
     async def _async_exec(self, command):
-        # Use Factory
-        self._ensure_tty_log()
-        fs = self.fs
+        try:
+            print(f"DEBUG _async_exec START: {command!r} fs={self.fs!r}", flush=True)
+            # Use Factory
+            self._ensure_tty_log()
+            fs = self.fs
+            if not fs:
+                 fs = self.honeypot.get_filesystem(self.src_ip)
 
-        def q_hook(f, c):
-            self.honeypot.save_quarantine_file(f, c, self.session_id, self.src_ip)
+            def q_hook(f, c):
+                self.honeypot.save_quarantine_file(f, c, self.session_id, self.src_ip)
 
-        shell = ShellEmulator(
-            fs,
-            self.username,
-            quarantine_callback=q_hook,
-            config=self.honeypot.config,
-        )
-
-        # ML Analysis
-        if (
-            self.honeypot.services.analytics.ml_enabled
-            and self.honeypot.services.analytics.ml_pipeline
-        ):
-            self.honeypot._analyze_command(
-                command, self.username, self.src_ip, self.session_id, "ssh"
+            shell = ShellEmulator(
+                fs,
+                self.username,
+                quarantine_callback=q_hook,
+                config=self.honeypot.config,
             )
+            print(f"DEBUG _async_exec shell created, executing...", flush=True)
 
-        stdout, stderr, rc = await shell.execute(command)
+            stdout, stderr, rc = await shell.execute(command)
+            print(f"DEBUG _async_exec done rc={rc} stdout={stdout!r}", flush=True)
 
-        self.channel.write(stdout)
-        self.honeypot.stats.on_traffic("out", len(stdout))
-        self.honeypot._log_tty(self, "OUT", stdout)
+            self.channel.write(stdout)
+            self.honeypot.stats.on_traffic("out", len(stdout))
+            self._log_tty("OUT", stdout)
 
-        if stderr:
-            self.channel.write_stderr(stderr)
-            self.honeypot.stats.on_traffic("out", len(stderr))
-            self.honeypot._log_tty(self, "OUT", stderr)
+            if stderr:
+                self.channel.write_stderr(stderr)
+                self.honeypot.stats.on_traffic("out", len(stderr))
+                self._log_tty("OUT", stderr)
 
-        self.channel.write_eof()
-        await asyncio.sleep(0.01)
-        self.channel.exit(rc)
-        self.channel.close()
+            self.channel.write_eof()
+            await asyncio.sleep(0.01)
+            self.channel.exit(rc)
+            self.channel.close()
+            print(f"DEBUG _async_exec channel closed cleanly", flush=True)
+        except Exception as e:
+            print(f"DEBUG _async_exec EXCEPTION: {e}", flush=True)
+            import sys
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
+            try:
+                self.channel.exit(1)
+                self.channel.close()
+            except Exception:
+                pass
 
     # Function 81: Performs operations related to session ended.
     def session_ended(self):

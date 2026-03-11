@@ -1,21 +1,51 @@
 import asyncio
 import logging
+import traceback
 from typing import Any, Dict, List, Optional
+
 
 class RsyncHandler:
     """
     Handler for rsync requests (rsync --server).
     Provides realistic logging and minimal handshake.
+    Works with both legacy SSHSession.channel and new process_factory SSHServerProcess.
     """
 
-    def __init__(self, session: Any):
+    def __init__(self, session: Any, process=None):
         self.session = session
+        self.process = process  # SSHServerProcess (from process_factory)
         self.honeypot = session.honeypot
-        self.channel = session.channel
         self.src_ip = session.src_ip
         self.username = session.username
-        self.session_id = session.session_id
+        self.session_id = (
+            "conn_" + session.conn_id
+            if hasattr(session, "conn_id")
+            else getattr(session, "session_id", "unknown")
+        )
         self.logger = self.honeypot.logger
+
+    def _write(self, data: bytes):
+        """Write bytes to the correct output stream."""
+        if self.process is not None:
+            # process_factory: stdout is a StreamWriter, write bytes directly via channel
+            self.process.channel.write(data)
+        else:
+            self.session.channel.write(data)
+
+    async def _read(self, n: int, timeout: float = 5.0) -> bytes:
+        """Read bytes from the correct input stream."""
+        if self.process is not None:
+            try:
+                data = await asyncio.wait_for(self.process.stdin.read(n), timeout=timeout)
+                return data if data else b""
+            except asyncio.TimeoutError:
+                return b""
+        else:
+            try:
+                data = await asyncio.wait_for(self.session.channel.read(n), timeout=timeout)
+                return data if data else b""
+            except asyncio.TimeoutError:
+                return b""
 
     def _log_op(self, op: str, command: str, success: bool = True, extra: Optional[Dict] = None):
         log_data = {
@@ -24,11 +54,10 @@ class RsyncHandler:
             "username": self.username,
             "op": op,
             "command": command,
-            "success": success
+            "success": success,
         }
         if extra:
             log_data.update(extra)
-        
         self.logger.log_event(self.session_id, "rsync_op", log_data)
 
     async def handle(self, command: str) -> int:
@@ -36,40 +65,34 @@ class RsyncHandler:
         Detects and logs rsync server attempts.
         Returns the exit code.
         """
-        # rsync commands usually look like:
-        # rsync --server --sender -vlogDtprze.iLsfxC . /path/to/src
-        # rsync --server -vlogDtprze.iLsfxC . /path/to/dest
-        
-        is_sender = '--sender' in command
-        
+        is_sender = "--sender" in command
+
         self._log_op("server_mode_request", command, extra={"is_sender": is_sender})
-        
+
         try:
-            # The rsync protocol is complex. For a honeypot, we want to:
-            # 1. Exchange protocol version.
-            # 2. Log the activity.
-            # 3. Potentially fail with a realistic error.
-            
-            # Send protocol version (e.g., 31)
-            # Format: <version_int>\n
-            self.channel.write(b'31\n')
-            
-            # Wait for client version
-            client_version_bytes = await self.channel.read(10)
-            client_version = client_version_bytes.decode().strip() if client_version_bytes else "unknown"
-            
-            self._log_op("handshake", command, extra={"client_rsync_version": client_version})
-            
-            # For now, we return a realistic error message to the client
-            # as implementing the full rsync transfer protocol is out of scope 
-            # for a base implementation and could be fragile.
-            # Real rsync servers often fail if the exact binary isn't matched or modules aren't found.
-            
-            error_msg = f"rsync: connection unexpectedly closed (root@server:{self.src_ip})\n"
-            self.channel.write_stderr(error_msg.encode())
-            
-            return 12 # rsync error code for communication error
-            
+            # Send rsync protocol version greeting: "@RSYNCD: 31.0\n"
+            # Real rsync sends a text greeting first
+            self._write(b"@RSYNCD: 31.0\n")
+
+            # Read client greeting
+            try:
+                client_hello = await self._read(64, timeout=5.0)
+                client_version = client_hello.decode("utf-8", "ignore").strip()
+            except Exception:
+                client_version = "unknown"
+
+            self._log_op("handshake", command, extra={"client_hello": client_version})
+
+            await asyncio.sleep(0.3)
+
+            # Send a realistic rsync error to terminate gracefully
+            # "@ERROR: access denied to root from ..." is a realistic honeypot response
+            error_msg = f"@ERROR: access denied to root from {self.src_ip} (Permission denied)\n"
+            self._write(error_msg.encode())
+
+            return 1
+
         except Exception as e:
+            traceback.print_exc()
             self._log_op("error", command, success=False, extra={"error": str(e)})
             return 1

@@ -70,7 +70,7 @@ When using Cyanide in `pool` mode with `libvirt`:
 4. If a guest hangs or receives heavy traffic, Cyanide automatically recycles it based on your configured `recycle_period` and unused timeout policies.
 
 ### Quarantine Service
-Any file downloaded by an attacker (via `wget` or `curl`) is automatically:
+Any file transferred to the honeypot by an attacker (via `wget`, `curl`, `scp`, `sftp`, or `rsync`) is automatically:
 1.  **Intercepted**: The actual file is moved to `var/quarantine/`.
 2.  **Hashed**: MD5/SHA256 calculations for threat intelligence.
 3.  **Analyzed**: Automatically submitted to VirusTotal if an API key is configured.

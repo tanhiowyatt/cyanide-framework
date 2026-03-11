@@ -12,7 +12,7 @@ Fastest checks to ensure code quality and formatting.
 - **Command**: `black --check src/ && ruff check src/ && mypy src/`
 
 ### 🟡 Level 2: Component Unit Tests
-Verifies individual modules (VFS, Config, Utils) in isolation.
+Verifies individual modules (VFS, Config, Utils, File Transfers like SCP/SFTP/Rsync) in isolation.
 - **Location**: `tests/unit/`
 - **Command**: `pytest tests/unit/`
 

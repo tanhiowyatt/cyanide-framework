@@ -49,11 +49,11 @@ users:
     pass: "123456"
 
 metrics:
-  enabled: true
+  enabled: false
   port: 9090
 
 ml:
-  enabled: true
+  enabled: false
   metrics_port: 9090
   online_learning: false
   retraining_interval_days: 7
