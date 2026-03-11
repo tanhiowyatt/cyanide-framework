@@ -229,3 +229,13 @@
       - CYANIDE_LOGGING_ROTATION_INTERVAL=1
       - CYANIDE_LOGGING_ROTATION_BACKUP_COUNT=14
       - CYANIDE_LOGGING_ROTATION_MAX_BYTES=10485760
+      # =======================================================================
+      # N. FILE TRANSFER (SFTP, SCP, RSYNC)
+      # =======================================================================
+      - CYANIDE_SSH_SFTP_ENABLED=true
+      - CYANIDE_SSH_SCP_ENABLED=true
+      - CYANIDE_SSH_RSYNC_ENABLED=true
+      - CYANIDE_SSH_MAX_UPLOAD_SIZE_MB=50
+      - CYANIDE_SSH_MAX_TOTAL_UPLOAD_MB_PER_SESSION=200
+      - CYANIDE_SSH_ALLOW_DOWNLOAD=true
+      - CYANIDE_SSH_ALLOW_UPLOAD=true

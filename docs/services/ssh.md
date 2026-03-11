@@ -40,3 +40,28 @@ When an attacker attempts to establish a tunnel through Cyanide, the `direct_tcp
 2. **Policy Router Evaluation:** Cyanide evaluates `CYANIDE_SSH_FORWARD_REDIRECT_RULES`.
 3. **Redirection (Optional):** If a rule exists (e.g., mapping port `80` to a safe internal sinkhole sandbox), Cyanide transparently alters the `dest_host` and routes the tunnel silently to the safe sandbox, making the attacker believe they successfully breached the internal network.
 4. **Denial:** If `CYANIDE_SSH_FORWARDING_ENABLED` is false, Cyanide denies the channel softly, emulating a correct `Administratively Prohibited` firewall response.
+## 5. File Transfer Capabilities (SFTP, SCP, rsync)
+
+Cyanide supports advanced file transfer protocols to realistically simulate a target environment where attackers might attempt to drop malware or exfiltrate data.
+
+### SFTP Subsystem
+Cyanide implements a full SFTP subsystem that bridges directly to the Virtual Filesystem (VFS).
+- **Realistic Metadata:** File permissions, owners (root/user), and timestamps are realistically simulated.
+- **Quarantining:** Every file uploaded via SFTP is automatically captured and moved to the `quarantine` directory for deep forensics and malware analysis.
+- **Audit Logging:** Every SFTP operation (listdir, open, mkdir, rename, delete) is logged as a structured event with the origin IP and session context.
+
+### SCP Support
+Secure Copy (SCP) is supported via the standard RCP-based wire protocol.
+- **Interception:** Cyanide intercepts `scp -t` (to) and `scp -f` (from) execution requests.
+- **Realistic Protocol:** The honeypot engages in the expected ACK-based handshake, supporting both file and directory uploads.
+
+### rsync Monitoring
+While the full rsync delta-transfer algorithm is complex, Cyanide provides a realistic "Server Mode" monitor.
+- **Command Dissection:** The honeypot captures and logs the exact rsync command line, revealing the attacker's intentions (e.g., `-avz`, `--delete`).
+- **Handshake Emulation:** Cyanide performs the initial rsync 3.x protocol handshake before realistically "aborting" with a connection error that mimics a server-side misconfiguration, ensuring the attempt is logged without needing a full rsync binary on the host.
+
+### Security Limits
+To prevent the honeypot from being used as a storage drop:
+- `CYANIDE_SSH_MAX_UPLOAD_SIZE_MB`: Limits the size of a single file.
+- `CYANIDE_SSH_MAX_TOTAL_UPLOAD_MB_PER_SESSION`: Limits the total bytes an attacker can upload.
+- `CYANIDE_SSH_ALLOW_DOWNLOAD`: Can be disabled to prevent "exfiltration" of the simulated target's sensitive files.

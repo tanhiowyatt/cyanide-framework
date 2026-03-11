@@ -72,6 +72,15 @@ class SSHConfig(BaseModel):
     idle_timeout: int = 3600
     rekey_limit: str = "1G"
 
+    # File Transfer
+    sftp_enabled: bool = True
+    scp_enabled: bool = True
+    rsync_enabled: bool = True
+    max_upload_size_mb: int = 50
+    max_total_upload_mb_per_session: int = 200
+    allow_download: bool = True
+    allow_upload: bool = True
+
     # Port Forwarding
     forwarding_enabled: bool = False
     forward_redirect_enabled: bool = False

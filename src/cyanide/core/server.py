@@ -628,6 +628,10 @@ class CyanideServer:
                     "rekey_bytes": parse_rekey(ssh_conf.get("rekey_limit", "1G")),
                 }
 
+                if ssh_conf.get("sftp_enabled", True):
+                    from cyanide.vfs.sftp import CyanideSFTPHandler
+                    ssh_opts["sftp_factory"] = CyanideSFTPHandler
+
                 # Map user config keys to asyncssh.listen kwargs
                 algo_map = {
                     "kex_algs": "kex_algs",
@@ -823,6 +827,8 @@ class SSHServerFactory(asyncssh.SSHServer):
 
     # Function 58: Performs operations related to connection made.
     def connection_made(self, conn):
+        self.conn = conn
+        conn.cyanide_factory = self
         self.src_ip = conn.get_extra_info("peername")[0]
         self.src_port = conn.get_extra_info("peername")[1]
 
@@ -922,12 +928,11 @@ class SSHServerFactory(asyncssh.SSHServer):
         )
         return success
 
-    # Function 62: Performs operations related to subsystem requested.
-    def subsystem_requested(self, subsystem):  # type: ignore
-        return super().subsystem_requested(subsystem)  # type: ignore
+        return super().subsystem_requested(subsystem)
 
     # Function 63: Performs operations related to session requested.
     def session_requested(self):
+        print(f"DEBUG: session_requested for {self.src_ip}")
         return SSHSession(self.honeypot, self.fs, self.src_ip, self.src_port, self.conn_id)
 
     # Function 62.1: Handles direct-tcpip requests (-L).
@@ -1053,6 +1058,7 @@ class SSHSession(asyncssh.SSHServerSession):
 
     # Function 64: Initializes the class instance and its attributes.
     def __init__(self, honeypot: CyanideServer, fs: FakeFilesystem, src_ip, src_port, conn_id: str):
+        print(f"DEBUG: SSHSession.__init__ starting for {src_ip}")
         self.honeypot = honeypot
         self.fs = fs
         self.src_ip = src_ip
@@ -1072,6 +1078,8 @@ class SSHSession(asyncssh.SSHServerSession):
         self.bytes_in = 0
         self.bytes_out = 0
 
+
+
     # Function 65: Performs operations related to connection made.
     def connection_made(self, channel):
         self.channel = channel
@@ -1083,6 +1091,8 @@ class SSHSession(asyncssh.SSHServerSession):
 
         # GeoIP Lookup
         asyncio.create_task(self.honeypot.log_geoip(self.session_id, self.src_ip, "ssh"))
+
+        # SSH Fingerprinting
 
         # SSH Fingerprinting
         # Extract negotiated algorithms (HASSH-like data)
@@ -1435,8 +1445,34 @@ class SSHSession(asyncssh.SSHServerSession):
             },
         )
 
+        # SCP/rsync Interception
+        ssh_conf = self.honeypot.config.get("ssh", {})
+        if command.startswith("scp ") and ssh_conf.get("scp_enabled", True):
+            from cyanide.vfs.scp import SCPHandler
+            scp = SCPHandler(self)
+            asyncio.create_task(self._run_scp(scp, command))
+            return True
+
+        if command.startswith("rsync ") and ssh_conf.get("rsync_enabled", True):
+            from cyanide.vfs.rsync import RsyncHandler
+            rsync = RsyncHandler(self)
+            asyncio.create_task(self._run_rsync(rsync, command))
+            return True
+
         asyncio.create_task(self._async_exec(command))
         return True
+
+    # Function 79.1: Runs SCP handler and handles exit.
+    async def _run_scp(self, scp, command):
+        rc = await scp.handle(command)
+        self.channel.exit(rc)
+        self.channel.close()
+
+    # Function 79.2: Runs rsync handler and handles exit.
+    async def _run_rsync(self, rsync, command):
+        rc = await rsync.handle(command)
+        self.channel.exit(rc)
+        self.channel.close()
 
     # Function 80: Performs operations related to async exec.
     async def _async_exec(self, command):

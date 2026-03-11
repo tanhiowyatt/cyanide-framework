@@ -75,6 +75,13 @@ ssh:
   login_timeout: 60
   idle_timeout: 3600
   rekey_limit: "1G"
+  sftp_enabled: true
+  scp_enabled: true
+  rsync_enabled: true
+  max_upload_size_mb: 50
+  max_total_upload_mb_per_session: 200
+  allow_download: true
+  allow_upload: true
   forwarding_enabled: false
   forward_redirect_enabled: false
   forward_redirect_rules:
