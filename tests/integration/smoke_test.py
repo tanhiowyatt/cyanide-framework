@@ -82,7 +82,7 @@ def check_smtp_functional(host, port):
             code, msg = smtp.helo("cyanide-test.local")
             if code == 250:
                 return True, "SMTP HELO OK"
-            return False, f"SMTP HELO failed with code {code}: {msg}"
+            return False, f"SMTP HELO failed with code {code}: {msg!r}"
     except Exception as e:
         return False, str(e)
 

@@ -819,9 +819,9 @@ class CyanideServer:
             try:
                 smtp_proxy = TCPProxy(
                     "0.0.0.0",
-                    int(smtp_conf.get("listen_port", 25)),
+                    int(smtp_conf.get("port", 25)),
                     smtp_conf.get("target_host", "127.0.0.1"),
-                    int(smtp_conf.get("target_port", 2525)),
+                    int(smtp_conf.get("target_port", 25255)),
                     protocol_name="smtp",
                 )
                 await smtp_proxy.start()
@@ -830,8 +830,8 @@ class CyanideServer:
                     "service_started",
                     {
                         "service": "smtp_proxy",
-                        "listen_port": int(smtp_conf.get("listen_port", 25)),
-                        "target": f"{smtp_conf.get('target_host', '127.0.0.1')}:{smtp_conf.get('target_port', 2525)}",
+                        "listen_port": int(smtp_conf.get("port", 25)),
+                        "target": f"{smtp_conf.get('target_host', '127.0.0.1')}:{smtp_conf.get('target_port', 25255)}",
                     },
                 )
             except Exception as e:

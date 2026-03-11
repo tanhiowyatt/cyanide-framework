@@ -116,9 +116,9 @@ class MetricsConfig(BaseModel):
 
 class SMTPConfig(BaseModel):
     enabled: bool = False
-    listen_port: int = 25
+    port: int = 25
     target_host: str = "127.0.0.1"
-    target_port: int = 2525
+    target_port: int = 25255
 
 
 class TelemetryConfig(BaseModel):

@@ -124,23 +124,29 @@ class TelnetHandler:
                 pass  # silently skip banner if unreadable
 
             # Simple auth
-            writer.write(b"login: ")
-            bytes_out += len(b"login: ")
-            self.stats.on_traffic("out", len(b"login: "))
-            await writer.drain()
-            login_data = await reader.readuntil(b"\n")
-            bytes_in += len(login_data)
-            self.stats.on_traffic("in", len(login_data))
-            username = login_data.decode().strip()
+            try:
+                writer.write(b"login: ")
+                bytes_out += len(b"login: ")
+                self.stats.on_traffic("out", len(b"login: "))
+                await writer.drain()
+                login_data = await reader.readuntil(b"\n")
+                bytes_in += len(login_data)
+                self.stats.on_traffic("in", len(login_data))
+                username = login_data.decode().strip()
 
-            writer.write(b"Password: ")
-            bytes_out += len(b"Password: ")
-            self.stats.on_traffic("out", len(b"Password: "))
-            await writer.drain()
-            pass_data = await reader.readuntil(b"\n")
-            bytes_in += len(pass_data)
-            self.stats.on_traffic("in", len(pass_data))
-            password = pass_data.decode().strip()
+                writer.write(b"Password: ")
+                bytes_out += len(b"Password: ")
+                self.stats.on_traffic("out", len(b"Password: "))
+                await writer.drain()
+                pass_data = await reader.readuntil(b"\n")
+                bytes_in += len(pass_data)
+                self.stats.on_traffic("in", len(pass_data))
+                password = pass_data.decode().strip()
+            except (asyncio.IncompleteReadError, ConnectionResetError):
+                self.logger.log_event(
+                    session_id, "telnet_disconnect", {"message": "Client disconnected during auth"}
+                )
+                return False, bytes_in, bytes_out, "", False
 
             # Auth Check
             success = self.server.is_valid_user(username, password)

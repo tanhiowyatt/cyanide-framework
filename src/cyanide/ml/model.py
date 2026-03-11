@@ -133,8 +133,15 @@ class CommandAutoencoder(nn.Module):
             except ImportError:
                 pass
 
-            # Secure load with weights_only=True
-            checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=True)
+            # Secure load with weights_only=True (PyTorch 2.6+ default)
+            try:
+                checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=True)
+            except Exception as e:
+                # Fallback for models with legacy formats or non-standard globals (like numpy scalars)
+                logger.warning(
+                    f"[*] Secure load failed for {path} ({e}), retrying with weights_only=False"
+                )
+                checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=False)
 
             model = CommandAutoencoder(
                 input_dim=checkpoint.get("input_dim", 512),

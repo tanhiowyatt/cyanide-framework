@@ -97,7 +97,7 @@ telnet:
 
 smtp:
   enabled: false
-  listen_port: 2525
+  port: 25
   target_host: 127.0.0.1
   target_port: 25255
 

@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from pydantic import ValidationError
 
@@ -100,7 +102,17 @@ virustotal:
 
 
 # Function 430: Runs unit tests for the load_valid_config functionality.
-def test_load_valid_config(valid_config):
+def test_load_valid_config(valid_config, monkeypatch):
+    # Clear environment variables that might interfere
+    for key in list(os.environ.keys()):
+        if key.startswith("CYANIDE_") or key in (
+            "SSH_PORT",
+            "TELNET_PORT",
+            "SMTP_PORT",
+            "METRICS_PORT",
+        ):
+            monkeypatch.delenv(key, raising=False)
+
     config = load_config(valid_config)
     assert config["ssh"]["port"] == 2222
     assert config["ssh"]["backend_mode"] == "emulated"
