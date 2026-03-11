@@ -28,3 +28,25 @@ Context analysis enriches raw detection outcomes by considering the surrounding 
 ### Mechanism:
 - If a seemingly benign command (`cat`) is executed against a critically sensitive target (`/etc/shadow`), the semantic consequence is inherently severe.
 - The `ContextAnalyzer` assesses target IPs (identifying public scanners vs internal ranges), referenced VFS paths (identifying attempts to manipulate system bootloaders vs temp storage), and the timing behavior of specific attacker patterns (e.g. executing 10 recon commands in exactly 0.05 seconds indicates bot-like orchestration).
+
+## Layer 4: GeoIP Enrichment
+
+Modern threat intel requires geographic context. The `AnalyticsService` seamlessly integrates with IP-based geolocation databases (e.g., MaxMind).
+- When a new attacker connects, their source IP is instantly queried against the local GeoIP database.
+- Metadata including `Country`, `City`, and `ASN` (Autonomous System Number) is merged into their session context.
+- This allows researchers to quickly map botnet origins and correlate behavioral anomalies (from the Autoencoder) directly with geographical threat actor clusters.
+
+## Layer 5: Output Plugins & Central Logging
+
+Identifying a threat is useless if nowhere is alerted. The analytics pipeline standardizes all findings into parsed JSON events and feeds them to the `CyanideLogger`.
+
+### Centralized Logging (`CyanideLogger`)
+- Replaces legacy scattering by centralizing all logs into unified, automatically rotated streams (`cyanide-server.json`, `cyanide-ml.json`, etc.).
+- Native rotation (`time` or `size`) ensures the honeypot disk never fills up, preventing denial of service by logging exhaustion.
+
+### Output Plugins Architecture
+In production, Cyanide can replicate these unified logs via asynchronous output plugins to:
+1. **ElasticSearch / Splunk:** For massive SIEM aggregations.
+2. **PostgreSQL:** For structured long-term historical analysis.
+3. **Slack / Discord:** For real-time, high-priority severity alerts (e.g., when a user drops a confirmed zero-day binary).
+4. **HPFeeds:** For sharing anonymous threat feeds with the global Honeynet project community.

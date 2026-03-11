@@ -218,3 +218,14 @@
       - CYANIDE_POOL_SAVE_SNAPSHOTS=false
       - CYANIDE_POOL_SNAPSHOT_PATH=var/lib/cyanide/snapshots
       - CYANIDE_POOL_TARGETS=""
+
+      # =======================================================================
+      # M. LOGGING & ROTATION
+      # =======================================================================
+      - CYANIDE_LOGGING_DIRECTORY=var/log/cyanide
+      - CYANIDE_LOGGING_LOGTYPE=plain
+      - CYANIDE_LOGGING_ROTATION_STRATEGY=time
+      - CYANIDE_LOGGING_ROTATION_WHEN=midnight
+      - CYANIDE_LOGGING_ROTATION_INTERVAL=1
+      - CYANIDE_LOGGING_ROTATION_BACKUP_COUNT=14
+      - CYANIDE_LOGGING_ROTATION_MAX_BYTES=10485760

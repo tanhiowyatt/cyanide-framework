@@ -14,6 +14,7 @@ Diagnostic tools usually rely on default log paths (`var/log/cyanide/`). If you'
 ## 📑 Detailed Documents
 
 *   **[Operations Guide](operations.md)**: Comprehensive manual on system monitoring, logging, and TTY playback.
+*   **[Plugins Architecture](plugins.md)**: Details on the asynchronous output system and how to integrate with external SIEMs/Databases.
 *   **[Deployment Workflow](operations.md#deployment-setup)**: How to scale from individual local instances to high-availability Docker swarms.
 *   **[Session Playback](operations.md#tty-log-replay)**: Utilizing `scriptreplay` for granular session investigation.
 *   **[Asset Management](operations.md#system-maintenance)**: Handling the local file cache and quarantine directories.

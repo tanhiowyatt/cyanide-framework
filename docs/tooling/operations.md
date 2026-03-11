@@ -52,6 +52,12 @@ Replay TTY sessions exactly as they appeared to the attacker.
 scriptreplay var/log/cyanide/tty/<session_id>/timing var/log/cyanide/tty/<session_id>/data
 ```
 
+### 3. Cleanup & TTL Sweeper
+While `CyanideLogger` natively handles file rotation, database rows and long-term quarantine telemetry can grow stale. The `cleanup.py` script enforces a Time-to-Live (TTL) on historical analytics data.
+```bash
+python3 scripts/management/cleanup.py --days 30
+```
+
 ---
 
 ## 🛡️ Forensics & Malware Handling

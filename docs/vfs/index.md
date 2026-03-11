@@ -14,6 +14,7 @@ FileSystem structure is defined via **OS Profiles** in `configs/profiles/`. Thes
 ## 📑 Detailed Documents
 
 *   **[VFS Architecture](vfs.md)**: Details on the engine, proxy nodes, and profile-based OS manifests.
+*   **[Shell Emulator Architecture](shell_emulator.md)**: Details on the custom AST parser, logic gates, and command dispatching.
 *   **[Caching Strategy](../core/caching.md)**: Performance optimizations for high-throughput I/O scenarios.
 *   **[Dynamic Providers](vfs.md#3-dynamic-providers)**: How `/proc/uptime`, `/proc/cpuinfo`, and other system files are generated.
 *   **[Commands](vfs.md#5-command-implementation)**: Native implementations of standard Linux command-line utilities.

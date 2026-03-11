@@ -91,16 +91,6 @@ class VMPool:
         assert self.backend is not None
         await self.backend.release_target(lease)
 
-    def get_target(self):
-        """
-        Legacy GET. Not recommended if using libvirt.
-        """
-        if isinstance(self.backend, SimplePool):
-            if not self.backend.targets:
-                return None
-            return random.choice(self.backend.targets)
-        return None
-
     def report_failure(self, host, port):
         """
         Report a failed backend. Could disable it temporarily.

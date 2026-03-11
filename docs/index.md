@@ -9,12 +9,18 @@ This documentation suite provides detailed insights into the system's architectu
 | Section | Description |
 |:---|:---|
 | 🏛️ **[Core](core/index.md)** | System architecture, global configuration, and core engine mechanics. |
+| 🚀 **[Deployment](core/deployment.md)** | Step-by-step setup (Docker vs Baremetal) and scaling. |
+| 💎 **[Advanced](core/advanced_features.md)** | **New:** Honeytokens, HTTP Log Browser, and SMTP Capture. |
+| 🔌 **[Plugins](tooling/plugins.md)** | Asynchronous output system for SIEMs, databases, and Slack. |
+| 🧩 **[Extensibility](core/extensibility.md)** | Modular design: custom VFS providers, shell commands, and VM backends. |
 | 📁 **[VFS](vfs/index.md)** | The Virtual Filesystem layer, OS profiles, and dynamic file providers. |
+| 🎭 **[OS Profiles](vfs/profiles_guide.md)** | **New:** Tutorial on creating custom OS personas and file manifests. |
 | 🛠️ **[Services](services/index.md)** | Technical details on individual honeypot services (SSH, Telnet, etc.). |
 | 🌐 **[Networking](networking/index.md)** | Man-in-the-Middle proxying, traffic interception, and protocol handling. |
 | 🧠 **[ML & Analytics](ml-analytics/index.md)** | Anomaly detection, security rule engine, and log analysis. |
 | 🔧 **[Tooling](tooling/index.md)** | Operational scripts, management CLI, and deployment guides. |
 | 🧪 **[Tests](tests/index.md)** | Test suite structure, integration testing, and coverage reports. |
+| 🆘 **[Troubleshooting](core/troubleshooting.md)** | **New:** Solutions for common errors (Libvirt, ML, Logging). |
 
 ## 🌍 Translations
 

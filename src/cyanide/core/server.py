@@ -443,7 +443,8 @@ class CyanideServer:
                     content = json.dumps(status_data)
                     content_type = "application/json"
                 elif path.startswith("/logs"):
-                    log_base = Path(self.config.get("log_path", "var/log/cyanide")).resolve()
+                    log_dir = self.config.get("logging", {}).get("directory", self.config.get("log_path", "var/log/cyanide"))
+                    log_base = Path(log_dir).resolve()
                     requested_subpath = path.replace("/logs", "", 1).lstrip("/")
                     target_path = (log_base / requested_subpath).resolve()
 

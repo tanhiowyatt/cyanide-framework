@@ -9,6 +9,11 @@
 *   **Metrics Server**: Internal Prometheus-compatible exporter for real-time monitoring of sessions, traffic, and security alerts.
 *   **VMPool Manager**: Dynamic backend pool for managing proxied sessions into isolated micro-VMs.
 
+## 📄 Detailed Documents
+
+*   **[SSH Service Architecture](ssh.md)**: Deep interactions around custom crypto mimicry, port forwarding interception, and standard PTY allocation.
+*   **[Telnet Service Architecture](telnet.md)**: Details on the asynchronous raw TCP connection handler and `IAC` byte sanitization logic.
+
 ## 🔗 See Also
 *   🌐 **[Networking Logic](../networking/index.md)**: Details on the MiTM proxying.
 *   📁 **[VFS Layer](../vfs/index.md)**: The shared filesystem used by all honeypot protocols.

@@ -72,13 +72,6 @@ class AnalyticsService:
                 self.ml_enabled = False
                 return
 
-            self.ml_log_path = Path(
-                self.config.get("ml", {}).get("ml_log", "var/log/cyanide/ml.json")
-            )
-
-            # Ensure log directory exists
-            self.ml_log_path.parent.mkdir(parents=True, exist_ok=True)
-
         except (ImportError, ModuleNotFoundError) as e:
             self.logger.log_event(
                 "system", "error", {"message": f"ML Module could not be loaded: {e}"}

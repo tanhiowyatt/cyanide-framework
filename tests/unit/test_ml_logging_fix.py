@@ -39,12 +39,6 @@ def analytics_svc(mock_logger):
     return svc
 
 
-# Function 449: Runs unit tests for the ml_logging_path_creation functionality.
-def test_ml_logging_path_creation(analytics_svc):
-    # Verify that the log directory exists
-    assert analytics_svc.ml_log_path.parent.exists()
-
-
 # Function 450: Runs unit tests for the ml_command_logging functionality.
 def test_ml_command_logging(analytics_svc):
     # Mock pipeline analyze_command

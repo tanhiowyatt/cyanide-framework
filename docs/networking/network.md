@@ -16,18 +16,17 @@ Attackers do not interact with native unshielded daemons (like `sshd` or `telnet
 - An explicit, raw TCP socket parser tracking Telnet Negotiation protocols (DO, DONT, WILL, WONT).
 - Simulates legacy login workflows common on old IoT devices, dropping the attacker into an identical `ShellEmulator` instance once standard text-based authentication criteria are met.
 
-## 2. Proxy Dispatch
+## 2. Proxy Dispatch (`src/cyanide/network/proxy.py`)
 
-If the honeypot is configured in Proxy Mode, the Network layer conditionally routes attacker traffic rather than trapping it in an emulator.
+If the honeypot is configured in Proxy or Pool Mode, the Network layer conditionally routes attacker traffic directly at the TCP stream level rather than trapping it in an emulator.
 
-### `TCP Proxy`:
-- Operates at Layer 4, forwarding raw bytes back and forth between the attacker and a legitimate internal testing server (e.g., forwarding an attacker probing port 25 to a real Postfix staging instance).
-- Passively logs the stream for forensics via hexadecimal dumps and PCAP tracking.
+### `TCPProxy` Implementation
+The `TCPProxy` class sits invisibly between the attacker and the configured destination (a proxy target or a dynamic `VMPool` guest).
 
-### `SSH Proxy`:
-- Serves as an advanced Man-in-the-Middle interceptor.
-- If the target backend relies on SSH, this module negotiates the initial cryptography with the attacker, then transparently opens a corresponding SSH tunnel to the backend using the attacker's supplied credentials.
-- All decrypted input/output is silently logged prior to being routed via the tunnel.
+1. **Transparent Bridging:** Once the attacker connects, `TCPProxy` asynchronously opens a socket to the target backend (`target_host:target_port`). It reads raw bytes (`data_received`) from the attacker's transport, buffers them, and writes them immediately to the target backend's transport.
+2. **Reverse Tunneling:** Simultaneously, it reads byte output back from the target and pipes it directly to the attacker.
+3. **Forensic Logging & Observability:** While the stream acts like a pure pass-through, `TCPProxy` silently clones all transmitted payloads in real-time. It translates hexadecimal data into readable formats and routes it centrally through `CyanideLogger` as `proxy_traffic` events, ensuring an immutable audit trail of the man-in-the-middle session.
+4. **VMPool Awareness:** If a `Lease` object is passed into the proxy, the `TCPProxy` takes ownership of the VM lifecycle for that session. Upon connection loss (`connection_lost`), the proxy automatically triggers the `VMPool` to release the lease, which destroys the attacker's sandbox VM.
 
 ## 3. Defensive Anti-Fingerprinting (Jitter)
 
