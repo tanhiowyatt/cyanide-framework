@@ -28,11 +28,28 @@ jobs:
     - name: Run Container
       run: |
         docker run -d \
+          -e CYANIDE_HONEYPOT_HOSTNAME=server01 \
+          -e CYANIDE_SERVER_OS_PROFILE=ubuntu \
+          -e CYANIDE_SERVER_MAX_SESSIONS=100 \
+          -e CYANIDE_SERVER_MAX_SESSIONS_PER_IP=5 \
+          -e CYANIDE_SERVER_SESSION_TIMEOUT=300 \
+          -e CYANIDE_HONEYPOT_QUARANTINE_MAX_SIZE_MB=500 \
+          -e CYANIDE_SSH_ENABLED=true \
+          -e CYANIDE_SSH_PORT=2222 \
+          -e CYANIDE_SSH_BACKEND_MODE=emulated \
+          -e CYANIDE_SSH_SFTP_ENABLED=true \
+          -e CYANIDE_SSH_SCP_ENABLED=true \
+          -e CYANIDE_SSH_RSYNC_ENABLED=true \
           -e CYANIDE_TELNET_ENABLED=true \
           -e CYANIDE_TELNET_PORT=2223 \
+          -e CYANIDE_TELNET_BACKEND_MODE=emulated \
           -e CYANIDE_SMTP_ENABLED=true \
           -e CYANIDE_SMTP_PORT=2525 \
+          -e CYANIDE_ML_ENABLED=true \
+          -e CYANIDE_ML_RETRAINING_INTERVAL_DAYS=7 \
           -e CYANIDE_METRICS_ENABLED=true \
+          -e CYANIDE_METRICS_PORT=9090 \
+          -e 'CYANIDE_USERS=[{"user": "root", "pass": "admin"}, {"user": "admin", "pass": "admin"}]' \
           -p 2222:2222 \
           -p 2223:2223 \
           -p 2525:2525 \

@@ -429,7 +429,10 @@ class CyanideServer:
                 elif path == "/health":
                     ssh_up = self.ssh_server is not None
                     telnet_up = self.telnet_server is not None
-                    smtp_up = self.smtp_server is not None or getattr(self, "smtp_proxy", None) is not None
+                    smtp_up = (
+                        self.smtp_server is not None
+                        or getattr(self, "smtp_proxy", None) is not None
+                    )
                     is_healthy = True
                     if self.config.get("ssh", {}).get("enabled", True) and not ssh_up:
                         is_healthy = False
