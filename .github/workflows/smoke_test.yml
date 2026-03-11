@@ -28,8 +28,13 @@ jobs:
     - name: Run Container
       run: |
         docker run -d \
+          -e CYANIDE_TELNET_ENABLED=true \
+          -e CYANIDE_TELNET_PORT=2223 \
+          -e CYANIDE_SMTP_ENABLED=true \
+          -e CYANIDE_SMTP_PORT=25 \
           -p 2222:2222 \
           -p 2223:2223 \
+          -p 2525:25 \
           -p 9090:9090 \
           --name cyanide \
           cyanide:latest
@@ -46,6 +51,11 @@ jobs:
       run: pip install requests asyncssh
 
     - name: Run Smoke Test
+      env:
+        CYANIDE_SSH_PORT: 2222
+        CYANIDE_TELNET_PORT: 2223
+        CYANIDE_SMTP_PORT: 2525
+        CYANIDE_METRICS_PORT: 9090
       run: python3 tests/integration/smoke_test.py
 
     - name: Check Container Logs (if failed)

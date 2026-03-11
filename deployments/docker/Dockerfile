@@ -55,7 +55,7 @@ RUN mkdir -p var/log/cyanide/tty var/quarantine var/run \
 USER cyanide
 
 # Expose ports
-EXPOSE 2222 2223 9090
+EXPOSE 2222 2223 9090 25
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

@@ -1,8 +1,8 @@
+import asyncio
+import os
 import socket
 import sys
 import time
-import os
-import asyncio
 
 
 # Function 328: Performs operations related to check port.
@@ -37,13 +37,70 @@ async def check_ssh_functional(host, port):
         return False, str(e)
 
 
+async def check_sftp_functional(host, port):
+    """Try to login and perform a simple SFTP operation."""
+    try:
+        import asyncssh
+
+        async with asyncssh.connect(
+            host, port=port, username="root", password="admin", known_hosts=None
+        ) as conn:
+            async with conn.start_sftp_client() as sftp:
+                # Try to list root directory
+                files = await sftp.listdir("/")
+                if files is not None:
+                    return True, f"SFTP List OK ({len(files)} items)"
+                return False, "SFTP List returned None"
+    except Exception as e:
+        return False, str(e)
+
+
+async def check_telnet_functional(host, port):
+    """Try to perform a simple Telnet connect and banner read."""
+    try:
+        reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=5)
+        # Try to read some data (banner)
+        data = await asyncio.wait_for(reader.read(1024), timeout=5)
+        writer.close()
+        try:
+            await writer.wait_closed()
+        except Exception:
+            pass
+        if data:
+            return True, f"Telnet Banner OK ({len(data)} bytes)"
+        return False, "Telnet connected but no banner received"
+    except Exception as e:
+        return False, str(e)
+
+
+def check_smtp_functional(host, port):
+    """Try to perform a simple SMTP handshake."""
+    try:
+        import smtplib
+
+        with smtplib.SMTP(host, port, timeout=5) as smtp:
+            code, msg = smtp.helo("cyanide-test.local")
+            if code == 250:
+                return True, "SMTP HELO OK"
+            return False, f"SMTP HELO failed with code {code}: {msg}"
+    except Exception as e:
+        return False, str(e)
+
+
 # Function 330: Runs unit tests for the smoke_test functionality.
 def smoke_test():
     host = "127.0.0.1"
     ssh_port = int(os.getenv("CYANIDE_SSH_PORT", 2222))
     telnet_port = int(os.getenv("CYANIDE_TELNET_PORT", 2223))
     metrics_port = int(os.getenv("CYANIDE_METRICS_PORT", 9090))
-    ports = {"SSH": ssh_port, "Telnet": telnet_port, "Metrics": metrics_port}
+    smtp_port = int(os.getenv("CYANIDE_SMTP_PORT", 25))
+
+    ports = {
+        "SSH": ssh_port,
+        "Telnet": telnet_port,
+        "Metrics": metrics_port,
+        "SMTP": smtp_port,
+    }
 
     print("[*] Starting Smoke Test...")
     all_passed = True
@@ -74,9 +131,45 @@ def smoke_test():
         print(f"[-] SSH Functional Error: {e}")
         all_passed = False
 
+    # Functional SFTP Test
+    try:
+        ok, msg = asyncio.run(check_sftp_functional(host, ssh_port))
+        if ok:
+            print(f"[+] SFTP Functional: {msg}")
+        else:
+            print(f"[-] SFTP Functional FAILED: {msg}")
+            all_passed = False
+    except Exception as e:
+        print(f"[-] SFTP Functional Error: {e}")
+        all_passed = False
+
+    # Functional Telnet Test
+    try:
+        ok, msg = asyncio.run(check_telnet_functional(host, telnet_port))
+        if ok:
+            print(f"[+] Telnet Functional: {msg}")
+        else:
+            print(f"[-] Telnet Functional FAILED: {msg}")
+            all_passed = False
+    except Exception as e:
+        print(f"[-] Telnet Functional Error: {e}")
+        all_passed = False
+
+    # Functional SMTP Test
+    try:
+        ok, msg = check_smtp_functional(host, smtp_port)
+        if ok:
+            print(f"[+] SMTP Functional: {msg}")
+        else:
+            print(f"[-] SMTP Functional FAILED: {msg}")
+            all_passed = False
+    except Exception as e:
+        print(f"[-] SMTP Functional Error: {e}")
+        all_passed = False
+
     # Check /health endpoint with retries
     print("[*] Checking Health Endpoint...")
-    max_retries = 3
+    max_retries = 5
     health_ok = False
     for attempt in range(max_retries):
         try:
@@ -84,16 +177,20 @@ def smoke_test():
             try:
                 import requests  # type: ignore
 
-                response = requests.get(f"http://{host}:{metrics_port}/health", timeout=5)
+                response = requests.get(
+                    f"http://{host}:{metrics_port}/health",
+                    timeout=5,
+                    headers={"Connection": "close"},
+                )
                 if response.status_code == 200:
                     data = response.json()
             except ImportError:
                 import json
                 import urllib.request
 
-                with urllib.request.urlopen(
-                    f"http://{host}:{metrics_port}/health", timeout=5
-                ) as response:
+                req = urllib.request.Request(f"http://{host}:{metrics_port}/health")
+                req.add_header("Connection", "close")
+                with urllib.request.urlopen(req, timeout=5) as response:
                     if response.status == 200:
                         data = json.loads(response.read().decode())
 
@@ -113,7 +210,7 @@ def smoke_test():
             print(f"[-] Health Endpoint Error (Attempt {attempt+1}/{max_retries}): {e}")
 
         if attempt < max_retries - 1:
-            time.sleep(2)
+            time.sleep(3)
 
     if not health_ok:
         all_passed = False
