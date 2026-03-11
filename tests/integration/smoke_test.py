@@ -1,6 +1,8 @@
 import socket
 import sys
 import time
+import os
+import asyncio
 
 
 # Function 328: Performs operations related to check port.
@@ -38,7 +40,6 @@ async def check_ssh_functional(host, port):
 # Function 330: Runs unit tests for the smoke_test functionality.
 def smoke_test():
     host = "127.0.0.1"
-    import os
     ssh_port = int(os.getenv("CYANIDE_SSH_PORT", 2222))
     telnet_port = int(os.getenv("CYANIDE_TELNET_PORT", 2223))
     metrics_port = int(os.getenv("CYANIDE_METRICS_PORT", 9090))
@@ -49,9 +50,9 @@ def smoke_test():
 
     # Wait for service startup
     for i in range(10):
-        if check_port(host, 9090):
+        if check_port(host, metrics_port):
             break
-        print(f"Waiting for service... {i+1}/10")
+        print(f"Waiting for metrics service on {metrics_port}... {i+1}/10")
         time.sleep(2)
 
     for name, port in ports.items():
@@ -62,8 +63,6 @@ def smoke_test():
             all_passed = False
 
     # Functional SSH Test
-    import asyncio
-
     try:
         ok, msg = asyncio.run(check_ssh_functional(host, ssh_port))
         if ok:
@@ -75,37 +74,48 @@ def smoke_test():
         print(f"[-] SSH Functional Error: {e}")
         all_passed = False
 
-    # Check /health endpoint
-
-    try:
-        data = None
+    # Check /health endpoint with retries
+    print("[*] Checking Health Endpoint...")
+    max_retries = 3
+    health_ok = False
+    for attempt in range(max_retries):
         try:
-            import requests  # type: ignore
+            data = None
+            try:
+                import requests  # type: ignore
 
-            response = requests.get(f"http://{host}:{metrics_port}/health", timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-        except ImportError:
-            import json
-            import urllib.request
+                response = requests.get(f"http://{host}:{metrics_port}/health", timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+            except ImportError:
+                import json
+                import urllib.request
 
-            with urllib.request.urlopen(f"http://{host}:{metrics_port}/health", timeout=5) as response:
-                if response.status == 200:
-                    data = json.loads(response.read().decode())
+                with urllib.request.urlopen(
+                    f"http://{host}:{metrics_port}/health", timeout=5
+                ) as response:
+                    if response.status == 200:
+                        data = json.loads(response.read().decode())
 
-        if data:
-            if data.get("status") == "healthy":
-                print("[+] Health Endpoint: OK")
+            if data:
+                if data.get("status") == "healthy":
+                    print("[+] Health Endpoint: OK")
+                    health_ok = True
+                    break
+                else:
+                    print(
+                        f"[-] Health Endpoint (Attempt {attempt+1}/{max_retries}): UNHEALTHY ({data})"
+                    )
             else:
-                print(f"[-] Health Endpoint: UNHEALTHY ({data})")
-                all_passed = False
-        else:
-            print("[-] Health Endpoint: FAILED (No data)")
-            all_passed = False
-    except Exception as e:
-        import traceback
-        print(f"[-] Health Endpoint Error: {e}")
-        # traceback.print_exc()
+                print(f"[-] Health Endpoint (Attempt {attempt+1}/{max_retries}): FAILED (No data)")
+
+        except Exception as e:
+            print(f"[-] Health Endpoint Error (Attempt {attempt+1}/{max_retries}): {e}")
+
+        if attempt < max_retries - 1:
+            time.sleep(2)
+
+    if not health_ok:
         all_passed = False
 
     if all_passed:

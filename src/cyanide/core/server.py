@@ -5,7 +5,6 @@ Advanced SSH/Telnet Honeypot Server Implementation.
 import asyncio
 import json
 import logging
-import os
 import random
 import time
 import traceback
@@ -14,7 +13,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import asyncssh
-from prometheus_client import generate_latest
 
 from cyanide import CyanideLogger
 from cyanide.core.emulator import ShellEmulator
@@ -385,150 +383,95 @@ class CyanideServer:
         port = metrics_conf.get("port", 9090)
 
         # Function 51: Handles incoming request events.
+        # Function 51: Handles incoming request events.
         async def handle_request(reader, writer):
             try:
-                # Read headers robustly
-                header_data = b""
-                while True:
-                    try:
-                        line = await asyncio.wait_for(reader.readline(), timeout=5.0)
-                        if not line or line in (b"\r\n", b"\n"):
-                            break
-                        header_data += line
-                    except asyncio.TimeoutError:
-                        break
-
-                if not header_data:
+                # 1. Read the first line (Request-Line)
+                try:
+                    line = await asyncio.wait_for(reader.readline(), timeout=2.0)
+                except asyncio.TimeoutError:
                     writer.close()
-                    await writer.wait_closed()
+                    return
+
+                if not line:
+                    writer.close()
                     return
 
                 try:
-                    request_line = header_data.decode("utf-8").splitlines()[0]
+                    request_line = line.decode("utf-8", "ignore").strip()
                     parts = request_line.split()
                     if len(parts) < 2:
                         writer.close()
-                        await writer.wait_closed()
                         return
                     path = parts[1]
-                except (IndexError, UnicodeDecodeError):
+                except Exception:
                     writer.close()
-                    await writer.wait_closed()
                     return
+
+                # 2. Consume remaining headers (important for client state)
+                try:
+                    while True:
+                        line = await asyncio.wait_for(reader.readline(), timeout=1.0)
+                        if not line or line in (b"\r\n", b"\n"):
+                            break
+                except (asyncio.TimeoutError, Exception):
+                    pass
+
+                # Route path
+                content = ""
+                content_type = "text/plain"
 
                 if path == "/metrics":
                     content = self.stats.to_prometheus()
-
-                    # Append ML metrics if available
-                    if self.services.analytics.ml_enabled and self.services.analytics.ml_pipeline:
-                        try:
-                            ml_metrics = generate_latest().decode()
-                            content += "\n" + ml_metrics
-                        except Exception as e:
-                            self.logger.log_event(
-                                "system",
-                                "metrics_error",
-                                {"message": f"Error generating ML metrics: {e}"},
-                            )
-
                     content_type = "text/plain; version=0.0.4; charset=utf-8"
                 elif path == "/stats":
                     content = json.dumps(self.stats.get_stats(), indent=2)
                     content_type = "application/json"
                 elif path == "/health":
-                    # Check core services
-                    ssh_conf = self.config.get("ssh", {})
-                    telnet_conf = self.config.get("telnet", {})
-
                     ssh_up = self.ssh_server is not None
                     telnet_up = self.telnet_server is not None
-
                     is_healthy = True
-                    if ssh_conf.get("enabled", True) and not ssh_up:
+                    if self.config.get("ssh", {}).get("enabled", True) and not ssh_up:
                         is_healthy = False
-                    if telnet_conf.get("enabled", False) and not telnet_up:
+                    if self.config.get("telnet", {}).get("enabled", False) and not telnet_up:
                         is_healthy = False
 
                     status_data = {
                         "status": "healthy" if is_healthy else "unhealthy",
-                        "version": "2.1.1",
                         "uptime": int(time.time() - self.stats.start_time),
                         "services": {"ssh": ssh_up, "telnet": telnet_up},
                     }
                     content = json.dumps(status_data)
                     content_type = "application/json"
                 elif path.startswith("/logs"):
-                    log_dir = self.config.get("logging", {}).get(
-                        "directory", self.config.get("log_path", "var/log/cyanide")
-                    )
-                    log_base = Path(log_dir).resolve()
-                    requested_subpath = path.replace("/logs", "", 1).lstrip("/")
-                    target_path = (log_base / requested_subpath).resolve()
-
-                    # Security check: ensure target is within log_base
-                    if not str(target_path).startswith(str(log_base)):
-                        content = "403 Forbidden: Path traversal detected."
-                        content_type = "text/plain"
-                    elif not target_path.exists():
-                        content = f"404 Not Found: {requested_subpath}"
-                        content_type = "text/plain"
-                    elif target_path.is_dir():
-                        # Directory listing
-                        try:
-                            items = os.listdir(target_path)
-                            # Create a simple HTML listing
-                            html_lines = [f"<h1>Index of {path}</h1><ul>"]
-                            if requested_subpath:
-                                parent = "/".join(path.rstrip("/").split("/")[:-1])
-                                if not parent.startswith("/logs"):
-                                    parent = "/logs"
-                                html_lines.append(f'<li><a href="{parent}">..</a></li>')
-                            for item in sorted(items):
-                                item_path = os.path.join(path.rstrip("/"), item)
-                                html_lines.append(f'<li><a href="{item_path}">{item}</a></li>')
-                            html_lines.append("</ul>")
-                            content = "\n".join(html_lines)
-                            content_type = "text/html"
-                        except Exception as e:
-                            content = f"500 Internal Server Error: {e}"
-                            content_type = "text/plain"
-                    else:
-                        # File serving
-                        try:
-                            with open(target_path, "r", errors="ignore") as f:
-                                content = f.read()
-                            if target_path.suffix == ".json" or target_path.suffix == ".jsonl":
-                                content_type = "application/json"
-                            else:
-                                content_type = "text/plain"
-                        except Exception as e:
-                            content = f"500 Internal Server Error: {e}"
-                            content_type = "text/plain"
+                    content = "Log access is restricted in metrics mode."
+                    content_type = "text/plain"
                 else:
-                    content = (
-                        "Cyanide Honeypot Metrics Server. Use /metrics, /stats, /health or /logs."
-                    )
+                    content = "Cyanide Metrics Server"
                     content_type = "text/plain"
 
-                payload = content.encode("utf-8", "ignore") if isinstance(content, str) else content
-
-                response_header = (
+                payload = content.encode("utf-8", "ignore")
+                response = (
                     f"HTTP/1.1 200 OK\r\n"
                     f"Content-Type: {content_type}\r\n"
                     f"Content-Length: {len(payload)}\r\n"
                     f"Connection: close\r\n"
                     f"\r\n"
-                ).encode()
+                ).encode() + payload
 
-                writer.write(response_header + payload)
-                await writer.drain()
+                try:
+                    writer.write(response)
+                    await writer.drain()
+                except (ConnectionResetError, BrokenPipeError):
+                    pass
             except Exception as e:
-                self.logger.log_event(
-                    "system", "metrics_handler_error", {"message": f"Metrics Handler Error: {e}"}
-                )
+                self.logger.log_event("system", "metrics_handler_error", {"error": str(e)})
             finally:
-                writer.close()
-                await writer.wait_closed()
+                try:
+                    writer.close()
+                    await writer.wait_closed()
+                except Exception:
+                    pass
 
         try:
             self.metrics_server = await asyncio.start_server(handle_request, "0.0.0.0", port)
