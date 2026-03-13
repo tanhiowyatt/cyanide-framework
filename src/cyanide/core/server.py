@@ -644,7 +644,15 @@ class CyanideServer:
                         if command is None:
                             # Shell request — delegate to SSHSession shell handler
                             sess = factory.sessions.get(factory.conn_id)
+                            if sess is None:
+                                # In high-level process_factory mode, session_requested might not be called by asyncssh.
+                                # We manually ensure the session object exists.
+                                sess = factory.session_requested()
+                                
                             if sess:
+                                if not sess.shell:
+                                    sess.shell_requested()
+                                    
                                 sess.channel = process.channel
                                 sess.session_started()
                                 # Hand off stdin processing to SSHSession
