@@ -25,7 +25,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # The project root is one level up from the scripts/ directory
 ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 
-PID_FILE = os.path.join(ROOT_DIR, "var/run/cyanide.pid")
+PID_FILE = os.path.join(ROOT_DIR, "var/lib/cyanide/run/cyanide.pid")
 STDOUT_LOG = os.path.join(ROOT_DIR, "var/log/cyanide/cyanide.out")
 STDERR_LOG = os.path.join(ROOT_DIR, "var/log/cyanide/cyanide.err")
 CONFIG_FILE = os.path.join(ROOT_DIR, "configs/app.yaml")

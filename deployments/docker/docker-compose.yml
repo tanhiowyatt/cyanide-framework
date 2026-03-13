@@ -20,7 +20,7 @@ services:
     tmpfs:
       - /tmp
       - /var/run
-      - /app/var/run
+      - /app/var/lib/cyanide/run
     cap_drop:
       - ALL
     cap_add:
