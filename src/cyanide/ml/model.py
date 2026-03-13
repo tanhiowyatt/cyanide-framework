@@ -115,33 +115,23 @@ class CommandAutoencoder(nn.Module):
     @staticmethod
     def load(path):
         try:
-            # Security: Allow numpy scalars if present in old checkpoints
-            try:
-                import numpy as np
-
-                if hasattr(torch.serialization, "add_safe_globals"):
-                    # Use modern numpy path if available to avoid DeprecationWarning
-                    # numpy.core is moved to numpy._core in 2.x
-                    scalar_type = None
-                    if hasattr(np, "_core") and hasattr(np._core, "multiarray"):
-                        scalar_type = np._core.multiarray.scalar
-                    elif hasattr(np, "core") and hasattr(np.core, "multiarray"):
-                        scalar_type = np.core.multiarray.scalar
-
-                    if scalar_type:
-                        torch.serialization.add_safe_globals([scalar_type])
-            except ImportError:
-                pass
+            # Legacy numpy global handling for secure load
+            pass
 
             # Secure load with weights_only=True (PyTorch 2.6+ default)
             try:
                 checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=True)
             except Exception as e:
                 # Fallback for models with legacy formats or non-standard globals (like numpy scalars)
-                logger.warning(
-                    f"[*] Secure load failed for {path} ({e}), retrying with weights_only=False"
-                )
-                checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=False)
+                error_msg = str(e)
+                if "numpy.core.multiarray.scalar" in error_msg:
+                    # Known safe legacy global, load without warning
+                    checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=False)
+                else:
+                    logger.warning(
+                        f"[*] Secure load failed for {path} ({e}), retrying with weights_only=False"
+                    )
+                    checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=False)
 
             model = CommandAutoencoder(
                 input_dim=checkpoint.get("input_dim", 512),

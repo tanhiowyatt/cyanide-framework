@@ -26,7 +26,7 @@ def mock_session():
     session.username = "root"
     session.conn_id = "test_conn"
     session.channel = MagicMock()
-    
+
     # SFTP session context
     conn = MagicMock()
     conn.get_extra_info.return_value = "root"
@@ -36,7 +36,7 @@ def mock_session():
     conn.cyanide_factory.fs = session.fs
     conn.cyanide_factory.conn_id = session.conn_id
     conn.cyanide_factory.src_ip = session.src_ip
-    
+
     return session
 
 
@@ -81,10 +81,10 @@ async def test_sftp_upload_via_handler(mock_session):
     file_obj = await handler.open(
         "/tmp/test.txt", asyncssh.FXF_WRITE | asyncssh.FXF_CREAT, asyncssh.SFTPAttrs()
     )
-    
+
     await file_obj.write(0, b"hello sftp/scp")
     await file_obj.close()
-    
+
     # Check if file was created in VFS
     assert mock_session.fs.exists("/tmp/test.txt")
     assert mock_session.fs.get_content("/tmp/test.txt") == "hello sftp/scp"

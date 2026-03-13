@@ -6,7 +6,6 @@ import asyncio
 import json
 import logging
 import random
-import sys
 import time
 import traceback
 import uuid
@@ -642,8 +641,8 @@ class CyanideServer:
                                 try:
                                     sess.data_received(data, None)
                                     await process.stdout.drain()
-                                except (asyncssh.TerminalSizeChange, asyncssh.BreakReceived, 
-                                        asyncssh.SignalReceived, asyncssh.TerminalModeChange):
+                                except (asyncssh.TerminalSizeChanged, asyncssh.BreakReceived, 
+                                        asyncssh.SignalReceived):
                                     continue
                                 except Exception as e:
                                     print(f"DEBUG: CyanideProcess stdin loop error: {e}", flush=True)
@@ -968,7 +967,7 @@ class SSHServerFactory(asyncssh.SSHServer):
         self.src_port = conn.get_extra_info("peername")[1]
 
         # Initialize session filesystem
-        self.fs = self.honeypot.get_filesystem(self.src_ip)
+        self.fs = self.honeypot.get_filesystem(session_id="conn_" + self.conn_id, src_ip=self.src_ip)
 
         self.client_version = conn.get_extra_info("client_version", "unknown")
 
@@ -1238,7 +1237,8 @@ class SSHSession(asyncssh.SSHServerSession):
         super().connection_made(channel)
         self.channel = channel
         conn = channel.get_connection()
-        self.username = conn.get_extra_info("username") or "root"
+        factory = getattr(conn, 'cyanide_factory', None)
+        self.username = factory.username if factory else (conn.get_extra_info("username") or "root")
         self.client_version = conn.get_extra_info("client_version") or "unknown"
 
         self.honeypot.stats.on_connect("ssh", self.src_ip)
@@ -1702,7 +1702,7 @@ class SSHSession(asyncssh.SSHServerSession):
             self._ensure_tty_log()
             fs = self.fs
             if not fs:
-                fs = self.honeypot.get_filesystem(self.src_ip)
+                fs = self.honeypot.get_filesystem(session_id=self.session_id, src_ip=self.src_ip)
 
             def q_hook(f, c):
                 self.honeypot.save_quarantine_file(f, c, self.session_id, self.src_ip)
@@ -1718,20 +1718,42 @@ class SSHSession(asyncssh.SSHServerSession):
             stdout, stderr, rc = await shell.execute(command)
             print(f"DEBUG _async_exec done rc={rc} stdout={stdout!r}", flush=True)
 
-            self.channel.write(stdout.encode() if isinstance(stdout, str) else stdout)
+            # Use process if available, otherwise fallback to channel
+            if self.process:
+                if isinstance(stdout, bytes):
+                    stdout_str = stdout.decode('utf-8', 'ignore')
+                else:
+                    stdout_str = stdout
+                self.process.stdout.write(stdout_str)
+                
+                if stderr:
+                    if isinstance(stderr, bytes):
+                        stderr_str = stderr.decode('utf-8', 'ignore')
+                    else:
+                        stderr_str = stderr
+                    self.process.stderr.write(stderr_str)
+            else:
+                self.channel.write(stdout.encode() if isinstance(stdout, str) else stdout)
+                if stderr:
+                    stderr_data = stderr.encode() if isinstance(stderr, str) else stderr
+                    self.channel.write_stderr(stderr_data)
+
             self.honeypot.stats.on_traffic("out", len(stdout))
             self._log_tty("OUT", stdout)
-
+            
             if stderr:
-                self.channel.write_stderr(stderr.encode() if isinstance(stderr, str) else stderr)
                 self.honeypot.stats.on_traffic("out", len(stderr))
                 self._log_tty("OUT", stderr)
 
-            self.channel.write_eof()
-            await asyncio.sleep(0.01)
-            self.channel.exit(rc)
-            self.channel.close()
-            print("DEBUG _async_exec channel closed cleanly", flush=True)
+            if self.process:
+                # completion of cyanide_process_factory signals end, but we can set exit status
+                self.process.exit(rc)
+            else:
+                self.channel.write_eof()
+                await asyncio.sleep(0.01)
+                self.channel.exit(rc)
+                self.channel.close()
+            print("DEBUG _async_exec finished", flush=True)
         except Exception as e:
             print(f"DEBUG _async_exec EXCEPTION: {e}", flush=True)
             import sys
