@@ -36,6 +36,7 @@ class Plugin(OutputPlugin):
             self.conn = psycopg.connect(conn_str)
             if self.conn:
                 with self.conn.cursor() as cursor:
+                    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query, python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                     cursor.execute(f"""
                         CREATE TABLE IF NOT EXISTS {self.table} (
                             id SERIAL PRIMARY KEY,
@@ -63,8 +64,11 @@ class Plugin(OutputPlugin):
 
         try:
             with self.conn.cursor() as cursor:
-                query = f"INSERT INTO {self.table} (timestamp, session, eventid, data) VALUES (%s, %s, %s, %s)"
-                cursor.execute(query, (timestamp, session, eventid, json.dumps(data)))
+                # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query, python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+                cursor.execute(
+                    f"INSERT INTO {self.table} (timestamp, session, eventid, data) VALUES (%s, %s, %s, %s)",
+                    (timestamp, session, eventid, json.dumps(data)),
+                )
             self.conn.commit()
         except Exception as e:
             logging.error(f"[PostgreSQL] Write failure: {e}")

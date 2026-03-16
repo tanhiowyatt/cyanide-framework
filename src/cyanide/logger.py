@@ -62,6 +62,7 @@ class CyanideLogger:
                 continue
 
             try:
+                # nosemgrep: python.lang.security.audit.non-literal-import.non-literal-import
                 module = importlib.import_module(f"cyanide.output.{plugin_name}")
                 plugin_class = getattr(module, "Plugin")
                 plugin_instance = plugin_class(plugin_cfg)

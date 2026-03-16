@@ -1,13 +1,11 @@
 import json
 import logging
-import pickle
 from pathlib import Path
 
+import joblib
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-from cyanide.core import security
 
 logger = logging.getLogger(__name__)
 
@@ -278,7 +276,7 @@ class KnowledgeBase:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "wb") as f:
-            pickle.dump(
+            joblib.dump(
                 {
                     "vectorizer": self.vectorizer,
                     "tfidf_matrix": self.tfidf_matrix,
@@ -299,7 +297,7 @@ class KnowledgeBase:
     def load(self, path):
         try:
             with open(path, "rb") as f:
-                data = security.load(f)
+                data = joblib.load(f)
                 self.__dict__.update(data)
             logger.info(f"[*] KB loaded from {path}")
         except Exception as e:

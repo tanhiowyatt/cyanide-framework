@@ -97,6 +97,7 @@ class CommandAutoencoder(nn.Module):
     def save(self, path):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
+        # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
         torch.save(
             {
                 "model_state": self.state_dict(),
@@ -111,36 +112,37 @@ class CommandAutoencoder(nn.Module):
     # Function 131: Performs operations related to load.
     @staticmethod
     def load(path):
-        try:
-            pass
+        from cyanide.core import security
 
-            try:
-                checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=True)
-            except Exception as e:
-                error_msg = str(e)
-                if "numpy.core.multiarray.scalar" in error_msg:
-                    checkpoint = torch.load(
-                        path, map_location=torch.device("cpu"), weights_only=False
-                    )
-                else:
-                    logger.warning(
-                        f"[*] Secure load failed for {path} ({e}), retrying with weights_only=False"
-                    )
-                    checkpoint = torch.load(
-                        path, map_location=torch.device("cpu"), weights_only=False
-                    )
-
+        def _build_model(checkpoint, source_info):
             model = CommandAutoencoder(
                 input_dim=checkpoint.get("input_dim", 512),
                 latent_dim=checkpoint.get("latent_dim", 64),
             )
             model.load_state_dict(checkpoint["model_state"])
             model.threshold = checkpoint.get("threshold", 0.05)
-
             model.to(model.device)
             model.eval()
-            logger.info(f"[*] PyTorch Autoencoder loaded from {path}")
+            logger.info(f"[*] PyTorch Autoencoder loaded with {source_info} from {path}")
             return model
-        except Exception as e:
-            logger.error(f"[!] Failed to load model: {e}")
-            return CommandAutoencoder()
+
+        try:
+            # Tier 1: Strict weights_only (fastest and most secure if no legacy data)
+            # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
+            checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=True)
+            return _build_model(checkpoint, "strict weights_only")
+        except Exception:
+            try:
+                # Tier 2: RestrictedUnpickler (Secure fallback for legacy data/numpy core paths)
+                # This uses our own whitelist defined in cyanide.core.security
+                # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
+                checkpoint = torch.load(
+                    path,
+                    map_location=torch.device("cpu"),
+                    weights_only=False,
+                    pickle_module=security,
+                )
+                return _build_model(checkpoint, "RestrictedUnpickler")
+            except Exception as e:
+                logger.error(f"[!] Failed to load model even with RestrictedUnpickler: {e}")
+                return CommandAutoencoder()

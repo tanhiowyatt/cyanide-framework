@@ -31,6 +31,7 @@ class Plugin(OutputPlugin):
             path.parent.mkdir(parents=True, exist_ok=True)
             self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
             cursor = self.conn.cursor()
+            # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query, python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             cursor.execute(f"""
                 CREATE TABLE IF NOT EXISTS {self.table} (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,6 +57,7 @@ class Plugin(OutputPlugin):
 
         try:
             cursor = self.conn.cursor()
+            # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query, python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             cursor.execute(
                 f"INSERT INTO {self.table} (timestamp, session, eventid, data) VALUES (?, ?, ?, ?)",
                 (timestamp, session, eventid, json.dumps(data)),

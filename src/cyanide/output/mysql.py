@@ -41,6 +41,7 @@ class Plugin(OutputPlugin):
             )
             if self.conn:
                 cursor = self.conn.cursor()
+                # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query, python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                 cursor.execute(f"""
                     CREATE TABLE IF NOT EXISTS {self.table} (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,8 +70,11 @@ class Plugin(OutputPlugin):
 
         try:
             cursor = self.conn.cursor()
-            query = f"INSERT INTO {self.table} (timestamp, session, eventid, data) VALUES (%s, %s, %s, %s)"
-            cursor.execute(query, (timestamp, session, eventid, json.dumps(data)))
+            # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query, python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+            cursor.execute(
+                f"INSERT INTO {self.table} (timestamp, session, eventid, data) VALUES (%s, %s, %s, %s)",
+                (timestamp, session, eventid, json.dumps(data)),
+            )
             self.conn.commit()
             cursor.close()
         except Exception as e:

@@ -1,6 +1,4 @@
-import pickle
-
-from cyanide.core import security
+import json
 
 
 class CharacterLevelTokenizer:
@@ -58,21 +56,22 @@ class CharacterLevelTokenizer:
 
     # Function 144: Performs operations related to save.
     def save(self, path):
-        with open(path, "wb") as f:
-            pickle.dump(
+        with open(path, "w") as f:
+            json.dump(
                 {
                     "char_map": self.char_map,
                     "index_map": self.index_map,
                     "max_length": self.max_length,
                 },
                 f,
+                indent=4,
             )
 
     # Function 145: Performs operations related to load.
     def load(self, path):
-        with open(path, "rb") as f:
-            data = security.load(f)
+        with open(path, "r") as f:
+            data = json.load(f)
             self.char_map = data["char_map"]
-            self.index_map = data["index_map"]
+            self.index_map = {int(k) if k.isdigit() else k: v for k, v in data["index_map"].items()}
             self.max_length = data["max_length"]
             self.vocab_size = len(self.char_map)

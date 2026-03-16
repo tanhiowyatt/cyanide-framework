@@ -15,10 +15,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --user --upgrade pip setuptools>=78.1.1
 
 # Install dependencies
-COPY pyproject.toml .
-COPY src/ src/
+COPY pyproject.toml README.md ./
+RUN mkdir -p src/cyanide && touch src/cyanide/__init__.py
 RUN pip install --user --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install --user --no-cache-dir .
+
+# Install source
+COPY src/ src/
+RUN pip install --user --no-cache-dir .
 
 # Runtime Stage
 FROM python:3.12-slim
