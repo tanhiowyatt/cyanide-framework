@@ -42,6 +42,7 @@ class RsyncHandler:
     async def _read(self, n: int) -> bytes:
         if n <= 0:
             return b""
+
         try:
             async with asyncio.timeout(10.0):  # type: ignore[attr-defined]
                 if self.process is not None:
@@ -51,12 +52,20 @@ class RsyncHandler:
 
                 if not data:
                     return b""
+
                 if isinstance(data, str):
                     data = data.encode()
+
                 self.bytes_read += len(data)
                 return bytes(data)
-        except (asyncio.TimeoutError, Exception):
+
+        except asyncio.TimeoutError:  
+            logger.debug("Read timeout after 10s - normal for honeypot")
             return b""
+        except Exception as e:        
+            logger.error(f"Read error: {e}")
+            return b""
+
 
     async def _read_int(self) -> int:
         """Read a 4-byte little-endian integer."""

@@ -226,7 +226,7 @@ class CyanideServer:
             event_type = "fs_audit"
             if str(path) in HONEYTOKENS:
                 event_type = "CRITICAL_ALERT"
-                self.stats.on_honeytoken(str(path), src_ip)
+                self.stats.on_honeytoken(str(path))
 
             try:
                 self.logger.log_event(
@@ -1287,7 +1287,13 @@ class SSHSession(asyncssh.SSHServerSession):
             self.honeypot.save_quarantine_file(f, c, self.session_id, self.src_ip)
 
         self.shell = ShellEmulator(
-            self.fs, self.username, quarantine_callback=q_hook, config=self.honeypot.config
+            self.fs,
+            self.username,
+            quarantine_callback=q_hook,
+            config=self.honeypot.config,
+            logger=self.honeypot.logger,
+            session_id=self.session_id,
+            src_ip=self.src_ip,
         )
         return True
 
@@ -1583,6 +1589,9 @@ class SSHSession(asyncssh.SSHServerSession):
                 self.username,
                 quarantine_callback=q_hook,
                 config=self.honeypot.config,
+                logger=self.honeypot.logger,
+                session_id=self.session_id,
+                src_ip=self.src_ip,
             )
 
             stdout, stderr, rc = await shell.execute(command)

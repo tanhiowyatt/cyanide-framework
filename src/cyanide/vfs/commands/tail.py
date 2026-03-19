@@ -8,19 +8,41 @@ class TailCommand(Command):
     # Function 270: Executes the 'tail' command logic within the virtual filesystem.
     async def execute(self, args, input_data=""):
         await asyncio.sleep(0)
+
         parser = argparse.ArgumentParser(prog="tail", add_help=False)
         parser.add_argument("-n", "--lines", type=int, default=10)
         parser.add_argument("files", nargs="*")
 
         try:
             parsed, unknown = parser.parse_known_args(args)
+
+            # Логируем мусорные аргументы для ML
+            if unknown and self.emulator.logger:
+                self.emulator.logger.log_event(
+                    self.emulator.session_id,
+                    "tail_unknown_args",
+                    {
+                        "src_ip": self.emulator.src_ip,
+                        "files": parsed.files,
+                        "unknown_args": unknown,  # [-f --follow --pwned]
+                        "full_cmd": " ".join(args),
+                    },
+                )
+
         except SystemExit:
+            # Логируем recon attempts для ML
+            if self.emulator.logger:
+                self.emulator.logger.log_event(
+                    self.emulator.session_id,
+                    "tail_parse_fail",
+                    {"src_ip": self.emulator.src_ip, "full_cmd": " ".join(args)},
+                )
             raise
 
         count = parsed.lines
         files = parsed.files
-
         lines = []
+
         if not files:
             lines = input_data.splitlines(keepends=True)
         else:

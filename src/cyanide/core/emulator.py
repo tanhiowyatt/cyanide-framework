@@ -25,12 +25,22 @@ class ShellEmulator:
 
     # Function 18: Initializes the class instance and its attributes.
     def __init__(
-        self, fs: FakeFilesystem, username: str = "root", quarantine_callback=None, config=None
+        self,
+        fs: FakeFilesystem,
+        username: str = "root",
+        quarantine_callback=None,
+        config=None,
+        logger=None,
+        session_id=None,
+        src_ip=None,
     ):
         self.fs = fs
         self.username = username
         self.config = config or {}
         self.quarantine_callback = quarantine_callback
+        self.logger = logger
+        self.session_id = session_id
+        self.src_ip = src_ip
         self.dns_cache: dict[str, tuple[str, float]] = {}
 
         if username == "admin":
@@ -312,6 +322,35 @@ class ShellEmulator:
 
         return input_data, err_out, last_rc
 
+    def _resolve_alias(self, cmd_name: str, params: List[str]) -> tuple[str, List[str]]:
+        """Resolve command alias if it exists."""
+        if cmd_name in self.aliases:
+            alias_val = self.aliases[cmd_name]
+            try:
+                alias_args = shlex.split(alias_val)
+                if alias_args and alias_args[0] != cmd_name:
+                    return alias_args[0], alias_args[1:] + params
+            except ValueError:
+                pass
+        return cmd_name, params
+
+    async def _run_command_instance(
+        self, cmd_name: str, params: List[str], input_data: str
+    ) -> tuple[str, str, int]:
+        """Execute the command instance and handle its specific errors/output."""
+        if cmd_name not in self.commands:
+            return "", f"{cmd_name}: command not found\n", 127
+
+        try:
+            from typing import cast
+
+            result = await self.commands[cmd_name].auth_and_execute(params, input_data=input_data)
+            return cast(tuple[str, str, int], result)
+        except SystemExit:
+            raise
+        except Exception as e:
+            return "", f"Command execution error: {e}\n", 1
+
     # Function 25: Performs operations related to execute single command.
     async def _execute_single_command(self, cmd_line: str, input_data: str) -> tuple[str, str, int]:
         try:
@@ -322,35 +361,8 @@ class ShellEmulator:
         if not args:
             return "", "", 0
 
-        cmd_name = args[0]
-        params = args[1:]
-
-        if cmd_name in self.aliases:
-            alias_val = self.aliases[cmd_name]
-            try:
-                alias_args = shlex.split(alias_val)
-                if alias_args and alias_args[0] != cmd_name:
-                    cmd_name = alias_args[0]
-                    params = alias_args[1:] + params
-            except ValueError:
-                pass
-
-        if cmd_name in self.commands:
-            try:
-                from typing import cast
-
-                result = await self.commands[cmd_name].auth_and_execute(
-                    params, input_data=input_data
-                )
-                return cast(tuple[str, str, int], result)
-            except SystemExit as e:
-                # Catch argparse or other SystemExit and return as error
-                code = e.code if isinstance(e.code, int) else 1
-                return "", f"Command exited with code {code}\n", code
-            except Exception as e:
-                return "", f"Command execution error: {e}\n", 1
-        else:
-            return "", f"{cmd_name}: command not found\n", 127
+        cmd_name, params = self._resolve_alias(args[0], args[1:])
+        return await self._run_command_instance(cmd_name, params, input_data)
 
     # Function 26: Performs operations related to parse redirections.
     def _parse_redirections(self, cmd: str) -> tuple[str, Optional[str], bool]:
@@ -366,17 +378,15 @@ class ShellEmulator:
         i = 0
         while i < len(parts):
             token = parts[i]
-            if token == ">>":
-                if i + 1 < len(parts):
-                    target = parts[i + 1]
-                    append = True
-                    i += 2
-                    continue
-            elif token == ">":
-                if i + 1 < len(parts):
-                    target = parts[i + 1]
-                    i += 2
-                    continue
+            if token == ">>" and i + 1 < len(parts):
+                target = parts[i + 1]
+                append = True
+                i += 2
+                continue
+            elif token == ">" and i + 1 < len(parts):
+                target = parts[i + 1]
+                i += 2
+                continue
 
             clean_parts.append(token)
             i += 1

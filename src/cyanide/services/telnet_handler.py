@@ -71,6 +71,9 @@ class TelnetHandler:
                         f, c, session_id, src_ip
                     ),
                     config=self.config,
+                    logger=self.logger,
+                    session_id=session_id,
+                    src_ip=src_ip,
                 )
                 b_in, b_out, cmds = await self._run_shell(
                     reader, writer, shell, tty_state, session_id, src_ip, username
@@ -96,6 +99,7 @@ class TelnetHandler:
 
     async def _prepare_session(self, src_ip: str, writer) -> Tuple[str, Optional[object], bool]:
         """Check session limits, register session, and prepare log directory."""
+        await asyncio.sleep(0)
         accepted, reason = self.services.session.can_accept(src_ip)
         if not accepted:
             self.logger.log_event(

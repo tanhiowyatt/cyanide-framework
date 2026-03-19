@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import secrets
 import time
@@ -39,14 +40,15 @@ class SimplePool:
             )
 
     async def start(self):
-        # No background services or connections to initialize for SimplePool.
-        pass
+        # No background services to initialize for SimplePool.
+        await asyncio.sleep(0)
 
     async def stop(self):
-        # No background tasks or connections to clean up for SimplePool.
-        pass
+        # No background tasks to clean up for SimplePool.
+        await asyncio.sleep(0)
 
     async def reserve_target(self, session_id: str, protocol: str):
+        await asyncio.sleep(0)
         if not self.targets:
             logger.error("SimplePool: No targets configured in pool settings.")
             return None

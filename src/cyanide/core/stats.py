@@ -75,7 +75,7 @@ class StatsManager:
             self.recent_commands.pop()
 
     # Function 87: Performs operations related to on honeytoken.
-    def on_honeytoken(self, path: str, ip: str):
+    def on_honeytoken(self, path: str):
         self.honeytoken_triggers[path] += 1
 
     # Function 88: Performs operations related to on malware.

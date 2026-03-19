@@ -1,9 +1,14 @@
-[![Stars](https://img.shields.io/github/stars/tanhiowyatt/cyanide?style=flat&logo=GitHub&color=yellow)](https://github.com/tanhiowyatt/cyanide/stargazers)
-[![CI](https://github.com/tanhiowyatt/cyanide/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tanhiowyatt/cyanide/actions/workflows/ci.yml)
-[![Security Scan](https://github.com/tanhiowyatt/cyanide/actions/workflows/security_scan.yml/badge.svg)](https://github.com/tanhiowyatt/cyanide/actions/workflows/security_scan.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tanhiowyatt_cyanide&metric=coverage)](https://sonarcloud.io/component_measures/metric/coverage/list?id=tanhiowyatt_cyanide)
+<p align="center">
+
+  [![Stars](https://img.shields.io/github/stars/tanhiowyatt/cyanide?style=flat&logo=GitHub&color=yellow)](https://github.com/tanhiowyatt/cyanide/stargazers)
+  [![CI](https://github.com/tanhiowyatt/cyanide/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tanhiowyatt/cyanide/actions/workflows/ci.yml)
+  [![Security Scan](https://github.com/tanhiowyatt/cyanide/actions/workflows/security_scan.yml/badge.svg)](https://github.com/tanhiowyatt/cyanide/actions/workflows/security_scan.yml)
+  [![Quality gate](https://sonarcloud.io/api/project_badges/measure?project=tanhiowyatt_cyanide&metric=alert_status)](https://sonarcloud.io/dashboard?id=tanhiowyatt_cyanide)
+  [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tanhiowyatt_cyanide&metric=coverage)](https://sonarcloud.io/component_measures/metric/coverage/list?id=tanhiowyatt_cyanide)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+  [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/)
+  ![version](https://img.shields.io/badge/version-0.0.1-blue)
+</p>
 
 <p align="center">
   <a target="_blank" href="/docs/translations/readme-ru.md">RU</a> &nbsp; | &nbsp;
@@ -44,13 +49,21 @@
 ### Szybki start
 
 ```bash
-1. Uruchom środowisko
+1. Sklonuj repozytorium
+git clone https://github.com/tanhiowyatt/cyanide.git
+
+2. Przejdź do folderu z docker-compose
+cd cyanide/deployments/docker
+
+3. Uruchom środowisko
 docker-compose up -d
 
-2. Połącz się przez SSH
-ssh root@localhost -p 2222
+4. Połącz się przez SSH, Telnet lub SFTP
+ssh root@localhost -p 2222 lub 
+telnet localhost -p 2222 lub 
+sftp root@localhost -p 2222
 
-Z lokalnymi zmianami
+* Z lokalnymi zmianami
 docker-compose up -d --build
 ```
 

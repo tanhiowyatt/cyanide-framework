@@ -193,11 +193,7 @@ class LibvirtPool:
                 "system", "pool_provisioning", {"backend": "libvirt", "vm_id": vm_id}
             )
 
-        if self.conn:
-            try:
-                pass
-            except Exception as e:
-                logger.error(f"Failed to provision {vm_id}: {e}")
+
 
         self.vms[vm_id]["state"] = "ready"
         logger.info(f"VM {vm_id} provisioned and ready.")

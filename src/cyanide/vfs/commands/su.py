@@ -31,38 +31,37 @@ class SuCommand(Command):
 
         return "Password: ", "", 0
 
-    # Function 267: Performs operations related to on password.
-    def _on_password(self, password: str) -> tuple[str, str, int]:
-        password = password.strip()
-        success = False
-
+    def _validate_password(self, password: str) -> bool:
+        """Check password against config, fallbacks, and honeypot defaults."""
         # Check against configured users from docker-compose / config
         for user_entry in self.fs.users:
             if user_entry.get("user") == self.target_user:
                 if user_entry.get("pass") == password:
-                    success = True
+                    return True
                 break
 
         # Fallback for common honeypot passwords
-        if not success and password in ["root", "password", "cyanide", "admin"]:
-            success = True
+        if password in ["root", "password", "cyanide", "admin"]:
+            return True
 
         # Treat empty password as success if not explicit in config (common in honeypots)
-        if not password and not success:
-            success = True
+        return not password
 
-        if success:
-            self.emulator.username = self.target_user
-            if self.target_user == "root":
-                if self.login_shell or self.emulator.cwd == "/":
-                    self.emulator.cwd = "/root"
-            else:
-                if self.login_shell:
-                    self.emulator.cwd = f"/home/{self.target_user}"
+    def _update_emulator_state(self):
+        """Update emulator username and CWD based on target user."""
+        self.emulator.username = self.target_user
+        if self.target_user == "root":
+            if self.login_shell or self.emulator.cwd == "/":
+                self.emulator.cwd = "/root"
+        elif self.login_shell:
+            self.emulator.cwd = f"/home/{self.target_user}"
 
-            if not self.fs.exists(self.emulator.cwd):
-                self.fs.mkdir_p(self.emulator.cwd, owner=self.target_user)
+        if not self.fs.exists(self.emulator.cwd):
+            self.fs.mkdir_p(self.emulator.cwd, owner=self.target_user)
 
+    # Function 267: Performs operations related to on password.
+    def _on_password(self, password: str) -> tuple[str, str, int]:
+        if self._validate_password(password.strip()):
+            self._update_emulator_state()
             return "", "", 0
-        else:
-            return "", "su: Authentication failure\n", 1
+        return "", "su: Authentication failure\n", 1

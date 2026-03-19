@@ -6,27 +6,45 @@ from .base import Command
 
 
 class MkdirCommand(Command):
-    # Function 250: Executes the 'mkdir' command logic within the virtual filesystem.
     async def execute(self, args, input_data=""):
         await asyncio.sleep(0)
+
         parser = argparse.ArgumentParser(prog="mkdir", add_help=False)
         parser.add_argument("-p", "--parents", action="store_true")
         parser.add_argument("path", nargs="+")
 
         try:
             parsed, unknown = parser.parse_known_args(args)
+
+            if self.emulator.logger:
+                self.emulator.logger.log_event(
+                    self.emulator.session_id,
+                    "mkdir_unknown_args",
+                    {
+                        "src_ip": self.emulator.src_ip,
+                        "path": parsed.path,
+                        "unknown_args": unknown,
+                        "full_cmd": " ".join(args),
+                    },
+                )
+
         except SystemExit:
+            if self.emulator.logger:
+                self.emulator.logger.log_event(
+                    self.emulator.session_id,
+                    "mkdir_parse_fail",
+                    {"src_ip": self.emulator.src_ip, "full_cmd": " ".join(args)},
+                )
             raise
+
+        if not hasattr(parsed, "path") or not parsed.path:
+            return "", "mkdir: missing operand\n", 1
 
         for path_str in parsed.path:
             resolved = self.emulator.resolve_path(path_str)
 
             if self.fs.exists(resolved):
-                return (
-                    "",
-                    f"mkdir: cannot create directory '{path_str}': File exists\n",
-                    1,
-                )
+                return "", f"mkdir: cannot create directory '{path_str}': File exists\n", 1
 
             if parsed.parents:
                 self.fs.mkdir_p(resolved, owner=self.username)
@@ -39,5 +57,12 @@ class MkdirCommand(Command):
                         1,
                     )
                 self.fs.mkdir_p(resolved, owner=self.username)
+
+            if self.emulator.logger:
+                self.emulator.logger.log_event(
+                    self.emulator.session_id,
+                    "mkdir_success",
+                    {"path": resolved, "parents": parsed.parents},
+                )
 
         return "", "", 0
