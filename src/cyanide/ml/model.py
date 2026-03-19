@@ -167,26 +167,12 @@ class CommandAutoencoder(nn.Module):
     def load(path):
         """Secure model loading using weights_only=True with legacy fallback."""
         try:
-            try:
-                # SECURE: weights_only=True is preferred (S5334)
-                # It only allows loading of tensors and standard Python types.
-                # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
-                checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=True)
-            except Exception as e:
-                # FALLBACK: Some legacy models saved with numpy 1.x cannot be loaded securely in numpy 2.x
-                # We allow an insecure load ONLY for the internal official model assets which we trust.
-                # This handles the "GLOBAL numpy.core.multiarray.scalar" unpickling error (S5334).
-                path_str = str(path)
-                if "assets/models/cyanideML.pkl" in path_str and Path(path_str).exists():
-                    logger.warning(
-                        f"[*] Legacy model detected at {path}, falling back to insecure load for trusted asset."
-                    )
-                    # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
-                    checkpoint = torch.load(
-                        path, map_location=torch.device("cpu"), weights_only=False
-                    )
-                else:
-                    raise e
+            # SECURE: weights_only=True is preferred (S5334)
+            # It only allows loading of tensors and standard Python types.
+            # Compatibility with legacy models is achieved via the global allowlist
+            # defined in torch.serialization.add_safe_globals at the top of this file.
+            # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
+            checkpoint = torch.load(path, map_location=torch.device("cpu"), weights_only=True)
 
             model = CommandAutoencoder(
                 input_dim=checkpoint.get("input_dim", 512),

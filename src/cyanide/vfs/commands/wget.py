@@ -104,5 +104,5 @@ class WgetCommand(Command):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, timeout=10) as resp:
                 if resp.status != 200:
-                    raise Exception(f"HTTP {resp.status}")
+                    raise RuntimeError(f"HTTP {resp.status}")
                 return await resp.read()

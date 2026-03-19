@@ -211,7 +211,14 @@ class ShellEmulator:
         if len(nodes) > self.max_chain_depth:
             return "", "shell: maximum command chain depth exceeded\n", 1
 
-        return await self._execute_nodes(nodes)
+        try:
+            return await self._execute_nodes(nodes)
+        except SystemExit as se:
+            # Catch argparse/command exits to return a status code instead of crashing.
+            rc = se.code if isinstance(se.code, int) else 2
+            # Attempt to extract the first command name for a better error message if possible
+            cmd_name = nodes[0].cmd_line.split()[0] if nodes else "shell"
+            return "", f"{cmd_name}: argument error\n", rc
 
     def _check_operator(self, command_line: str, i: int) -> Optional[str]:
         """Check for chain operators at the current index."""
@@ -343,10 +350,9 @@ class ShellEmulator:
 
             result = await self.commands[cmd_name].auth_and_execute(params, input_data=input_data)
             return cast(tuple[str, str, int], result)
-        except SystemExit as se:
-            # Handle argparse help or error exits gracefully without stopping the server.
-            exit_code = se.code if isinstance(se.code, int) else 0
-            return "", f"{cmd_name}: argument error\n", exit_code
+        except SystemExit:
+            # Argparse usage/help exits are expected to bubble up to execute().
+            raise
         except Exception as e:
             return "", f"Command execution error: {e}\n", 1
 

@@ -56,7 +56,7 @@ class GrepCommand(Command):
                     "grep_parse_fail",
                     {"src_ip": self.emulator.src_ip, "full_cmd": " ".join(args)},
                 )
-            return argparse.Namespace(pattern=None, files=[]), False
+            raise
 
         recursive = "-r" in args or "-R" in args
         return parsed, recursive

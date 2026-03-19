@@ -204,12 +204,13 @@ class LibvirtPool:
         if self.conn:
             try:
                 dom = self.conn.lookupByName(vm_id)
-                if dom.isActive():
-                    dom.destroy()
+                loop = asyncio.get_running_loop()
+                if await loop.run_in_executor(None, dom.isActive):
+                    await loop.run_in_executor(None, dom.destroy)
                 if self.save_snapshots:
                     # Snapshot reversion logic would go here if enabled.
                     pass
-                dom.create()
+                await loop.run_in_executor(None, dom.create)
             except Exception as e:
                 logger.error(f"Failed to rebuild {vm_id}: {e}")
 

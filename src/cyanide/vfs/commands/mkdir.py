@@ -24,7 +24,7 @@ class MkdirCommand(Command):
         if not getattr(parsed, "path", None):
             return "", "mkdir: missing operand\n", 1
 
-        return self._execute_mkdir_loop(parsed, args)
+        return self._execute_mkdir_loop(parsed)
 
     def _prepare_parser(self):
         parser = argparse.ArgumentParser(prog="mkdir", add_help=False)
@@ -37,7 +37,7 @@ class MkdirCommand(Command):
             data["src_ip"] = self.emulator.src_ip
             self.emulator.logger.log_event(self.emulator.session_id, event_type, data)
 
-    def _execute_mkdir_loop(self, parsed, args):
+    def _execute_mkdir_loop(self, parsed):
         for path_str in parsed.path:
             resolved = self.emulator.resolve_path(path_str)
             if self.fs.exists(resolved):

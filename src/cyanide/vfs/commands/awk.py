@@ -70,7 +70,7 @@ class AwkCommand(Command):
                     "awk_parse_fail",
                     {"src_ip": self.emulator.src_ip, "full_cmd": " ".join(args)},
                 )
-            return None, 2
+            raise
 
     def _get_fields_to_print(self, program: str) -> list[int]:
         """Parse the awk program to find which fields to print."""

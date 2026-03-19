@@ -37,7 +37,7 @@ class TailCommand(Command):
                     "tail_parse_fail",
                     {"src_ip": self.emulator.src_ip, "full_cmd": " ".join(args)},
                 )
-            return "", "tail: argument error\n", 2
+            raise
 
         count = parsed.lines
         files = parsed.files
