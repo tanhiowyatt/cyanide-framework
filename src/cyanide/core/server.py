@@ -1498,10 +1498,14 @@ class SSHSession(asyncssh.SSHServerSession):
                 cmd, self.username, self.src_ip, self.session_id, "ssh", is_bot=is_bot
             )
 
-        if self.shell:
-            stdout, stderr, rc = await self.shell.execute(cmd)
-        else:
-            stdout, stderr, rc = "", "Shell not initialized\n", 1
+        try:
+            if self.shell:
+                stdout, stderr, rc = await self.shell.execute(cmd)
+            else:
+                stdout, stderr, rc = "", "Shell not initialized\n", 1
+        except SystemExit as se:
+            rc = se.code if isinstance(se.code, int) else 2
+            stdout, stderr = "", f"{cmd.split()[0] if cmd else 'shell'}: argument error\n"
 
         if rc == 127:
             self.honeypot.stats.on_command_not_found(cmd)
@@ -1594,7 +1598,15 @@ class SSHSession(asyncssh.SSHServerSession):
                 src_ip=self.src_ip,
             )
 
-            stdout, stderr, rc = await shell.execute(command)
+            try:
+                stdout, stderr, rc = await shell.execute(command)
+            except SystemExit as se:
+                rc = se.code if isinstance(se.code, int) else 2
+                stdout, stderr = (
+                    "",
+                    f"{command.split()[0] if command else 'shell'}: argument error\n",
+                )
+
             self._write_exec_output(stdout, stderr, rc)
 
         except Exception as e:

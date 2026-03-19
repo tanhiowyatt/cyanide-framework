@@ -213,12 +213,9 @@ class ShellEmulator:
 
         try:
             return await self._execute_nodes(nodes)
-        except SystemExit as se:
-            # Catch argparse/command exits to return a status code instead of crashing.
-            rc = se.code if isinstance(se.code, int) else 2
-            # Attempt to extract the first command name for a better error message if possible
-            cmd_name = nodes[0].cmd_line.split()[0] if nodes else "shell"
-            return "", f"{cmd_name}: argument error\n", rc
+        except SystemExit:
+            # Re-raise to comply with S5754. The caller (server) will handle the exit code.
+            raise
 
     def _check_operator(self, command_line: str, i: int) -> Optional[str]:
         """Check for chain operators at the current index."""
