@@ -211,11 +211,7 @@ class ShellEmulator:
         if len(nodes) > self.max_chain_depth:
             return "", "shell: maximum command chain depth exceeded\n", 1
 
-        try:
-            return await self._execute_nodes(nodes)
-        except SystemExit:
-            # Re-raise to comply with S5754. The caller (server) will handle the exit code.
-            raise
+        return await self._execute_nodes(nodes)
 
     def _check_operator(self, command_line: str, i: int) -> Optional[str]:
         """Check for chain operators at the current index."""
@@ -347,9 +343,6 @@ class ShellEmulator:
 
             result = await self.commands[cmd_name].auth_and_execute(params, input_data=input_data)
             return cast(tuple[str, str, int], result)
-        except SystemExit:
-            # Argparse usage/help exits are expected to bubble up to execute().
-            raise
         except Exception as e:
             return "", f"Command execution error: {e}\n", 1
 

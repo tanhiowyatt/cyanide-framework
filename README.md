@@ -98,7 +98,7 @@ Structured events are captured: IP/session ID, login attempts, commands/payloads
 
 ### Creators 
  
-This honeypot was created by **tanhiowyatt** and **Koshanzov**, the founding contributors to Cyanide Labs. Our initial collaboration on advanced honeypot prototypes evolved into the current suite of open-source cybersecurity tools, focusing on realistic threat simulation, ML-driven attack classification, and seamless SOC integrations.
+This honeypot was created by **tanhiowyatt** and **koshanzov**, the founding contributors to Cyanide. Our initial collaboration on advanced honeypot prototypes evolved into the current open-source cybersecurity project, focusing on realistic threat simulation, ML-driven attack classification, and seamless SOC integrations.
 
 ---
 

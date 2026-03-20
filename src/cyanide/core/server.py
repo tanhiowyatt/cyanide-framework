@@ -1516,7 +1516,9 @@ class SSHSession(asyncssh.SSHServerSession):
                 stdout, stderr, rc = await self.shell.execute(cmd)
             else:
                 stdout, stderr, rc = "", "Shell not initialized\n", 1
-        except SystemExit as se:
+        except SystemExit as se:  # noqa: S5754
+            # We must not re-raise SystemExit to prevent a malicious user from
+            # crashing the server with a command like "mkdir --help" or argparse usage.
             rc = se.code if isinstance(se.code, int) else 2
             stdout, stderr = "", f"{cmd.split()[0] if cmd else 'shell'}: argument error\n"
 
@@ -1592,7 +1594,9 @@ class SSHSession(asyncssh.SSHServerSession):
 
             try:
                 stdout, stderr, rc = await shell.execute(command)
-            except SystemExit as se:
+            except SystemExit as se:  # noqa: S5754
+                # We must not re-raise SystemExit to prevent a malicious user from
+                # crashing the server with a command like "mkdir --help" or argparse usage.
                 rc = se.code if isinstance(se.code, int) else 2
                 stdout, stderr = (
                     "",
