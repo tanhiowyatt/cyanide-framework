@@ -99,7 +99,7 @@ Przechwytywane są strukturalne zdarzenia: IP/ID sesji, próby logowania, komend
 
 ### Twórcy
 
-Ten honeypot został stworzony przez **tanhiowyatt** i **Koshanzov**, założycieli Cyanide Labs. Nasza początkowa współpraca nad zaawansowanymi prototypami honeypotów przekształciła się w obecny zestaw narzędzi cyberbezpieczeństwa open-source, koncentrujący się na realistycznej symulacji zagrożeń, klasyfikacji ataków opartej na ML i bezproblemowej integracji z SOC.
+Ten honeypot został stworzony przez **tanhiowyatt** i **koshanzov**. Nasza początkowa współpraca nad zaawansowanymi prototypami honeypotów ewoluowała w obecny projekt open-source z dziedziny cyberbezpieczeństwa, skoncentrowany na realistycznej symulacji zagrożeń, klasyfikacji ataków z wykorzystaniem ML oraz bezproblemowej integracji z SOC.
 
 ---
 
