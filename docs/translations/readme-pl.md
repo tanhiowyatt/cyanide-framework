@@ -79,8 +79,8 @@ Zachowanie usługi jest definiowane za pomocą **profili YAML**:
 - Stan sesji (uwierzytelnianie, kontekst, liczniki);
 - Czynniki realizmu (opóźnienia/jitter, randomizacja).
 
-#### MsgPack (Szybki czas wykonywania)
-YAML służy jako „kod źródłowy”, kompilowany/buforowany do formatu **MsgPack** na potrzeby produkcyjne:
+#### SQLite (Szybki czas wykonywania)
+YAML służy jako „kod źródłowy”, kompilowany/buforowany do formatu **SQLite** (`.compiled.db`) na potrzeby produkcyjne:
 - Szybsze ładowanie/dekodowanie niż YAML/JSON;
 - Mniejszy rozmiar, łatwiejsze buforowanie/dystrybucja;
 - Stabilniejsza wydajność przy wysokim obciążeniu.
@@ -88,7 +88,7 @@ YAML służy jako „kod źródłowy”, kompilowany/buforowany do formatu **Msg
 #### Przepływ sesji
 1. Przychodzące zdarzenie (logowanie/komenda/ładunek)
 2. Aktualizacja stanu
-3. Zastosowanie reguł profilu (YAML/MsgPack)
+3. Zastosowanie reguł profilu (YAML/SQLite)
 4. Generowanie odpowiedzi (z realistycznym czasem)
 5. Logowanie + ekstrakcja IOC
 

@@ -15,7 +15,7 @@ services:
       - ../../var/lib/cyanide:/app/var/lib/cyanide
       - ../../var/quarantine:/app/var/quarantine
       - ../../configs/app.yaml:/app/configs/app.yaml
-      - ../../configs/profiles:/app/configs/profiles:ro
+      - ../../configs/profiles:/app/configs/profiles
       - ../../src:/app/src
     read_only: true
     tmpfs:
@@ -35,7 +35,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - CYANIDE_HONEYPOT_HOSTNAME=server01
-      - CYANIDE_SERVER_OS_PROFILE=ubuntu
+      - CYANIDE_SERVER_OS_PROFILE=centos
       - CYANIDE_SERVER_MAX_SESSIONS=100
       - CYANIDE_SERVER_MAX_SESSIONS_PER_IP=5
       - CYANIDE_SERVER_SESSION_TIMEOUT=300

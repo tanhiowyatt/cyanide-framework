@@ -78,8 +78,8 @@ Service behavior is defined via **YAML profiles**:
 - Session state (authentication, context, counters);
 - Realism factors (delays/jitter, randomization).
 
-#### MsgPack (Fast Runtime)
-YAML serves as the "source code," compiled/cached into **MsgPack** for production:
+#### SQLite (Fast Runtime)
+YAML serves as the "source code," compiled/cached into **SQLite** (`.compiled.db`) for production:
 - Faster loading/decoding than YAML/JSON;
 - Smaller footprint, easier caching/distribution;
 - More stable high-load performance.
@@ -87,7 +87,7 @@ YAML serves as the "source code," compiled/cached into **MsgPack** for productio
 #### Session Flow
 1. Incoming event (login/command/payload)  
 2. State update  
-3. Profile rules application (YAML/MsgPack)  
+3. Profile rules application (YAML/SQLite)  
 4. Response generation (with realistic timing)  
 5. Logging + IOC extraction
 

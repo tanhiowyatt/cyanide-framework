@@ -49,7 +49,7 @@ The VFS is a declarative, profile-based system that mirrors a real Linux disk wi
 - **Templating**: Files use Jinja2 to dynamically render content based on the session's context.
 - **Laziness**: Using `VirtualNode` proxies, the filesystem only loads file contents or directory structures when they are explicitly accessed.
 - **Memory Overlay**: All changes (creating files, deleting, modifies) are stored in an in-memory overlay. The base OS profile remains immutable.
-- **Caching**: A two-tier msgpack and memory cache prevents redundant YAML parsing. Read the [Profile Caching Architecture](caching.md) for details.
+- **Caching**: A two-tier SQLite and memory cache prevents redundant YAML parsing. Read the [Profile Caching Architecture](caching.md) for details.
 
 ### Dynamic Nodes
 Found in `/proc`, these nodes call **Providers** to generate data on the fly, such as:

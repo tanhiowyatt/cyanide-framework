@@ -1,7 +1,7 @@
 from cyanide.vfs.profile_loader import invalidate, load
 
 
-def test_msgpack_corruption_fallback(tmp_path):
+def test_sqlite_corruption_fallback(tmp_path):
     # Setup: Create a profile-like structure
     profile_dir = tmp_path / "profiles"
     ubuntu_dir = profile_dir / "ubuntu"
@@ -13,16 +13,16 @@ def test_msgpack_corruption_fallback(tmp_path):
 
     # Pre-compile
     load("ubuntu", profile_dir)
-    msgpack_file = ubuntu_dir / ".compiled.msgpack"
-    assert msgpack_file.exists()
+    db_file = ubuntu_dir / ".compiled.db"
+    assert db_file.exists()
 
-    # 1. Corrupt the msgpack file
-    msgpack_file.write_text("NOT_A_MSGPACK_FILE")
+    # 1. Corrupt the SQLite file
+    db_file.write_text("NOT_A_SQLITE_FILE")
 
     # 2. Try to load again
     invalidate()
     data = load("ubuntu", profile_dir)
 
     # 3. Verify it fell back to YAML and regenerated
-    assert data["static"]["/test.txt"]["content"] == "OK"
-    assert msgpack_file.stat().st_size > 20  # Should be valid msgpack now
+    assert data["backend_path"] == str(db_file)
+    assert db_file.stat().st_size > 100  # Should be valid SQLite now

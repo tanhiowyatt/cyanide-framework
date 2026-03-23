@@ -1,0 +1,5 @@
+# Ignore emulated OS profiles (mock linux systems)
+configs/profiles/
+
+# Ignore security-focused unit tests that benchmark/test vulnerabilities
+tests/unit/test_security.py

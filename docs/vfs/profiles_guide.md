@@ -82,4 +82,4 @@ static:
 ---
 
 ## ⚡ Performance Optimization
-Cyanide automatically compiles your YAML profiles into binary **MessagePack** caches (`.compiled.msgpack`) upon the first connection. You do not need to manually manage these; they auto-invalidate whenever you edit your YAML files.
+Cyanide automatically compiles your YAML profiles into binary **SQLite** caches (`.compiled.db`) upon the first connection. You do not need to manually manage these; they auto-invalidate whenever you edit your YAML files.

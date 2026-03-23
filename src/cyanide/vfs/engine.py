@@ -1,6 +1,8 @@
 import datetime
 import os
 import posixpath
+import sqlite3
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -9,6 +11,67 @@ from jinja2 import Template
 from .context import Context
 from .dynamic import PROVIDERS
 from .nodes import Directory, File, Node
+
+
+class VFSBackend(ABC):
+    @abstractmethod
+    def get_config(self, path: str) -> Optional[Dict[str, Any]]:
+        pass
+
+    @abstractmethod
+    def list_dir(self, path: str) -> List[str]:
+        pass
+
+    @abstractmethod
+    def exists(self, path: str) -> bool:
+        pass
+
+    @abstractmethod
+    def is_dir(self, path: str) -> bool:
+        pass
+
+    def close(self):
+        pass
+
+
+class SqliteBackend(VFSBackend):
+    def __init__(self, db_path: str):
+        self.db_path = db_path
+        self._conn = sqlite3.connect(db_path, check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+
+    def get_config(self, path: str) -> Optional[Dict[str, Any]]:
+        cursor = self._conn.execute(
+            "SELECT type, content, owner, group_name as 'group', perm, size, mtime FROM vfs WHERE path = ?",
+            (path,),
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def list_dir(self, path: str) -> List[str]:
+        cursor = self._conn.execute("SELECT name FROM vfs WHERE parent_path = ?", (path,))
+        return [row["name"] for row in cursor.fetchall()]
+
+    def exists(self, path: str) -> bool:
+        cursor = self._conn.execute("SELECT 1 FROM vfs WHERE path = ?", (path,))
+        if cursor.fetchone():
+            return True
+        cursor = self._conn.execute("SELECT 1 FROM vfs WHERE parent_path = ? LIMIT 1", (path,))
+        return cursor.fetchone() is not None
+
+    def is_dir(self, path: str) -> bool:
+        cursor = self._conn.execute("SELECT type FROM vfs WHERE path = ?", (path,))
+        row = cursor.fetchone()
+        if row:
+            return str(row["type"]) == "dir"
+        return self.exists(path)
+
+    def close(self):
+        if hasattr(self, "_conn") and self._conn:
+            self._conn.close()
+
+    def __del__(self):
+        self.close()
 
 
 class VirtualFile(File):
@@ -78,7 +141,7 @@ class FakeFilesystem:
 
         self.context: Optional[Context] = None
         self.dynamic_files: Dict[str, Any] = {}
-        self.static_manifest: Dict[str, Any] = {}
+        self.backend: Optional[VFSBackend] = None
 
         self.memory_overlay: Dict[str, Dict[str, Any]] = {}
         self.deleted_paths: Set[str] = set()
@@ -86,6 +149,13 @@ class FakeFilesystem:
         self._load_profile()
         self._generate_system_files()
         self._initialize_user_homes()
+
+    def close(self):
+        if self.backend:
+            self.backend.close()
+
+    def __del__(self):
+        self.close()
 
     # Function 289: Performs operations related to generate system files.
     def _generate_system_files(self):
@@ -154,21 +224,24 @@ class FakeFilesystem:
 
     # Function 291: Performs operations related to load profile.
     def _load_profile(self):
-        """Load profile configuration via two-tier cache."""
+        """Load profile configuration using SQLite backend."""
         from .profile_loader import load as load_profile
 
-        if not (self.profile_path / "base.yaml").exists():
-            self.profile_path = Path("configs/profiles") / self.os_profile
-        if not (self.profile_path / "base.yaml").exists():
-            raise FileNotFoundError(f"Base config not found for profile: {self.os_profile}")
+        if (
+            not (self.profile_path / "base.yaml").exists()
+            and not (self.profile_path / ".compiled.db").exists()
+        ):
+            if not self.profile_path.exists():
+                self.profile_path = Path("configs/profiles") / self.os_profile
 
         data = load_profile(self.os_profile, self.profile_path.parent)
 
         self.context = Context(**data.get("metadata", {}))
         self.dynamic_files = data.get("dynamic_files", {})
 
-        for path, config in data.get("static", {}).items():
-            self.static_manifest[self.resolve(path)] = config
+        db_path = data.get("backend_path")
+        if db_path:
+            self.backend = SqliteBackend(db_path)
 
     # Function 292: Retrieves node data.
     def get_node(self, path: str) -> Optional[Node]:
@@ -187,9 +260,15 @@ class FakeFilesystem:
 
         if path in self.dynamic_files:
             return VirtualFile(os.path.basename(path), path, self, self.dynamic_files[path])
-        if path in self.static_manifest:
-            config = self.static_manifest[path]
-            return VirtualFile(os.path.basename(path), path, self, config)
+
+        if self.backend:
+            backend_config = self.backend.get_config(path)
+            if backend_config:
+                if backend_config.get("type") == "dir":
+                    return VirtualDirectory(
+                        posixpath.basename(path) or "/", path, self, backend_config
+                    )
+                return VirtualFile(posixpath.basename(path), path, self, backend_config)
 
         if self.is_dir(path):
             return VirtualDirectory(os.path.basename(path) or "/", path, self)
@@ -208,19 +287,9 @@ class FakeFilesystem:
             path == "/"
             or path in self.memory_overlay
             or path in self.dynamic_files
-            or path in self.static_manifest
+            or (self.backend and self.backend.exists(path))
         ):
             return True
-
-        all_paths = (
-            list(self.dynamic_files.keys())
-            + list(self.static_manifest.keys())
-            + list(self.memory_overlay.keys())
-        )
-        prefix = path.rstrip("/") + "/"
-        for p in all_paths:
-            if p.startswith(prefix):
-                return True
         return False
 
     # Function 294: Checks condition: is dir.
@@ -230,18 +299,16 @@ class FakeFilesystem:
             return False
         if path == "/":
             return True
+
         if path in self.memory_overlay:
             return self.memory_overlay[path].get("type") == "dir"
 
-        all_paths = (
-            list(self.dynamic_files.keys())
-            + list(self.static_manifest.keys())
-            + list(self.memory_overlay.keys())
-        )
-        prefix = path.rstrip("/") + "/"
-        for p in all_paths:
-            if p.startswith(prefix):
-                return True
+        if path in self.dynamic_files:
+            return str(self.dynamic_files[path].get("type")) == "dir"
+
+        if self.backend and self.backend.is_dir(path):
+            return True
+
         return False
 
     # Function 295: Checks condition: is file.
@@ -251,8 +318,13 @@ class FakeFilesystem:
             return False
         if path in self.memory_overlay:
             return self.memory_overlay[path].get("type") == "file"
-        if path in self.dynamic_files or path in self.static_manifest:
-            return True
+        if path in self.dynamic_files:
+            return str(self.dynamic_files[path].get("type", "file")) == "file"
+
+        if self.backend:
+            config = self.backend.get_config(path)
+            if config:
+                return str(config.get("type", "file")) == "file"
 
         if not self.exists(path):
             return False
@@ -265,15 +337,22 @@ class FakeFilesystem:
             return []
 
         contents = set()
-        prefix = path.rstrip("/") + "/"
 
-        all_paths = (
-            list(self.dynamic_files.keys())
-            + list(self.static_manifest.keys())
-            + list(self.memory_overlay.keys())
-        )
-        for p in all_paths:
-            if p.startswith(prefix) and p not in self.deleted_paths:
+        # 1. Backend results
+        if self.backend:
+            for item in self.backend.list_dir(path):
+                contents.add(item)
+
+        # 2. Dynamic results
+        prefix = path.rstrip("/") + "/"
+        for p in self.dynamic_files:
+            if p.startswith(prefix):
+                rel = p[len(prefix) :].split("/")[0]
+                contents.add(rel)
+
+        # 3. Memory results
+        for p in self.memory_overlay:
+            if p.startswith(prefix):
                 rel = p[len(prefix) :].split("/")[0]
                 contents.add(rel)
 
@@ -297,16 +376,16 @@ class FakeFilesystem:
             config = self.dynamic_files[path]
             provider = PROVIDERS.get(config.get("provider"))
             if provider:
-                # Merge profile-defined args with runtime args
                 combined_args = {**config.get("args", {}), **(args or {})}
                 return provider(self.context, combined_args)
             if "content" in config:
                 return self._render(config["content"])
             return ""
 
-        if path in self.static_manifest:
-            config = self.static_manifest[path]
-            return self._render(config.get("content", ""))
+        if self.backend:
+            config = self.backend.get_config(path)
+            if config:
+                return self._render(config.get("content", ""))
 
         return ""
 
@@ -418,9 +497,21 @@ class FakeFilesystem:
         return False
 
     # Function 304: Performs operations related to render.
-    def _render(self, content: str) -> str:
-        if not self.context:
-            return content
+    def _render(self, content: Any) -> str:
+        if not content:
+            return ""
+
+        # If content is bytes, try to decode it for rendering
+        if isinstance(content, bytes):
+            try:
+                content = content.decode("utf-8")
+            except UnicodeDecodeError:
+                # If it's binary, we can't render it with Jinja2, just return as is (but as string representation or handle it elsewhere)
+                return str(content)
+
+        if not self.context or not isinstance(content, str):
+            return str(content)
+
         try:
             return Template(content).render(**self.context.to_dict())
         except Exception:
