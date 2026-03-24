@@ -992,6 +992,15 @@ class SSHServerFactory(asyncssh.SSHServer):
             asyncio.create_task(self.honeypot.services.analytics.geoip.lookup(self.src_ip))
         )
 
+    def _extract_algorithm_name(self, obj):
+        """Helper to safely extract algorithm name from an internal object (KEX or HostKey)."""
+        if obj is None:
+            return None
+        alg = getattr(obj, "algorithm", None)
+        if isinstance(alg, bytes):
+            return alg.decode("ascii", "ignore")
+        return alg
+
     def _setup_handshake_capture(self, conn):
         """Monkey-patch set_extra_info to capture kex/host_key algorithm."""
         try:
@@ -999,18 +1008,10 @@ class SSHServerFactory(asyncssh.SSHServer):
 
             def _capturing_set_extra_info(c, **kwargs):
                 if "send_cipher" in kwargs and self._captured_kex_alg is None:
-                    kex_obj = getattr(c, "_kex", None)
-                    if kex_obj is not None:
-                        alg = getattr(kex_obj, "algorithm", None)
-                        if isinstance(alg, bytes):
-                            alg = alg.decode("ascii", "ignore")
-                        self._captured_kex_alg = alg
-                    hk = getattr(c, "_server_host_key", None)
-                    if hk is not None:
-                        hk_alg = getattr(hk, "algorithm", None)
-                        if isinstance(hk_alg, bytes):
-                            hk_alg = hk_alg.decode("ascii", "ignore")
-                        self._captured_host_key_alg = hk_alg
+                    self._captured_kex_alg = self._extract_algorithm_name(getattr(c, "_kex", None))
+                    self._captured_host_key_alg = self._extract_algorithm_name(
+                        getattr(c, "_server_host_key", None)
+                    )
                 original_set_extra(c, **kwargs)
 
             import types
@@ -1035,7 +1036,9 @@ class SSHServerFactory(asyncssh.SSHServer):
             import sys
 
             print(f"ERROR: Failed to initialize session log directory: {e}", file=sys.stderr)
-            asyncio.create_task(self.honeypot.services.analytics.log_geoip(self.src_ip))
+            task = asyncio.create_task(self.honeypot.services.analytics.log_geoip(self.src_ip))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
 
     async def _log_connection_details(self, conn):
         """Log connection opening and algorithms."""
