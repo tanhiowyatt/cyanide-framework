@@ -35,7 +35,6 @@ static_files:
           *          soft    nproc     4096
           *          hard    nproc     4096
           root       soft    nproc     unlimited
-      # nosemgrep: generic.secrets.security.detected-etc-shadow.detected-etc-shadow
       passwd: |
         root:x:0:0:root:/root:/bin/bash
         bin:x:1:1:bin:/bin:/sbin/nologin

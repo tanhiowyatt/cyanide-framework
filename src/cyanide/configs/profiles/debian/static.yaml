@@ -12,7 +12,6 @@ static_files:
         /dev/sda1       /               ext4    errors=remount-ro 0       1
         /dev/sda2       none            swap    sw              0       0
         /dev/sr0        /media/cdrom0   udf,iso9660 user,noauto     0       0
-      # nosemgrep: generic.secrets.security.detected-etc-shadow.detected-etc-shadow
       group: |
         root:x:0:
         daemon:x:1:
@@ -68,7 +67,6 @@ static_files:
         HOME_URL="https://www.debian.org/"
         SUPPORT_URL="https://www.debian.org/support"
         BUG_REPORT_URL="https://bugs.debian.org/"
-      # nosemgrep: generic.secrets.security.detected-etc-shadow.detected-etc-shadow
       passwd.txt: |
         root:x:0:0:root:/root:/bin/bash
         admin:x:1000:1000:admin:/home/admin:/bin/bash
@@ -78,7 +76,6 @@ static_files:
         search localdomain
         nameserver 8.8.8.8
         nameserver 1.1.1.1
-      # nosemgrep: generic.secrets.security.detected-etc-shadow.detected-etc-shadow
       shadow: |
         root:*:19450:0:99999:7:::
         daemon:*:19450:0:99999:7:::

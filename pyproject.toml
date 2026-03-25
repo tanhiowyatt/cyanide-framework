@@ -42,7 +42,7 @@ dependencies = [
     # Security fixes for transitive dependencies
     "jinja2>=3.1.6",
     "urllib3>=2.3.0",
-    "pygments>=2.19.3",
+    "pygments>=2.19.2",
     "certifi>=2024.7.4",
     "idna>=3.7",
     "configobj>=5.0.9",

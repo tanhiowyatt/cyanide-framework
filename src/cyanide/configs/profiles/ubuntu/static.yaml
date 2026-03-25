@@ -12,7 +12,6 @@ static_files:
         /dev/mapper/ubuntu--vg-root /               ext4    errors=remount-ro 0       1
         UUID=b3a4c5d6-e7f8-9a0b-1c2d-3e4f5a6b7c8d /boot           ext4    defaults        0       2
         /dev/mapper/ubuntu--vg-swap_1 none            swap    sw              0       0
-      # nosemgrep: generic.secrets.security.detected-etc-shadow.detected-etc-shadow
       group: |
         root:x:0:
         daemon:x:1:
@@ -87,7 +86,6 @@ static_files:
         PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
         VERSION_CODENAME=jammy
         UBUNTU_CODENAME=jammy
-      # nosemgrep: generic.secrets.security.detected-etc-shadow.detected-etc-shadow
       passwd.txt: |
         root:x:0:0:root:/root:/bin/bash
         daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
@@ -128,7 +126,6 @@ static_files:
         nameserver 127.0.0.53
         options edns0 trust-ad
         search localdomain
-      # nosemgrep: generic.secrets.security.detected-etc-shadow.detected-etc-shadow
       shadow: |
         root:*:19450:0:99999:7:::
         daemon:*:19450:0:99999:7:::

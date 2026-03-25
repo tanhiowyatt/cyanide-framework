@@ -12,14 +12,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Use --extra-index-url for PyTorch (nosemgrep: dockerfile.audit.dockerfile-pip-extra-index-url.dockerfile-pip-extra-index-url)
-RUN pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu # nosemgrep: dockerfile.audit.dockerfile-pip-extra-index-url.dockerfile-pip-extra-index-url
 
 COPY pyproject.toml README.md ./
 COPY src/ src/
-# Build wheels, but skip re-building torch (already in site-packages if lucky, or fetch it again via extra-index)
 # Use --extra-index-url for PyTorch (nosemgrep: dockerfile.audit.dockerfile-pip-extra-index-url.dockerfile-pip-extra-index-url)
-RUN pip wheel --no-cache-dir --wheel-dir /app/wheels --extra-index-url https://download.pytorch.org/whl/cpu .
+RUN pip wheel --no-cache-dir --wheel-dir /app/wheels --extra-index-url https://download.pytorch.org/whl/cpu . # nosemgrep: dockerfile.audit.dockerfile-pip-extra-index-url.dockerfile-pip-extra-index-url
 
 # Final stage
 FROM python:3.12-slim
@@ -32,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Pre-install CPU-only torch (nosemgrep: dockerfile.audit.dockerfile-pip-extra-index-url.dockerfile-pip-extra-index-url)
-RUN pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu # nosemgrep: dockerfile.audit.dockerfile-pip-extra-index-url.dockerfile-pip-extra-index-url
 
 # Copy wheels and install
 COPY --from=builder /app/wheels /tmp/wheels
