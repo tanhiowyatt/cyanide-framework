@@ -44,7 +44,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: deployments/docker/Dockerfile
+          file: Dockerfile
           platforms: ${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
@@ -102,7 +102,7 @@ jobs:
         run: mypy src/
 
       - name: Tests with Coverage
-        run: pytest --cov=src --cov-report=xml --cov-fail-under=80 tests/
+        run: pytest --cov=src --cov-report=xml --cov-fail-under=80 src/cyanide/tests/
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e # master # nosemgrep: generic.secrets.security.detected-sonarqube-docs-api-key.detected-sonarqube-docs-api-key

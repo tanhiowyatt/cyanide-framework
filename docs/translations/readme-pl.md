@@ -17,7 +17,7 @@
 
 
 <p align="center">
-  <img src="../../assets/branding/name.png" alt="Cyanide" width="500" height="auto">
+  <img src="../../src/cyanide/assets/branding/name.png" alt="Cyanide" width="500" height="auto">
 </p>
 
 # Cyanide – Honeypot SSH i Telnet o średnim poziomie interakcji

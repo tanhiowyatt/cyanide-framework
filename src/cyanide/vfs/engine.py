@@ -4,10 +4,11 @@ import posixpath
 import sqlite3
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Union
 
 from jinja2 import Template
 
+from ..core.paths import get_profiles_dir
 from .context import Context
 from .dynamic import PROVIDERS
 from .nodes import Directory, File, Node
@@ -133,7 +134,7 @@ class FakeFilesystem:
     def __init__(
         self,
         os_profile: Optional[str] = None,
-        root_dir: str = "/app/configs/profiles",
+        root_dir: Optional[Union[str, Path]] = None,
         audit_callback=None,
         stats=None,
         users: Optional[List[Dict[str, Any]]] = None,
@@ -141,7 +142,7 @@ class FakeFilesystem:
         session_id: str = "unknown",
         session_mgr=None,
     ):
-        self.root_dir = Path(root_dir)
+        self.root_dir = Path(root_dir) if root_dir else get_profiles_dir()
         self.audit_callback = audit_callback
         self.stats = stats
         self.users = users or []
@@ -300,7 +301,7 @@ class FakeFilesystem:
             and not (self.profile_path / ".compiled.db").exists()
             and not self.profile_path.exists()
         ):
-            self.profile_path = Path("configs/profiles") / self.os_profile
+            self.profile_path = get_profiles_dir() / self.os_profile
 
         data = load_profile(self.os_profile, self.profile_path.parent)
 

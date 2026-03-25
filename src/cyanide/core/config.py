@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from pydantic import ValidationError
 
 from .config_schema import CyanideConfig
+from .paths import get_default_config_path
 
 logger = logging.getLogger("cyanide.config")
 
@@ -149,8 +150,10 @@ def _parse_users(config_data: dict) -> list:
 
 
 # Function 16: Loads config from storage or configuration.
-def load_config(path: Path = Path("configs/app.yaml")):
+def load_config(path: Any = None):
     """Load and normalized configuration from YAML file and .env."""
+    if path is None:
+        path = get_default_config_path()
     _CONFIG_EVENTS.clear()
 
     env_path = Path("configs/.env")
@@ -280,6 +283,9 @@ def load_config(path: Path = Path("configs/app.yaml")):
         },
         "listen_ip": get_val("server", "host", "HOST", "0.0.0.0"),
         "quarantine_path": "var/quarantine",
+        "vfs_root": get_val("server", "vfs_root", "VFS_ROOT", None)
+        or get_val("vfs", "root_dir", "VFS_ROOT", None)
+        or os.getenv("CYANIDE_VFS__ROOT"),
         "os_profile": get_val("server", "os_profile", "OS_PROFILE", None)
         or get_val("vfs", "profile", "VFS_PROFILE", None)
         or os.getenv("CYANIDE_VFS__PROFILE")

@@ -12,10 +12,12 @@ if parent_dir not in sys.path:
 
 from pydantic import ValidationError  # noqa: E402
 
-from cyanide.core import CyanideServer, load_config  # noqa: E402
 from cyanide.core.aesthetics import print_startup_banner  # noqa: E402
+from cyanide.core.config import load_config  # noqa: E402
+from cyanide.core.paths import get_default_config_path  # noqa: E402
+from cyanide.core.server import CyanideServer  # noqa: E402
 
-CONFIG_PATH = Path("configs/app.yaml")
+CONFIG_PATH = get_default_config_path()
 
 
 # Function 106: Checks condition: is docker.

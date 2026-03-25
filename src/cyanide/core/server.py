@@ -174,9 +174,10 @@ class CyanideServer:
         self.users = config.get("users", [])
 
         from .fs_utils import resolve_os_profile
+        from .paths import get_profiles_dir
 
         self.os_profile = resolve_os_profile(config.get("os_profile", "ubuntu"))
-        self.vfs_root = config.get("vfs_root", "configs/profiles")
+        self.vfs_root = config.get("vfs_root", get_profiles_dir())
 
         try:
             temp_fs = FakeFilesystem(

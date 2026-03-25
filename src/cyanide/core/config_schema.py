@@ -216,6 +216,7 @@ class CyanideConfig(BaseModel):
     quarantine_path: str = "var/quarantine"
     quarantine_max_size_mb: int = 500
     os_profile: str = "random"
+    vfs_root: Optional[str] = None
     dns_cache_ttl: int = 60
     custom_profile: Dict[str, str] = Field(default_factory=dict)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)

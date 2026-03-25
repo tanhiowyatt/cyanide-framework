@@ -1,0 +1,20 @@
+services:
+  cyanide:
+    image: ${GITHUB_REPOSITORY_OWNER:-cyanide}/cyanide:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "2222:2222" # SSH
+      - "2323:2323" # Telnet
+      - "2525:2525" # SMTP
+      - "9090:9090" # Metrics / Prometheus
+    volumes:
+      - ./src/cyanide/configs:/app/configs
+      - ./var/log/cyanide:/app/var/log/cyanide
+      - ./var/quarantine:/app/var/quarantine
+      - ./var/lib/cyanide:/app/var/lib/cyanide
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=INFO
+      - OS_PROFILE=ubuntu

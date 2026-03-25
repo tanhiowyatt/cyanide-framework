@@ -290,6 +290,8 @@ class CyanideLogger:
             self.async_logger.log(log_path, line)
         else:
             logger.info(json.dumps(entry))
+            for h in logger.handlers:
+                h.flush()
 
         # Session-specific mirroring
         self._mirror_to_session(session_id, event_type, line)
