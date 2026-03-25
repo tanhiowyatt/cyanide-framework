@@ -25,7 +25,7 @@ class Command:
     def generate_mac(self) -> str:
         """Generate a deterministic MAC address for this session."""
         vendor = [0x08, 0x00, 0x27]
-        h = hashlib.md5(self.emulator.username.encode()).digest()
+        h = hashlib.sha256(self.emulator.username.encode()).digest()
         rest = [h[i] for i in range(3)]
         return ":".join(f"{x:02x}" for x in vendor + rest)
 
