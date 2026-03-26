@@ -66,6 +66,13 @@ sftp root@localhost -p 2222
 docker-compose up -d --build
 ```
 
+### Быстрый старт через PyPI
+
+```bash
+pip install cyanide
+cyanide
+```
+
 ---
 
 ### Как работает ханипот

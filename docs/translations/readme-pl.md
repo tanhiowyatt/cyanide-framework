@@ -66,6 +66,13 @@ sftp root@localhost -p 2222
 docker-compose up -d --build
 ```
 
+### Szybki start przez PyPI
+
+```bash
+pip install cyanide
+cyanide
+```
+
 ---
 
 ### Jak działa honeypot
