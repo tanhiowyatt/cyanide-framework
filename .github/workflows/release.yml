@@ -52,7 +52,7 @@ jobs:
         uses: CycloneDX/gh-cdxgen-action@v2
         with:
           output: bom.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom-source-${{ matrix.arch }}
           path: bom.json
