@@ -69,7 +69,10 @@ docker-compose up -d --build
 ### Szybki start przez PyPI
 
 ```bash
+1. Zainstaluj pakiet
 pip install cyanide
+
+2. Uruchom honeypota
 cyanide
 ```
 
