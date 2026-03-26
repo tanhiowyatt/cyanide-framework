@@ -127,7 +127,7 @@ jobs:
           export TRIVY_PASSWORD=${{ secrets.GITHUB_TOKEN }}
           docker run --rm \
             -e TRIVY_USERNAME -e TRIVY_PASSWORD \
-            aquasec/trivy:latest image \
+            aquasecurity/trivy:0.60.0 image \
             --platform linux/${{ matrix.arch }} \
             --severity CRITICAL,HIGH \
             --exit-code 0 \
