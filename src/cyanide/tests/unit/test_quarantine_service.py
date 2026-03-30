@@ -114,6 +114,37 @@ async def test_quarantine_vt_scanner_integration(quarantine_service, mock_logger
             "malicious": True,
             "label": "Trojan.Generic",
             "vt_link": "https://vt.com/test",
+            "status": None,
+            "info": None,
+            "analysis_id": None,
+        },
+    )
+
+
+@pytest.mark.asyncio
+async def test_quarantine_vt_scanner_error_in_result(quarantine_service, mock_logger):
+    """Test VirusTotal scanner integration when result dictionary contains 'error'."""
+    mock_scanner = MagicMock()
+    mock_scanner.enabled = True
+    mock_scanner.scan = AsyncMock(return_value={"error": "Upload failed: 400"})
+
+    quarantine_service.set_scanner(mock_scanner)
+    filename = "bad_upload.exe"
+    content = b"content"
+
+    await quarantine_service.save_file(filename, content, "sess_vt_err", "5.5.5.5")
+
+    # Wait for background task
+    await asyncio.gather(*quarantine_service._background_tasks)
+
+    mock_scanner.scan.assert_called_once()
+    mock_logger.log_event.assert_any_call(
+        "sess_vt_err",
+        "ml_malware_scan_error",
+        {
+            "src_ip": "5.5.5.5",
+            "filename": filename,
+            "message": "Upload failed: 400",
         },
     )
 

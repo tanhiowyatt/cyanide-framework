@@ -86,7 +86,7 @@ class VTScanner:
         result["status"] = "uploaded_queued"
         upload_url = f"{self.base_url}/files"
         form = aiohttp.FormData()
-        form.add_field("utils", content, filename=filename)
+        form.add_field("file", content, filename=filename)
 
         async with session.post(upload_url, headers=self.headers, data=form) as upload_resp:
             if upload_resp.status == 200:
