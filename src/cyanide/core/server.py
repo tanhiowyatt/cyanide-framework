@@ -588,19 +588,22 @@ class CyanideServer:
         sess.session_started()
         await process.stdout.drain()
 
-        async for data in process.stdin:
-            try:
-                sess.data_received(data, None)
-                await process.stdout.drain()
-            except (
-                asyncssh.TerminalSizeChanged,
-                asyncssh.BreakReceived,
-                asyncssh.SignalReceived,
-            ):
-                continue
-            except Exception as e:
-                logging.debug(f"CyanideProcess stdin loop error: {e}")
-                break
+        try:
+            async for data in process.stdin:
+                try:
+                    sess.data_received(data, None)
+                    await process.stdout.drain()
+                except (
+                    asyncssh.TerminalSizeChanged,
+                    asyncssh.BreakReceived,
+                    asyncssh.SignalReceived,
+                ):
+                    continue
+                except Exception as e:
+                    logging.debug(f"CyanideProcess stdin loop error: {e}")
+                    break
+        except Exception as e:
+            logging.debug(f"CyanideProcess stream reading error: {e}")
 
         sess.session_ended()
 
