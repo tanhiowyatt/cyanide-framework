@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu 
 
 COPY src/ src/
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir .[outputs]
 
 RUN find /opt/venv -type d -name "__pycache__" -exec rm -rf {} + \
     && find /opt/venv -name "*.pyc" -delete
@@ -37,7 +37,6 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY src/cyanide/configs/ configs/
-COPY src/cyanide/assets assets/
 
 RUN mkdir -p var/log/cyanide/tty var/log/cyanide/keys var/quarantine var/lib/cyanide \
     && groupadd -r cyanide -g 1000 && useradd -r -u 1000 -g cyanide cyanide \

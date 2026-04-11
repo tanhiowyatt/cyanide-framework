@@ -23,7 +23,16 @@ class Plugin(OutputPlugin):
 
     def _connect(self):
         try:
-            self.client = pymongo.MongoClient(self.uri, serverSelectionTimeoutMS=5000)
+            self.client = pymongo.MongoClient(
+                self.uri,
+                serverSelectionTimeoutMS=5000,
+                maxPoolSize=10,
+                minPoolSize=1,
+                maxIdleTimeMS=60000,
+                socketTimeoutMS=30000,
+                connectTimeoutMS=5000,
+                retryWrites=True
+            )
             if self.client:
                 self.client.admin.command("ping")
                 self.db = self.client[self.database]
@@ -32,9 +41,9 @@ class Plugin(OutputPlugin):
             self.client = None
 
     def write(self, event: Dict[str, Any]):
-        if not self.client or not self.db:
+        if not self.client:
             self._connect()
-            if not self.client or not self.db:
+            if not self.client:
                 return
 
         try:

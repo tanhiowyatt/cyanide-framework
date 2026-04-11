@@ -109,7 +109,7 @@ output:
     table: events
   postgresql:
     enabled: false
-    host: 127.0.0.1
+    host: postgresql
     port: 5432
     user: cyanide
     password: password
@@ -118,18 +118,18 @@ output:
   elasticsearch:
     enabled: false
     hosts: 
-      - http://127.0.0.1:9200
+      - http://elasticsearch:9200
     index: cyanide-events
   splunk_hec:
     enabled: false
-    url: https://127.0.0.1:8088/services/collector/event
+    url: https://splunk:8088/services/collector/event
     token: "YOUR_TOKEN_HERE"
     source: cyanide
     sourcetype: _json
     verify_ssl: false
   graylog:
     enabled: false
-    host: 127.0.0.1
+    host: graylog
     port: 12201
   syslog:
     enabled: false
@@ -154,7 +154,7 @@ output:
     url: "https://isc.sans.edu/api/submit/file"
   mysql:
     enabled: false
-    host: 127.0.0.1
+    host: mysql
     port: 3306
     user: cyanide
     password: password
@@ -162,12 +162,12 @@ output:
     table: events
   mongodb:
     enabled: false
-    uri: "mongodb://127.0.0.1:27017/"
+    uri: "mongodb://mongodb:27017/"
     database: cyanide
     collection: events
   rethinkdb:
     enabled: false
-    host: 127.0.0.1
+    host: rethinkdb
     port: 28015
     database: cyanide
     table: events

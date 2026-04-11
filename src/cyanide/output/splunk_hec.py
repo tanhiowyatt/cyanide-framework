@@ -1,5 +1,9 @@
+from datetime import datetime
+import json
 import logging
+import time
 from typing import Any, Dict
+
 
 import requests
 import urllib3
@@ -29,8 +33,15 @@ class Plugin(OutputPlugin):
 
         headers = {"Authorization": f"Splunk {self.token}", "Content-Type": "application/json"}
 
+        event_ts = event.get("timestamp")
+        if event_ts:
+            dt = datetime.fromisoformat(event_ts.replace('+00:00', '+0000'))
+            event_time = int(dt.timestamp())
+        else:
+            event_time = int(time.time())
+        
         payload = {
-            "time": event.get("timestamp"),
+            "time": event_time,
             "source": self.source,
             "sourcetype": self.sourcetype,
             "event": event,
@@ -38,7 +49,7 @@ class Plugin(OutputPlugin):
 
         try:
             resp = requests.post(
-                self.url, headers=headers, json=payload, verify=self.verify_ssl, timeout=5
+                self.url, headers=headers, data=json.dumps(payload), verify=self.verify_ssl, timeout=5
             )
             if resp.status_code not in (200, 201, 202):
                 logging.error(f"[Splunk] Write error: status={resp.status_code} text={resp.text}")

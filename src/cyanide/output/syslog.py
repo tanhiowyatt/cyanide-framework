@@ -1,6 +1,7 @@
 import json
 import logging
 import logging.handlers
+import socket
 from typing import Any, Dict
 
 from .base import OutputPlugin
@@ -15,6 +16,7 @@ class Plugin(OutputPlugin):
         super().__init__(config)
         self.address = config.get("address", "/dev/log")
         self.facility = config.get("facility", "user")
+        self.enabled = config.get("enabled", False)
 
         facility_map = {
             "auth": logging.handlers.SysLogHandler.LOG_AUTH,
@@ -39,24 +41,52 @@ class Plugin(OutputPlugin):
             self.logger.handlers.clear()
 
         try:
+            handler = None
+            
             if isinstance(self.address, str):
+                if self.address == "/dev/log":
+                    if not self._check_dev_log():
+                        logging.warning("[Syslog] /dev/log not accessible, disabling plugin")
+                        self.enabled = False
+                        return
                 handler = logging.handlers.SysLogHandler(address=self.address, facility=fac)
+
             elif isinstance(self.address, (list, tuple)) and len(self.address) == 2:
                 handler = logging.handlers.SysLogHandler(
-                    address=(self.address[0], int(self.address[1])), facility=fac
+                    address=(self.address[0], int(self.address[1])), 
+                    facility=fac,
+                    socktype=socket.SOCK_DGRAM
                 )
-            else:
-                handler = logging.handlers.SysLogHandler(address="/dev/log", facility=fac)
-
-            formatter = logging.Formatter("Cyanide: %(message)s")
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+            
+            if handler:
+                formatter = logging.Formatter("Cyanide: %(message)s")
+                handler.setFormatter(formatter)
+                self.logger.addHandler(handler)
+                logging.info(f"[Syslog] Initialized with address: {self.address}")
+            
+        except PermissionError as e:
+            logging.error(f"[Syslog] Permission denied for {self.address}: {e}")
+            self.enabled = False
         except Exception as e:
             logging.error(f"[Syslog] Initialization failure: {e}")
+            self.enabled = False
+
+    def _check_dev_log(self) -> bool:
+        """Checks the availability of /dev/log"""
+        try:
+            test_sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            test_sock.connect("/dev/log")
+            test_sock.close()
+            return True
+        except Exception:
+            return False
 
     def write(self, event: Dict[str, Any]):
+        if not self.enabled:
+            return
+            
         try:
-            payload = json.dumps(event)
+            payload = json.dumps(event, ensure_ascii=False)
             self.logger.info(payload)
         except Exception as e:
             logging.error(f"[Syslog] Write failure: {e}")

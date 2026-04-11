@@ -14,6 +14,7 @@ services:
       - ./var/log/cyanide:/app/var/log/cyanide
       - ./var/quarantine:/app/var/quarantine
       - ./var/lib/cyanide:/app/var/lib/cyanide
+      - /dev/log:/dev/log
     restart: unless-stopped
     user: "cyanide"
     init: true
@@ -38,6 +39,21 @@ services:
         reservations:
           cpus: '0.10'
           memory: 128M
+    depends_on:
+      mysql:
+        condition: service_started
+      postgresql:
+        condition: service_started
+      mongodb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      rethinkdb:
+        condition: service_started
+      splunk:
+        condition: service_healthy
+      hpfeeds:
+        condition: service_started
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request as r; r.urlopen('http://localhost:9090/health')" ]
       interval: 30s
@@ -73,3 +89,162 @@ services:
       - CYANIDE_VIRUSTOTAL_ENABLED=true
       - CYANIDE_VIRUSTOTAL_API_KEY=
       - 'CYANIDE_AUTH_USERS=[{"user": "root", "pass": "admin"}, {"user": "admin", "pass": "admin"}, {"user": "user", "pass": "123456"}]'
+
+      - CYANIDE_OUTPUT_SQLITE_ENABLED=true
+      
+      - CYANIDE_OUTPUT_MYSQL_ENABLED=true
+
+      - CYANIDE_OUTPUT_POSTGRESQL_ENABLED=true
+
+      - CYANIDE_OUTPUT_MONGODB_ENABLED=true
+      - CYANIDE_OUTPUT_MONGODB_URI=mongodb://cyanide:password@mongodb:27017/cyanide?authSource=admin
+
+      - CYANIDE_OUTPUT_ELASTICSEARCH_ENABLED=true
+
+      - CYANIDE_OUTPUT_RETHINKDB_ENABLED=true
+
+      - CYANIDE_OUTPUT_SPLUNK_HEC_ENABLED=true
+      - CYANIDE_OUTPUT_SPLUNK_HEC_TOKEN=851A5E58-4EF1-7291-F947-F614A76ACB21
+
+      - CYANIDE_OUTPUT_GRAYLOG_ENABLED=true
+
+      - CYANIDE_OUTPUT_SYSLOG_ENABLED=true
+
+      # - CYANIDE_OUTPUT_SLACK_ENABLED=true
+      # - CYANIDE_OUTPUT_SLACK_WEBHOOK_URL=
+
+      - CYANIDE_OUTPUT_GRAYLOG_ENABLED=true
+
+      - CYANIDE_OUTPUT_HPFEEDS_ENABLED=true
+      - CYANIDE_OUTPUT_HPFEEDS_HOST=hpfeeds
+      - CYANIDE_OUTPUT_HPFEEDS_PORT=10000
+      - CYANIDE_OUTPUT_HPFEEDS_IDENT=cyanide
+      - CYANIDE_OUTPUT_HPFEEDS_SECRET=my-secret-password
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_DATABASE=cyanide
+      - MYSQL_USER=cyanide
+      - MYSQL_PASSWORD=password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "cyanide", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgresql:
+    image: postgres:17-bookworm
+    environment:
+      - POSTGRES_DB=cyanide
+      - POSTGRES_USER=cyanide
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cyanide -d cyanide"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:8.0
+    environment:
+      - GLIBC_TUNABLES=glibc.cpu.hwcaps=-SHSTK
+      - MONGO_INITDB_DATABASE=cyanide
+      - MONGO_INITDB_ROOT_USERNAME=cyanide
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  rethinkdb:
+    image: rethinkdb:2.4.2
+    ports:
+      - "28015:28015"
+      - "8080:8080"
+    volumes:
+      - rethinkdb_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  splunk:
+    image: splunk/splunk:latest
+    environment:
+      - SPLUNK_GENERAL_TERMS=--accept-sgt-current-at-splunk-com
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_PASSWORD=SuperSecretPassword
+      - SPLUNK_HEC_TOKEN=851A5E58-4EF1-7291-F947-F614A76ACB21
+    ports:
+      - "8000:8000"
+      - "8089:8089"
+      - "8088:8088"
+    volumes:
+      - splunk_data:/opt/splunk/var
+    restart: unless-stopped
+
+  hpfeeds:
+    image: hpfeeds/hpfeeds-broker
+    environment:
+      - HPFEEDS_CYANIDE_SECRET=my-secret-password
+      - HPFEEDS_CYANIDE_PUBCHANS=cyanide.events
+      - HPFEEDS_CYANIDE_SUBCHANS=cyanide.events
+    volumes:
+     - hpfeeds_userdb:/app/var
+    command:
+     - '/app/bin/hpfeeds-broker'
+     - '--endpoint=tcp:port=10000'
+     - '--auth=env'
+    ports:
+     - "10000:10000"
+
+volumes:
+  mysql_data:
+  postgres_data:
+  mongo_data:
+  es_data:
+  rethinkdb_data:
+  splunk_data:
+  hpfeeds_userdb:
+
+networks:
+  default:
+    name: cyanide-net
+    driver: bridge

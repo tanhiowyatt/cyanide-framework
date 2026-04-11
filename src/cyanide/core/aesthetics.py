@@ -9,7 +9,7 @@ RESET = "\033[0m"
 
 
 def _get_logo_raw():
-    logo_path = Path.cwd() / "assets/branding/logo.txt"
+    logo_path = Path(__file__).resolve().parent.parent / "assets/branding/logo.txt"
     if logo_path.exists():
         try:
             return logo_path.read_text().splitlines()
