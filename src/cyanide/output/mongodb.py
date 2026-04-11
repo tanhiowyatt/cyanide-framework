@@ -31,7 +31,7 @@ class Plugin(OutputPlugin):
                 maxIdleTimeMS=60000,
                 socketTimeoutMS=30000,
                 connectTimeoutMS=5000,
-                retryWrites=True
+                retryWrites=True,
             )
             if self.client:
                 self.client.admin.command("ping")

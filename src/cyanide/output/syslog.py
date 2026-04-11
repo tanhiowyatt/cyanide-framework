@@ -42,7 +42,7 @@ class Plugin(OutputPlugin):
 
         try:
             handler = None
-            
+
             if isinstance(self.address, str):
                 if self.address == "/dev/log":
                     if not self._check_dev_log():
@@ -53,17 +53,17 @@ class Plugin(OutputPlugin):
 
             elif isinstance(self.address, (list, tuple)) and len(self.address) == 2:
                 handler = logging.handlers.SysLogHandler(
-                    address=(self.address[0], int(self.address[1])), 
+                    address=(self.address[0], int(self.address[1])),
                     facility=fac,
-                    socktype=socket.SOCK_DGRAM
+                    socktype=socket.SOCK_DGRAM,
                 )
-            
+
             if handler:
                 formatter = logging.Formatter("Cyanide: %(message)s")
                 handler.setFormatter(formatter)
                 self.logger.addHandler(handler)
                 logging.info(f"[Syslog] Initialized with address: {self.address}")
-            
+
         except PermissionError as e:
             logging.error(f"[Syslog] Permission denied for {self.address}: {e}")
             self.enabled = False
@@ -84,7 +84,7 @@ class Plugin(OutputPlugin):
     def write(self, event: Dict[str, Any]):
         if not self.enabled:
             return
-            
+
         try:
             payload = json.dumps(event, ensure_ascii=False)
             self.logger.info(payload)

@@ -35,11 +35,11 @@ class Plugin(OutputPlugin):
 
         event_ts = event.get("timestamp")
         if event_ts:
-            dt = datetime.fromisoformat(event_ts.replace('+00:00', '+0000'))
+            dt = datetime.fromisoformat(event_ts.replace("+00:00", "+0000"))
             event_time = int(dt.timestamp())
         else:
             event_time = int(time.time())
-        
+
         payload = {
             "time": event_time,
             "source": self.source,
@@ -49,7 +49,11 @@ class Plugin(OutputPlugin):
 
         try:
             resp = requests.post(
-                self.url, headers=headers, data=json.dumps(payload), verify=self.verify_ssl, timeout=5
+                self.url,
+                headers=headers,
+                data=json.dumps(payload),
+                verify=self.verify_ssl,
+                timeout=5,
             )
             if resp.status_code not in (200, 201, 202):
                 logging.error(f"[Splunk] Write error: status={resp.status_code} text={resp.text}")
