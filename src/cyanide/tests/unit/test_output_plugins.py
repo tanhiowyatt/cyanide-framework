@@ -151,9 +151,10 @@ def test_splunk_plugin_payload_format():
         config = {"enabled": True, "url": "http://splunk", "token": "abc"}
         plugin = SplunkPlugin(config)
 
-        event = {"timestamp": "2023", "session": "s1", "eventid": "ev"}
+        event = {"timestamp": "2023-01-01T12:00:00+00:00", "session": "s1", "eventid": "ev"}
         plugin.write(event)
 
         args, kwargs = mock_post.call_args
-        assert kwargs["json"]["event"] == event
+        payload = json.loads(kwargs["data"])
+        assert payload["event"] == event
         assert kwargs["headers"]["Authorization"] == "Splunk abc"
