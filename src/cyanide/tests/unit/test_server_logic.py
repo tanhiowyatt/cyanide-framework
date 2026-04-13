@@ -21,6 +21,7 @@ def mock_config():
         },
         "users": [{"user": "admin", "pass": "password"}],
         "os_profile": "debian",
+        "honeytokens": ["/etc/shadow"],
     }
 
 

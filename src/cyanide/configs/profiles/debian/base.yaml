@@ -11,6 +11,11 @@ metadata:
 honeytokens:
   - "/etc/passwd"
   - "/etc/shadow"
+  - "/root/.bash_history"
+  - "/root/.ssh/id_rsa"
+  - "/home/admin/.bash_history"
+  - "/etc/ssh/sshd_config"
+  - "/var/www/html/.env"
 
 dynamic_files:
   /proc/uptime:
@@ -24,3 +29,9 @@ dynamic_files:
   /etc/motd:
     type: generated
     provider: motd_provider
+  /proc/meminfo:
+    type: generated
+    provider: meminfo_provider
+  /etc/shadow:
+    type: generated
+    provider: shadow_provider

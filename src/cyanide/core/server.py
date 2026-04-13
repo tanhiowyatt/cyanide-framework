@@ -37,15 +37,7 @@ from .telemetry import setup_telemetry
 from .vm_pool import VMPool
 from .vt_scanner import VTScanner
 
-DEFAULT_HONEYTOKENS = [
-    "/home/admin/secret.conf",
-    "/home/admin/flag.txt",
-    "/etc/shadow",
-    "/var/spool/cron/crontabs/root",
-    "/root/flag.txt",
-    "/root/secret.conf",
-    "/root/.ssh/id_rsa",
-]
+# Default honeytokens removed - users must now configure them explicitly.
 
 CONTENT_TYPE_PLAIN = "text/plain"
 EVENT_COMMAND_INPUT = "command.input"
@@ -225,11 +217,9 @@ class CyanideServer:
         """Callback for filesystem auditing."""
         try:
 
-            honeytokens = getattr(self.config, "honeytokens", [])
+            honeytokens = self.config.get("honeytokens", [])
             if not honeytokens and fs and hasattr(fs, "honeytokens"):
                 honeytokens = fs.honeytokens
-            if not honeytokens:
-                honeytokens = DEFAULT_HONEYTOKENS
 
             event_type = "fs_audit"
             if str(path) in honeytokens:

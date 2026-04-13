@@ -56,7 +56,8 @@ def test_log_ssh_details(session):
 
 
 def test_fs_audit_hook_priority(mock_honeypot):
-    mock_honeypot.config.honeytokens = ["/global/secret"]
+    # Setup mock config as a dict to support .get()
+    mock_honeypot.config = {"honeytokens": ["/global/secret"]}
     mock_honeypot._fs_audit_hook = CyanideServer._fs_audit_hook.__get__(
         mock_honeypot, CyanideServer
     )
@@ -64,7 +65,7 @@ def test_fs_audit_hook_priority(mock_honeypot):
     mock_honeypot._fs_audit_hook("open", "/global/secret", session_id="s1")
     mock_honeypot.stats.on_honeytoken.assert_called_with("/global/secret")
 
-    mock_honeypot.config.honeytokens = []
+    mock_honeypot.config = {"honeytokens": []}
     mock_fs = MagicMock()
     mock_fs.honeytokens = ["/profile/secret"]
 

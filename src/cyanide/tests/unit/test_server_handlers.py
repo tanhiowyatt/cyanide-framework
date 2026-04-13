@@ -13,6 +13,7 @@ def mock_config():
         "logging": {"directory": "var/log/cyanide"},
         "otel": {"enabled": False},
         "users": [{"user": "root", "pass": "cyanide"}],
+        "honeytokens": ["/etc/shadow"],
     }
 
 

@@ -1,13 +1,9 @@
-<p align="center">
-
-  [![Stars](https://img.shields.io/github/stars/tanhiowyatt/cyanide-honeypot?style=flat&logo=GitHub&color=yellow)](https://github.com/tanhiowyatt/cyanide-honeypot/stargazers)
-  [![CI](https://github.com/tanhiowyatt/cyanide-honeypot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tanhiowyatt/cyanide-honeypot/actions/workflows/ci.yml)
-  [![Security Scan](https://github.com/tanhiowyatt/cyanide-honeypot/actions/workflows/security_scan.yml/badge.svg)](https://github.com/tanhiowyatt/cyanide-honeypot/actions/workflows/security_scan.yml)
-  [![Quality gate](https://sonarcloud.io/api/project_badges/measure?project=tanhiowyatt_cyanide_honeypot&metric=alert_status)](https://sonarcloud.io/dashboard?id=tanhiowyatt_cyanide_honeypot)
-  [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tanhiowyatt_cyanide_honeypot&metric=coverage)](https://sonarcloud.io/component_measures/metric/coverage/list?id=tanhiowyatt_cyanide_honeypot)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-  [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/)
-</p>
+[![Stars](https://img.shields.io/github/stars/tanhiowyatt/cyanide-honeypot?style=flat&logo=GitHub&color=yellow)](https://github.com/tanhiowyatt/cyanide-honeypot/stargazers)
+[![CI](https://github.com/tanhiowyatt/cyanide-honeypot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tanhiowyatt/cyanide-honeypot/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/tanhiowyatt/cyanide-honeypot/actions/workflows/security_scan.yml/badge.svg)](https://github.com/tanhiowyatt/cyanide-honeypot/actions/workflows/security_scan.yml)
+[![Quality gate](https://sonarcloud.io/api/project_badges/measure?project=tanhiowyatt_cyanide_honeypot&metric=alert_status)](https://sonarcloud.io/dashboard?id=tanhiowyatt_cyanide_honeypot)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tanhiowyatt_cyanide_honeypot&metric=coverage)](https://sonarcloud.io/component_measures/metric/coverage/list?id=tanhiowyatt_cyanide_honeypot)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 
 <p align="center">
@@ -116,3 +112,8 @@ YAML служит "исходным кодом", который компилир
 ### Отказ от ответственности
 
 Это программное обеспечение предназначено только для образовательных и исследовательских целей. Запуск ханипота связан со значительными рисками. Автор не несет ответственности за любой ущерб или неправомерное использование.
+
+---
+<p align="center">
+  <i>Revision: 1.0 • April 2026 • Cyanide Honeypot</i>
+</p>

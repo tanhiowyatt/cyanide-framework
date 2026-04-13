@@ -43,9 +43,19 @@
 - Event export to external systems: SIEM/log stacks (ELK/Splunk), webhook alerts (Slack/Discord/Telegram) for real-time notifications.
 - Configurable triggers and rules for critical pattern alerts (e.g., anomalous brute-force velocity, dropper uploads, suspicious commands/payloads).
 
- ---
+---
 
-### Quick Start 
+### 📚 Documentation
+
+For complete guides on installation, configuration, and integration, visit our **[Documentation Hub](docs/index.md)**.
+
+*   [🚀 **Quick Start**](docs/user-reference/QuickStart.md)
+*   [⚙️ **Advanced Configuration**](docs/user-reference/AdvancedUsage.md)
+*   [🧠 **Developer Reference**](docs/developer-reference/core/index.md)
+
+---
+
+### Quick Start
 
  ```bash
 1. Clone the repository

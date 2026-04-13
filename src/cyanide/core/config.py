@@ -318,6 +318,7 @@ def load_config(path: Any = None):
         },
         "output": config_data.get("output", {}),
         "custom_profile": config_data.get("custom_profile", {}),
+        "honeytokens": get_val("honeypot", "honeytokens", [], cast="json"),
         "users": get_val("auth", "users", [{"user": "root", "pass": "admin"}], cast="json"),
     }
 

@@ -38,3 +38,6 @@ dynamic_files:
     provider: mounts_provider
   /etc/issue:
     content: "Red Hat Enterprise Linux 9.3 (Plow)\nKernel \\r on an \\m\n\n"
+  /etc/shadow:
+    type: generated
+    provider: shadow_provider

@@ -80,8 +80,93 @@ def motd_provider(context: Any, args: Optional[Dict[str, Any]] = None) -> str:
     return "".join(banner_parts)
 
 
+def meminfo_provider(context: Any, args: Optional[Dict[str, Any]] = None) -> str:
+    """Returns a fake meminfo string."""
+    return """MemTotal:        8165972 kB
+MemFree:         1245620 kB
+MemAvailable:    5642312 kB
+Buffers:          210452 kB
+Cached:          4123564 kB
+SwapCached:            0 kB
+Active:          3120452 kB
+Inactive:        2845612 kB
+Active(anon):    1564212 kB
+Inactive(anon):   845612 kB
+Active(file):    1556240 kB
+Inactive(file):  2000000 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:       2097148 kB
+SwapFree:        2097148 kB
+Dirty:                44 kB
+Writeback:             0 kB
+AnonPages:       2410000 kB
+Mapped:           542124 kB
+Shmem:             42124 kB
+KReclaimable:     210452 kB
+Slab:             412356 kB
+SReclaimable:     210452 kB
+SUnreclaim:       201904 kB
+KernelStack:       10452 kB
+PageTables:        41235 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     6180132 kB
+Committed_AS:    4123564 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:       41235 kB
+VmallocChunk:          0 kB
+Percpu:             4564 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      210452 kB
+DirectMap2M:     6123564 kB
+DirectMap1G:     2123564 kB
+"""
+
+
+def shadow_provider(context: Any, args: Optional[Dict[str, Any]] = None) -> str:
+    """Returns a fake shadow file with realistic password hashes."""
+    # Standard Linux users with realistic (but fake/randomized) password hashes
+    lines = [
+        "root:$6$8w3z.1xO$E6E1pYkG/r1XWvXzX6P...:19000:0:99999:7:::",
+        "daemon:*:18500:0:99999:7:::",
+        "bin:*:18500:0:99999:7:::",
+        "sys:*:18500:0:99999:7:::",
+        "sync:*:18500:0:99999:7:::",
+        "games:*:18500:0:99999:7:::",
+        "man:*:18500:0:99999:7:::",
+        "lp:*:18500:0:99999:7:::",
+        "mail:*:18500:0:99999:7:::",
+        "news:*:18500:0:99999:7:::",
+        "uucp:*:18500:0:99999:7:::",
+        "proxy:*:18500:0:99999:7:::",
+        "www-data:*:18500:0:99999:7:::",
+        "backup:*:18500:0:99999:7:::",
+        "list:*:18500:0:99999:7:::",
+        "irc:*:18500:0:99999:7:::",
+        "gnats:*:18500:0:99999:7:::",
+        "nobody:*:18500:0:99999:7:::",
+        "admin:$6$V4x0...:19000:0:99999:7:::",
+    ]
+    return "\n".join(lines) + "\n"
+
+
 PROVIDERS = {
     "uptime_provider": uptime_provider,
     "cpuinfo_provider": cpuinfo_provider,
     "motd_provider": motd_provider,
+    "meminfo_provider": meminfo_provider,
+    "shadow_provider": shadow_provider,
 }
