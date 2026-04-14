@@ -1,6 +1,8 @@
 import asyncio
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from cyanide.core.emulator import ShellEmulator
 from cyanide.vfs.engine import FakeFilesystem
 

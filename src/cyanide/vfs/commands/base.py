@@ -172,8 +172,8 @@ class Command:
         """Execute the sub-command args as a fresh emulator call.
         Note: This is intended for delegation commands like sudo/doas/pkexec.
         """
-        from typing import cast
         import shlex
+        from typing import cast
 
         if not args:
             return "", "", 0

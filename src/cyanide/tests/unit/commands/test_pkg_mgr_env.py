@@ -1,7 +1,8 @@
 import pytest
+
+from cyanide.core.config import load_config
 from cyanide.core.emulator import ShellEmulator
 from cyanide.vfs.engine import FakeFilesystem
-from cyanide.core.config import load_config
 
 
 @pytest.mark.asyncio
