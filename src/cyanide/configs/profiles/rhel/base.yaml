@@ -1,0 +1,43 @@
+honeytokens:
+  - "/etc/passwd"
+  - "/etc/shadow"
+  - "/root/.bash_history"
+  - "/home/admin/.ssh/authorized_keys"
+  - "/home/admin/.bash_history"
+  - "/etc/ssh/sshd_config"
+  - "/etc/redhat-release"
+
+metadata:
+  os_name: "Red Hat Enterprise Linux 9.3 (Plow)"
+  os_id: "rhel"
+  kernel_version: "5.14.0-362.8.1.el9_3.x86_64"
+  arch: "x86_64"
+  hostname: "rhel-server-01"
+  version_id: "9.3"
+  install_date: "2024-03-24T14:32:10Z"
+  ssh_banner: "SSH-2.0-OpenSSH_8.7p1-0.el9"
+  uptime: "42 days, 14:22"
+
+dynamic_files:
+  /proc/uptime:
+    type: generated
+    provider: uptime_provider
+  /proc/cpuinfo:
+    type: generated
+    provider: cpuinfo_provider
+  /proc/version:
+    content: "Linux version {{ kernel_version }} (mockbuild@x86-vm-01.build.eng.bos.redhat.com) (gcc (GCC) 11.4.1 20230605 (Red Hat 11.4.1-2)) #1 SMP PREEMPT_DYNAMIC Tue Nov 7 07:14:44 +0000 2024"
+  /etc/motd:
+    type: generated
+    provider: motd_provider
+  /proc/meminfo:
+    type: generated
+    provider: meminfo_provider
+  /proc/mounts:
+    type: generated
+    provider: mounts_provider
+  /etc/issue:
+    content: "Red Hat Enterprise Linux 9.3 (Plow)\nKernel \\r on an \\m\n\n"
+  /etc/shadow:
+    type: generated
+    provider: shadow_provider

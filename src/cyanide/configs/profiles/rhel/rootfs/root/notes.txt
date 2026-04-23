@@ -1,0 +1,4 @@
+TODO: 
+1. Rotate logs for DB server
+2. Call Michael about 10.0.5.12 access
+3. Update firewalld rules for internal subnet

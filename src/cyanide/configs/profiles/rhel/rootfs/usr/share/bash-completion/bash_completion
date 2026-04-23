@@ -1,0 +1,11 @@
+#!/bin/bash
+# Bash completion for common RHEL tools
+# This is a simplified version of bash_completion
+
+_comp_initialize() {
+    local exclude flag opt
+    COMPREPLY=()
+    return 0
+}
+
+complete -F _comp_initialize ssh scp sftp

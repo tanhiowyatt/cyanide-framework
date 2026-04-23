@@ -1,0 +1,100 @@
+import pytest
+
+from cyanide.core.emulator import ShellEmulator
+from cyanide.vfs.commands.cp import CpCommand
+from cyanide.vfs.commands.mkdir import MkdirCommand
+from cyanide.vfs.commands.mv import MvCommand
+from cyanide.vfs.commands.rm import RmCommand
+from cyanide.vfs.commands.touch import TouchCommand
+
+
+@pytest.fixture
+def shell(mock_fs):
+    return ShellEmulator(mock_fs, username="root")
+
+
+@pytest.mark.asyncio
+async def test_touch(shell, mock_fs):
+    cmd = TouchCommand(shell)
+
+    stdout, stderr, rc = await cmd.execute(["test.txt"])
+    assert rc == 0
+    assert mock_fs.exists("/root/test.txt")
+
+    stdout, stderr, rc = await cmd.execute(["test.txt"])
+    assert rc == 0
+
+
+@pytest.mark.asyncio
+async def test_mkdir(shell, mock_fs):
+    cmd = MkdirCommand(shell)
+
+    stdout, stderr, rc = await cmd.execute(["dir1"])
+    assert rc == 0
+    assert mock_fs.is_dir("/root/dir1")
+
+    stdout, stderr, rc = await cmd.execute(["-p", "a/b/c"])
+    assert rc == 0
+    assert mock_fs.is_dir("/root/a/b/c")
+
+    mock_fs.mkfile("/root/file")
+    stdout, stderr, rc = await cmd.execute(["file"])
+    assert rc != 0
+
+
+@pytest.mark.asyncio
+async def test_rm(shell, mock_fs):
+    cmd = RmCommand(shell)
+
+    mock_fs.mkfile("/root/file.txt")
+    mock_fs.mkdir_p("/root/dir")
+
+    stdout, stderr, rc = await cmd.execute(["file.txt"])
+    assert rc == 0
+    assert not mock_fs.exists("/root/file.txt")
+
+    stdout, stderr, rc = await cmd.execute(["dir"])
+    assert rc != 0
+    assert mock_fs.exists("/root/dir")
+
+    stdout, stderr, rc = await cmd.execute(["-r", "dir"])
+    assert rc == 0
+    assert not mock_fs.exists("/root/dir")
+
+    stdout, stderr, rc = await cmd.execute(["-f", "missing"])
+    assert rc == 0
+
+
+@pytest.mark.asyncio
+async def test_cp(shell, mock_fs):
+    cmd = CpCommand(shell)
+
+    mock_fs.mkfile("/root/src.txt", content="data")
+
+    stdout, stderr, rc = await cmd.execute(["src.txt", "dst.txt"])
+    assert rc == 0
+    assert mock_fs.get_content("/root/dst.txt") == "data"
+
+    mock_fs.mkdir_p("/root/src_dir")
+    mock_fs.mkfile("/root/src_dir/f.txt")
+
+    stdout, stderr, rc = await cmd.execute(["-r", "src_dir", "dst_dir"])
+    assert rc == 0
+    assert mock_fs.exists("/root/dst_dir/f.txt")
+
+
+@pytest.mark.asyncio
+async def test_mv(shell, mock_fs):
+    cmd = MvCommand(shell)
+
+    mock_fs.mkfile("/root/src.txt", content="data")
+
+    stdout, stderr, rc = await cmd.execute(["src.txt", "dst.txt"])
+    assert rc == 0
+    assert not mock_fs.exists("/root/src.txt")
+    assert mock_fs.get_content("/root/dst.txt") == "data"
+
+    mock_fs.mkdir_p("/root/dir")
+    stdout, stderr, rc = await cmd.execute(["dst.txt", "dir/"])
+    assert rc == 0
+    assert mock_fs.exists("/root/dir/dst.txt")

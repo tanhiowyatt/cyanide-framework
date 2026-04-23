@@ -1,0 +1,12 @@
+name: Trigger Site Update
+on: [push]
+jobs:
+  ping-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Tanhio.dev rebuild
+        run: |
+          curl -H "Authorization: token ${{ secrets.SITE_DEPLOY_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               -X POST https://api.github.com/repos/tanhiowyatt/tanhio.dev/dispatches \
+               -d '{"event_type": "docs_updated"}'

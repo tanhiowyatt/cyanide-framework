@@ -1,0 +1,3 @@
+NETWORKING=yes
+HOSTNAME=rhel-server-01
+GATEWAY=192.168.1.1
