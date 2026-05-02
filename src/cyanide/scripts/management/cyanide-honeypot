@@ -18,8 +18,7 @@ import subprocess
 import time
 from pathlib import Path
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+ROOT_DIR = Path(__file__).resolve().parents[4]
 
 PID_FILE = os.path.join(ROOT_DIR, "var/lib/cyanide/run/cyanide.pid")
 STDOUT_LOG = os.path.join(ROOT_DIR, "var/log/cyanide/cyanide.out")

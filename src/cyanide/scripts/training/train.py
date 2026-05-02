@@ -6,8 +6,8 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent / "src"))
-sys.path.append(str(Path.cwd() / "src"))
+ROOT_DIR = Path(__file__).resolve().parents[4]
+sys.path.append(str(ROOT_DIR / "src"))
 
 import numpy as np
 import torch
@@ -37,9 +37,8 @@ class CommandDataset(Dataset):
 def load_hacker_commands(path):
     """Load command strings from JSONL files."""
     commands = []
-    project_root = Path(__file__).resolve().parent.parent.parent
     if not Path(path).is_absolute():
-        path = project_root / path
+        path = ROOT_DIR / path
 
     files = glob.glob(str(Path(path) / "**" / "*.jsonl"), recursive=True)
     files.extend(glob.glob(str(Path(path) / "*.jsonl")))
@@ -88,7 +87,7 @@ def train_anomaly_detector(force=False):
     hacker_methods_path = ml_conf.get("training_data", {}).get("hacker_methods")
     model_path = Path(ml_conf.get("model_path"))
     if not model_path.is_absolute():
-        model_path = Path.cwd() / model_path
+        model_path = ROOT_DIR / model_path
 
     print("\n--- Phase 1: Training Anomaly Detector (PyTorch) ---")
 
