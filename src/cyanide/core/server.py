@@ -1,0 +1,2376 @@
+"""
+Advanced SSH/Telnet Framework Server Implementation.
+"""
+
+import asyncio
+import hashlib
+import ipaddress
+import json
+import logging
+import secrets
+import time
+import traceback
+import uuid
+from collections import OrderedDict
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import asyncssh
+
+from cyanide import CyanideLogger
+from cyanide.core.emulator import ShellEmulator
+from cyanide.network.tcp_proxy import TCPProxy
+from cyanide.services.analytics import AnalyticsService
+from cyanide.services.ioc_reporter import IOCReporter
+from cyanide.services.quarantine import QuarantineService
+from cyanide.services.session_manager import SessionManager
+from cyanide.services.smtp_handler import SMTPHandler
+from cyanide.services.telnet_handler import TelnetHandler
+from cyanide.vfs.engine import FakeFilesystem
+from cyanide.vfs.rsync import RsyncHandler
+from cyanide.vfs.scp import ScpHandler
+
+from .async_logger import AsyncLogger
+from .config import _CONFIG_EVENTS
+from .defaults import DEFAULT_METADATA
+from .session_pool import SessionPool
+from .stats import StatsManager
+from .telemetry import setup_telemetry
+from .vm_pool import VMPool
+from .vt_scanner import VTScanner
+
+# Default honeytokens removed - users must now configure them explicitly.
+
+CONTENT_TYPE_PLAIN = "text/plain"
+MIME_JSON = "application/json"
+PATH_STATS = "/logs/stats"
+PATH_HEALTH = "/health"
+EVENT_COMMAND_INPUT = "command.input"
+
+
+class ServiceRegistry:
+    def __init__(
+        self,
+        session: "SessionManager",
+        quarantine: "QuarantineService",
+        analytics: "AnalyticsService",
+        ioc_reporter: "IOCReporter",
+        telnet: Any = None,
+    ):
+        self.session = session
+        self.quarantine = quarantine
+        self.analytics = analytics
+        self.ioc_reporter = ioc_reporter
+        self.telnet = telnet
+
+
+class CyanideServer:
+    """Main framework server orchestrating SSH, Telnet."""
+
+    def __init__(self, config: Dict[str, Any]):
+        """Initialize framework server with configuration."""
+        self.config = config
+        self.async_logger = AsyncLogger()
+
+        try:
+            self.logger = CyanideLogger(
+                config,
+                async_logger=self.async_logger,
+            )
+            self.logger.log_event(
+                "system", "service_init_status", {"message": "Logger initialized"}
+            )
+
+            for ev in _CONFIG_EVENTS:
+                self.logger.log_event("system", ev["action"], ev["data"])
+
+        except Exception as e:
+            logging.error(f"[!] CyanideServer: Failed to initialize Logger: {e}")
+            raise
+
+        try:
+            self.stats = StatsManager()
+            self.tracer = setup_telemetry("cyanide-framework", config.get("otel", {}), "1.0.0")
+            self.session_pool = SessionPool(config)
+            self.logger.log_event(
+                "system",
+                "service_init_status",
+                {"message": "Telemetry and SessionPool initialized"},
+            )
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "service_init_error",
+                {"service": "Telemetry/Pool", "error": str(e)},
+            )
+            raise
+
+        try:
+            session_mgr = SessionManager(config, self.logger)
+            self.logger.log_event(
+                "system",
+                "service_init_status",
+                {"message": "SessionManager initialized"},
+            )
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "service_init_error",
+                {"service": "SessionManager", "error": str(e)},
+            )
+            raise
+
+        try:
+            quarantine_svc = QuarantineService(config, self.logger)
+            vt_key = config.get("virustotal", {}).get("api_key", "")
+            self.vt_scanner = VTScanner(vt_key, self.logger)
+            quarantine_svc.set_scanner(self.vt_scanner)
+            self.logger.log_event(
+                "system",
+                "service_init_status",
+                {"message": "QuarantineService initialized"},
+            )
+            self.logger.log_event(
+                "system", "service_init_status", {"message": "VTScanner initialized"}
+            )
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "service_init_error",
+                {"service": "QuarantineService", "error": str(e)},
+            )
+            raise
+
+        try:
+            analytics_svc = AnalyticsService(config, self.logger, session_mgr=session_mgr)
+            self.logger.log_event(
+                "system",
+                "service_init_status",
+                {"message": "AnalyticsService initialized"},
+            )
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "service_init_error",
+                {"service": "AnalyticsService", "error": str(e)},
+            )
+            raise
+
+        try:
+            ioc_reporter = IOCReporter(config, self.logger)
+            analytics_svc.set_ioc_reporter(ioc_reporter)
+            quarantine_svc.set_ioc_reporter(ioc_reporter)
+            self.logger.log_event(
+                "system",
+                "service_init_status",
+                {"message": "IOCReporter initialized"},
+            )
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "service_init_error",
+                {"service": "IOCReporter", "error": str(e)},
+            )
+            raise
+
+        try:
+            self.services = ServiceRegistry(
+                session=session_mgr,
+                quarantine=quarantine_svc,
+                analytics=analytics_svc,
+                ioc_reporter=ioc_reporter,
+                telnet=None,
+            )
+            self.logger.services = self.services
+            self.logger.log_event(
+                "system", "service_init_status", {"message": "Services registered"}
+            )
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "service_init_error",
+                {"service": "ServiceRegistry", "error": str(e)},
+            )
+            raise
+
+        telnet_handler = TelnetHandler(self, config)
+
+        self.services.telnet = telnet_handler
+
+        self.ssh_server: Any = None
+        self.telnet_server: Any = None
+        self.smtp_server: Any = None
+        self.metrics_server: Any = None
+        self.background_tasks: List[asyncio.Task] = []
+
+        # IOC reporting configuration
+        ioc_conf = config.get("ioc_reporting", {})
+
+        # Explicitly check environment variable as fallback or priority
+        import os
+
+        env_interval = os.environ.get("CYANIDE_IOC_REPORTING_INTERVAL_HOURS")
+        ioc_interval_hours = (
+            env_interval if env_interval else ioc_conf.get("report_interval_hours", 1)
+        )
+
+        self.ioc_interval = max(60, float(ioc_interval_hours) * 3600)
+
+        self.users = config.get("users", [])
+
+        from .fs_utils import resolve_os_profile
+        from .paths import get_profiles_dir
+
+        self.os_profile = resolve_os_profile(config.get("os_profile", "debian"))
+        self.vfs_root = config.get("vfs_root", get_profiles_dir())
+
+        try:
+            temp_fs = FakeFilesystem(
+                os_profile=self.os_profile,
+                root_dir=self.vfs_root,
+                users=self.users,
+                config=self.config,
+            )
+            self.profile = temp_fs.context.to_dict() if temp_fs.context else DEFAULT_METADATA.copy()
+            self.resolved_profile_name = self.os_profile
+            self.logger.log_event(
+                "system",
+                "vfs_init_status",
+                {"message": f"Initialized VFS profile: {self.os_profile}"},
+            )
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "vfs_init_error",
+                {"profile": self.os_profile, "error": str(e)},
+            )
+            self.profile = DEFAULT_METADATA.copy()
+            self.resolved_profile_name = "debian"
+
+        self.vfs_persistence = config.get("ssh", {}).get("vfs_persistence", True)
+        self.vfs_cache: OrderedDict[tuple, FakeFilesystem] = OrderedDict()
+        self.vfs_cache_limit = 100
+
+    def _analyze_command(self, cmd, username, src_ip, session_id, protocol, is_bot=False):
+        """Delegated to AnalyticsService."""
+        with self.tracer.start_as_current_span("analyze_command") as span:
+            span.set_attribute("command.body", cmd)
+            span.set_attribute("user.name", username)
+            span.set_attribute("net.peer.ip", src_ip)
+            span.set_attribute("session.id", session_id)
+            span.set_attribute("net.protocol.name", protocol)
+            span.set_attribute("bot.detected", is_bot)
+            self.services.analytics.analyze_command(cmd, src_ip, session_id, is_bot=is_bot)
+
+    async def log_geoip(self, ip):
+        """Delegated to AnalyticsService."""
+        await self.services.analytics.log_geoip(ip)
+
+    def is_valid_user(self, username, password):
+        """Validate user credentials against configured users."""
+        for user in self.users:
+            if user["user"] == username and user["pass"] == password:
+                return True
+        return False
+
+    def _fs_audit_hook(self, action, path, fs=None, session_id="unknown", src_ip="unknown"):
+        """Callback for filesystem auditing."""
+        try:
+            honeytokens = self.config.get("honeytokens", [])
+            if not honeytokens and fs and hasattr(fs, "honeytokens"):
+                honeytokens = fs.honeytokens
+
+            event_type = "fs_audit"
+            if str(path) in honeytokens:
+                event_type = "CRITICAL_ALERT"
+                self.stats.on_honeytoken(str(path))
+
+            try:
+                self.logger.log_event(
+                    session_id,
+                    event_type,
+                    {
+                        "action": action,
+                        "path": str(path),
+                        "src_ip": src_ip,
+                    },
+                )
+            except Exception as e:
+                logging.debug(f"Failed to log fs_audit event: {e}")
+        except Exception as e:
+            logging.debug(f"Error in _fs_audit_hook: {e}")
+
+    def _add_to_vfs_cache(self, cache_key: tuple, fs: FakeFilesystem, src_ip: str):
+        """Add a filesystem instance to the LRU cache if persistence is enabled."""
+        if not self.vfs_persistence or src_ip == "unknown":
+            return
+
+        if len(self.vfs_cache) >= self.vfs_cache_limit:
+            self.vfs_cache.popitem(last=False)
+        self.vfs_cache[cache_key] = fs
+
+    def _create_new_fs(self, session_id, src_ip, audit_hook):
+        """Initialize a new FakeFilesystem instance with error handling."""
+        try:
+            return FakeFilesystem(
+                os_profile=self.os_profile,
+                root_dir=self.vfs_root,
+                audit_callback=audit_hook,
+                stats=self.stats,
+                users=self.users,
+                src_ip=src_ip,
+                session_id=session_id,
+                session_mgr=self.services.session,
+                config=self.config,
+            )
+        except Exception as e:
+            self.logger.log_event(
+                session_id, "error", {"message": f"Error initializing new VFS: {e}"}
+            )
+            traceback.print_exc()
+            return FakeFilesystem(audit_callback=audit_hook, stats=self.stats, config=self.config)
+
+    def get_filesystem(self, session_id="unknown", src_ip="unknown", username=None):
+        """Create a fresh filesystem instance for a new session with LRU caching."""
+        cache_key = (src_ip, username)
+
+        def audit_hook(action, path, fs_instance=None):
+            self._fs_audit_hook(action, path, fs_instance, session_id, src_ip)
+
+        # 1. Try to retrieve from persistence cache
+        if self.vfs_persistence and src_ip != "unknown":
+            if cache_key in self.vfs_cache:
+                self.vfs_cache.move_to_end(cache_key)
+                return self.vfs_cache[cache_key]
+
+        # 2. Try to get from session pool synchronously
+        pooled = self.session_pool.get_session_sync(self.os_profile, username or "root")
+        if pooled:
+            fs, _ = pooled
+            fs.audit_callback = audit_hook
+            fs.session_id = session_id
+            fs.src_ip = src_ip
+            self._add_to_vfs_cache(cache_key, fs, src_ip)
+            return fs
+
+        # 3. Create a new filesystem instance
+        fs = self._create_new_fs(session_id, src_ip, audit_hook)
+        self._add_to_vfs_cache(cache_key, fs, src_ip)
+        return fs
+
+    def save_quarantine_file(
+        self,
+        filename: str,
+        content: bytes,
+        session_id="unknown",
+        src_ip="unknown",
+        protocol="ssh",
+    ):
+        """Delegated to QuarantineService."""
+        try:
+            if not hasattr(self, "_quarantine_tasks"):
+                self._quarantine_tasks = set()
+
+            folder_name = f"{protocol}_{src_ip}_{session_id}"
+
+            task = asyncio.create_task(
+                self.services.quarantine.save_file(
+                    filename, content, session_id, src_ip, sub_dir=folder_name
+                )
+            )
+            self._quarantine_tasks.add(task)
+            task.add_done_callback(self._quarantine_tasks.discard)
+        except RuntimeError:
+            pass
+
+    def _log_tty(self, session_obj, direction: str, data: str):
+        """Detailed logging: JSON (Detailed Audit) + Timing/TS (scriptreplay)."""
+        if direction != "OUT" and not hasattr(session_obj, "tty_log_path_json"):
+            return
+
+        self._log_tty_json(session_obj, direction, data)
+        self._log_tty_scriptreplay(session_obj, data)
+
+    def _log_tty_json(self, session_obj, direction: str, data: str):
+        """Log TTY data to a structured JSONL file."""
+        if not hasattr(session_obj, "tty_log_path_json"):
+            return
+
+        try:
+            readable_data = data.decode("utf-8", "ignore") if isinstance(data, bytes) else data
+            session_id = getattr(session_obj, "session_id", "unknown")
+            src_ip = getattr(session_obj, "src_ip", "unknown")
+            protocol = "ssh" if hasattr(session_obj, "channel") else "telnet"
+
+            # log_event routes to fs_log and mirrors to session audit.json automatically
+            self.logger.log_event(
+                session_id,
+                f"tty.{direction.lower()}",
+                {
+                    "src_ip": src_ip,
+                    "protocol": protocol,
+                    "direction": direction,
+                    "data": readable_data,
+                },
+            )
+        except Exception as e:
+            self.logger.log_event(
+                "system", "tty_error", {"message": f"Error saving JSONL TTY: {e}"}
+            )
+
+    def _log_tty_scriptreplay(self, session_obj, data: str):
+        """Log TTY data for scriptreplay (timing + raw session)."""
+        if not hasattr(session_obj, "tty_log_path") or not hasattr(session_obj, "tty_timing_path"):
+            return
+
+        try:
+            now = time.time()
+            elapsed = now - session_obj.last_log_time
+            session_obj.last_log_time = now
+
+            self.async_logger.log(session_obj.tty_timing_path, f"{elapsed:.6f} {len(data)}\n")
+            encoded_data = data.encode() if isinstance(data, str) else data
+            self.async_logger.log(session_obj.tty_log_path, encoded_data, mode="ab")
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "tty_error",
+                {"message": f"Error saving scriptreplay TTY: {e}"},
+            )
+
+    def _get_health_status(self) -> str:
+        ssh_up = self.ssh_server is not None or getattr(self, "ssh_proxy", None) is not None
+        telnet_up = (
+            self.telnet_server is not None or getattr(self, "telnet_proxy", None) is not None
+        )
+        smtp_up = self.smtp_server is not None or getattr(self, "smtp_proxy", None) is not None
+
+        is_healthy = True
+        if self.config.get("ssh", {}).get("enabled", True) and not ssh_up:
+            is_healthy = False
+        if self.config.get("telnet", {}).get("enabled", False) and not telnet_up:
+            is_healthy = False
+        if self.config.get("smtp", {}).get("enabled", False) and not smtp_up:
+            is_healthy = False
+
+        status_data = {
+            "status": "healthy" if is_healthy else "unhealthy",
+            "uptime": int(time.time() - self.stats.start_time),
+            "services": {"ssh": ssh_up, "telnet": telnet_up, "smtp": smtp_up},
+        }
+        return json.dumps(status_data)
+
+    def _route_metrics_request(self, path: str) -> tuple[str, str]:
+        # Virtual path mapping for logs (Clean URLs without extensions)
+        log_mapping = {
+            "/logs/vfs": "cyanide-vfs.json",
+            "/logs/ml": "cyanide-ml.json",
+            "/logs/server": "cyanide-server.json",
+            PATH_STATS: "cyanide-stats.json",
+            "/logs/reports/stix": "reports/cyanide_iocs.stix.json",
+            "/logs/reports/misp": "reports/cyanide_iocs.misp.json",
+        }
+
+        if path == "/metrics":
+            return (
+                self.stats.to_prometheus(),
+                f"{CONTENT_TYPE_PLAIN}; version=0.0.4; charset=utf-8",
+            )
+        if path == PATH_STATS:
+            return json.dumps(self.stats.get_stats(), indent=2), MIME_JSON
+        if path == PATH_HEALTH:
+            return self._get_health_status(), MIME_JSON
+
+        # Handle Root Index
+        if path == "/" or path == "":
+            index = {
+                "cyanide_control_plane": {
+                    "monitoring": [PATH_HEALTH, "/metrics"],
+                    "reports": ["/logs/reports/stix", "/logs/reports/misp"],
+                    "logs": [
+                        "/logs/ml",
+                        "/logs/server",
+                        PATH_STATS,
+                        "/logs/vfs",
+                    ],
+                },
+                "usage": f"Use 'Authorization: Bearer <token>' for all endpoints except {PATH_HEALTH}",
+            }
+            return json.dumps(index, indent=2), MIME_JSON
+
+        # Handle Virtual Log Access
+        if path in log_mapping:
+            import os
+
+            filename = log_mapping[path]
+            log_path = os.path.join(self.logger.log_dir, filename)
+
+            if os.path.exists(log_path) and os.path.isfile(log_path):
+                # For reports, return the full file as it's a single JSON bundle
+                if "reports/" in filename:
+                    with open(log_path, "r") as f:
+                        return f.read(), MIME_JSON
+
+                # For line-based logs, return the last 2000 lines to avoid OOM
+                from collections import deque
+
+                try:
+                    with open(log_path, "r") as f:
+                        # Simple and reasonably efficient for typical log sizes
+                        last_lines = deque(f, maxlen=2000)
+                        return "".join(last_lines), MIME_JSON
+                except Exception as e:
+                    return (
+                        json.dumps({"error": f"Failed to read log: {str(e)}"}),
+                        MIME_JSON,
+                    )
+            return json.dumps({"error": f"Resource '{path}' not found"}), MIME_JSON
+
+        return json.dumps({"error": "Not Found", "path": path}), MIME_JSON
+
+    async def _handle_metrics_request(self, reader, writer):
+        try:
+            try:
+                header_data = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), timeout=3.0)
+            except (
+                asyncio.IncompleteReadError,
+                asyncio.LimitOverrunError,
+                asyncio.TimeoutError,
+            ):
+                return
+            if not header_data:
+                return
+
+            try:
+                header_str = header_data.decode("utf-8", "ignore")
+                lines = header_str.splitlines()
+                if not lines:
+                    return
+                parts = lines[0].split()
+                if len(parts) < 2:
+                    return
+                path = parts[1]
+            except Exception:
+                return
+
+            # Token Auth Check
+            token = self.config.get("metrics", {}).get("token")
+            is_health_check = path.startswith("/health")
+            if token and not is_health_check:
+                auth_header = next(
+                    (line for line in lines if line.lower().startswith("authorization:")),
+                    None,
+                )
+                if not auth_header or f"Bearer {token}" not in auth_header:
+                    response = (
+                        "HTTP/1.1 401 Unauthorized\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "Content-Length: 12\r\n"
+                        "Connection: close\r\n"
+                        "\r\n"
+                        "Unauthorized"
+                    ).encode()
+                    writer.write(response)
+                    await writer.drain()
+                    return
+
+            content, content_type = self._route_metrics_request(path)
+
+            payload = content.encode("utf-8", "ignore")
+            response = (
+                f"HTTP/1.1 200 OK\r\n"
+                f"Content-Type: {content_type}\r\n"
+                f"Content-Length: {len(payload)}\r\n"
+                f"Connection: close\r\n"
+                f"\r\n"
+            ).encode() + payload
+
+            try:
+                writer.write(response)
+                await writer.drain()
+                await asyncio.sleep(0.05)
+            except Exception as e:
+                logging.debug(f"Metrics writer error: {e}")
+        except Exception as e:
+            self.logger.log_event("system", "metrics_handler_error", {"error": str(e)})
+        finally:
+            try:
+                writer.close()
+            except Exception as e:
+                logging.debug(f"Metrics writer close error: {e}")
+
+    async def start_metrics_server(self):
+        """Start a lightweight HTTP server for metrics and stats."""
+        metrics_conf = self.config.get("metrics", {})
+        if not metrics_conf.get("enabled", True):
+            return
+
+        port = metrics_conf.get("port", 9090)
+        host = metrics_conf.get("host", "127.0.0.1")
+        if metrics_conf.get("allow_remote", False):
+            host = "0.0.0.0"
+
+        try:
+            logging.info(f"[*] Starting Metrics service on port {port}...")
+            self.metrics_server = await asyncio.start_server(
+                self._handle_metrics_request, host, port
+            )
+            self.logger.log_event(
+                "system",
+                "service_started",
+                {"service": "metrics", "host": host, "port": port},
+            )
+            async with self.metrics_server:
+                await self.metrics_server.serve_forever()
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "metrics_server_error",
+                {"message": f"Metrics Server Error: {e}"},
+            )
+
+    def _get_host_keys(self) -> List[asyncssh.SSHKey]:
+        """Load host keys from storage or generate persistent ones."""
+        ssh_conf = self.config.get("ssh", {})
+        data_dir = Path(ssh_conf.get("data_path", "var/lib/cyanide/keys"))
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        key_types = ["ssh-rsa", "ssh-ed25519", "ecdsa-sha2-nistp256"]
+        loaded_keys = []
+
+        for ktype in key_types:
+            key_path = data_dir / f"host_key_{ktype}"
+
+            if key_path.exists():
+                try:
+                    key = asyncssh.read_private_key(str(key_path))
+                    loaded_keys.append(key)
+                except Exception as e:
+                    self.logger.log_event(
+                        "system",
+                        "key_error",
+                        {"message": f"Failed to load {ktype}: {e}"},
+                    )
+            else:
+                try:
+                    self.logger.log_event(
+                        "system",
+                        "key_gen",
+                        {"message": f"Generating new persistent {ktype} host key"},
+                    )
+                    key = asyncssh.generate_private_key(ktype)
+                    key.write_private_key(str(key_path))
+                    key_path.chmod(0o600)
+                    loaded_keys.append(key)
+                except Exception as e:
+                    self.logger.log_event(
+                        "system",
+                        "key_error",
+                        {"message": f"Failed to generate {ktype}: {e}"},
+                    )
+
+        if not loaded_keys:
+            return [asyncssh.generate_private_key("ssh-rsa")]
+
+        return loaded_keys
+
+    def _start_vm_pool(self):
+        """Initialize and start the VM pool service."""
+        is_enabled = self.config.get("pool", {}).get("enabled", False)
+        if is_enabled:
+            self.logger.log_event("system", "service_starting", {"service": "vm_pool"})
+
+        self.vm_pool = VMPool(self.config, logger=self.logger)
+
+        try:
+            self.background_tasks.append(asyncio.create_task(self.vm_pool.start()))
+            if is_enabled:
+                self.logger.log_event(
+                    "system",
+                    "service_started",
+                    {
+                        "service": "vm_pool",
+                        "mode": self.config.get("pool", {}).get("mode"),
+                        "max_vms": self.config.get("pool", {}).get("max_vms"),
+                    },
+                )
+        except Exception as e:
+            self.logger.log_event(
+                "system", "service_error", {"service": "vm_pool", "error": str(e)}
+            )
+
+    @staticmethod
+    def _parse_ssh_rekey(limit: str) -> int:
+        if not limit:
+            return 1024**3
+        limit = limit.upper()
+        if limit.endswith("G"):
+            return int(limit[:-1]) * 1024**3
+        if limit.endswith("M"):
+            return int(limit[:-1]) * 1024**2
+        if limit.endswith("K"):
+            return int(limit[:-1]) * 1024
+        return int(limit)
+
+    @staticmethod
+    async def _handle_shell_session(process, sess):
+        """Handle interactive shell session loop.
+
+        Uses raw read() instead of async-for iteration so that control
+        characters (Ctrl+X, Ctrl+O, etc.) are delivered immediately without
+        waiting for a newline. The async-for iterator in asyncssh text mode
+        only yields complete lines, which breaks full-screen editors.
+        """
+        if not sess.shell:
+            sess.shell_requested()
+
+        sess.session_started()
+        await process.stdout.drain()
+
+        try:
+            while True:
+                try:
+                    # Read up to 256 bytes at once. asyncssh delivers each
+                    # keystroke (or paste chunk) as a separate read() result.
+                    data = await process.stdin.read(256)
+                    if not data:
+                        break
+                    sess.data_received(data, None)
+                    await process.stdout.drain()
+                except (
+                    asyncssh.TerminalSizeChanged,
+                    asyncssh.BreakReceived,
+                    asyncssh.SignalReceived,
+                ):
+                    continue
+                except (EOFError, asyncssh.DisconnectError):
+                    break
+                except Exception as e:
+                    logging.debug(f"CyanideProcess stdin loop error: {e}")
+                    break
+        except Exception as e:
+            logging.debug(f"CyanideProcess stream reading error: {e}")
+
+        sess.session_ended()
+
+    @staticmethod
+    async def _handle_exec_session(process, sess, factory, command):
+        """Handle non-interactive EXEC session."""
+        ssh_conf = factory.framework.config.get("ssh", {})
+        if command.startswith("rsync ") and ssh_conf.get("rsync_enabled", True):
+            rsync = RsyncHandler(sess, process)
+            rc = await rsync.handle(command)
+            process.exit(rc)
+            return
+
+        if (command.startswith("scp ") or command.startswith("/usr/bin/scp ")) and ssh_conf.get(
+            "scp_enabled", True
+        ):
+            scp = ScpHandler(sess, process)
+            rc = await scp.handle(command)
+            process.exit(rc)
+            return
+
+        await sess._async_exec(command)
+
+    @staticmethod
+    async def _cyanide_ssh_process_factory(process):
+        """Expert AsyncSSH process factory handling shell and exec."""
+        try:
+            command = process.command
+            conn = process.channel.get_connection()
+            factory = getattr(conn, "cyanide_factory", None)
+
+            if not factory:
+                process.exit(1)
+                return
+
+            sess = factory.sessions.get(factory.conn_id)
+            if not sess:
+                sess = factory.session_requested()
+
+            if not sess:
+                process.exit(1)
+                return
+
+            sess.process = process
+            sess.channel = process.channel
+
+            if not command:
+                await CyanideServer._handle_shell_session(process, sess)
+            else:
+                await CyanideServer._handle_exec_session(process, sess, factory, command)
+        except Exception as e:
+            logging.debug(f"CyanideProcess EXCEPTION: {e}")
+            traceback.print_exc()
+            process.exit(1)
+
+    def _get_ssh_options(self, ssh_conf, host_keys):
+        """Prepare SSH options for the server."""
+        chosen_version = ssh_conf.get("version") or self.profile.get("ssh_banner", "")
+        if chosen_version.startswith("SSH-2.0-"):
+            chosen_version = chosen_version[8:]
+
+        self.logger.log_event(
+            "system", "system_status", {"message": f"SSH Banner: {chosen_version}"}
+        )
+
+        ssh_opts = {
+            "server_host_keys": host_keys,
+            "server_factory": lambda: SSHServerFactory(self),
+            "reuse_address": True,
+            "server_version": chosen_version,
+            "process_factory": self._cyanide_ssh_process_factory,
+            "encoding": "utf-8",
+            "login_timeout": ssh_conf.get("login_timeout", 60),
+            "rekey_bytes": self._parse_ssh_rekey(ssh_conf.get("rekey_limit", "1G")),
+            "keepalive_interval": 15,  # Send keepalive every 15s
+            "keepalive_count_max": 3,  # Disconnect after 3 failed keepalives
+            "line_editor": False,  # Disables asyncssh internal PTY buffering
+        }
+
+        if ssh_conf.get("sftp_enabled", True):
+            from cyanide.vfs.sftp import CyanideSFTPHandler
+
+            ssh_opts["sftp_factory"] = CyanideSFTPHandler
+
+        ssh_opts["allow_scp"] = False
+
+        algo_map = {
+            "kex_algs": "kex_algs",
+            "ciphers": "encryption_algs",
+            "macs": "mac_algs",
+            "compression": "compression_algs",
+            "public_key_algs": "signature_algs",
+        }
+        actual_algs = {}
+        for cfg_key, opt_key in algo_map.items():
+            val = ssh_conf.get(cfg_key)
+            if val:
+                ssh_opts[opt_key] = val
+                actual_algs[opt_key] = val
+
+        return ssh_opts, chosen_version, actual_algs
+
+    async def _start_ssh_service(self, host_keys):
+        ssh_conf = self.config.get("ssh", {})
+        ssh_enabled = ssh_conf.get("enabled", True)
+        if not ssh_enabled:
+            return
+
+        ssh_port = ssh_conf["port"]
+        backend_mode = ssh_conf.get("backend_mode", "emulated")
+
+        if backend_mode == "emulated":
+            ssh_opts, chosen_version, actual_algs = self._get_ssh_options(ssh_conf, host_keys)
+            self.ssh_server = await asyncssh.listen("0.0.0.0", ssh_port, **ssh_opts)
+            self.logger.log_event(
+                "system",
+                "service_started",
+                {"service": "ssh_emulated", "port": ssh_port},
+            )
+            self.logger.log_event(
+                "system",
+                "ssh_listen_started",
+                {
+                    "port": ssh_port,
+                    "server_version": chosen_version,
+                    "kex_algs": actual_algs.get("kex_algs"),
+                    "encryption_algs": actual_algs.get("encryption_algs"),
+                    "mac_algs": actual_algs.get("mac_algs"),
+                    "compression_algs": actual_algs.get("compression_algs"),
+                    "signature_algs": actual_algs.get("signature_algs"),
+                },
+            )
+        elif backend_mode == "proxy" or backend_mode == "pool":
+            t_host = ssh_conf.get("target_host", "127.0.0.1")
+            t_port = ssh_conf.get("target_port", 22)
+            self.ssh_proxy = TCPProxy(
+                "0.0.0.0",
+                ssh_port,
+                target_host=t_host,
+                target_port=t_port,
+                protocol_name="ssh_proxy",
+                pool=self.vm_pool if backend_mode == "pool" else None,
+                logger=self.logger,
+            )
+            await self.ssh_proxy.start()
+            self.logger.log_event(
+                "system",
+                "service_started",
+                {
+                    "service": "ssh_proxy",
+                    "listen_port": ssh_port,
+                    "target": f"{t_host}:{t_port}",
+                },
+            )
+
+    async def _start_telnet_service(self):
+        telnet_conf = self.config.get("telnet", {})
+        if not telnet_conf.get("enabled", False):
+            return
+
+        telnet_port = telnet_conf["port"]
+        backend_mode = telnet_conf.get("backend_mode", "emulated")
+
+        if backend_mode == "emulated":
+            self.telnet_server = await asyncio.start_server(
+                self.services.telnet.handle_connection,
+                "0.0.0.0",
+                telnet_port,
+                reuse_address=True,
+            )
+            self.logger.log_event(
+                "system",
+                "service_started",
+                {"service": "telnet_emulated", "port": telnet_port},
+            )
+        elif backend_mode == "pool" or backend_mode == "proxy":
+            t_host = telnet_conf.get("target_host", "127.0.0.1")
+            t_port = int(telnet_conf.get("target_port", 2323))
+            self.telnet_proxy = TCPProxy(
+                "0.0.0.0",
+                telnet_port,
+                target_host=t_host,
+                target_port=t_port,
+                protocol_name="telnet_proxy",
+                pool=self.vm_pool if backend_mode == "pool" else None,
+                logger=self.logger,
+            )
+            await self.telnet_proxy.start()
+            self.logger.log_event(
+                "system",
+                "service_started",
+                {
+                    "service": "telnet_proxy",
+                    "listen_port": telnet_port,
+                    "target": f"{t_host}:{t_port}",
+                },
+            )
+
+    async def _start_smtp_service(self):
+        smtp_conf = self.config.get("smtp", {})
+        if not smtp_conf.get("enabled", False):
+            return
+
+        smtp_port = int(smtp_conf.get("port", 25))
+        backend_mode = smtp_conf.get("backend_mode", "emulated")
+
+        try:
+            if backend_mode == "emulated":
+                smtp_handler = SMTPHandler(self, smtp_conf)
+                self.smtp_server = await asyncio.start_server(
+                    smtp_handler.handle_connection,
+                    "0.0.0.0",
+                    smtp_port,
+                    reuse_address=True,
+                )
+                self.logger.log_event(
+                    "system",
+                    "service_started",
+                    {"service": "smtp_emulated", "port": smtp_port},
+                )
+            else:
+                self.smtp_server = TCPProxy(
+                    "0.0.0.0",
+                    smtp_port,
+                    smtp_conf.get("target_host", "127.0.0.1"),
+                    int(smtp_conf.get("target_port", 25255)),
+                    protocol_name="smtp",
+                    logger=self.logger,
+                )
+                await self.smtp_server.start()
+                self.logger.log_event(
+                    "system",
+                    "service_started",
+                    {
+                        "service": "smtp_proxy",
+                        "port": smtp_port,
+                        "target": f"{smtp_conf.get('target_host', '127.0.0.1')}:{smtp_conf.get('target_port', 25255)}",
+                    },
+                )
+        except Exception as e:
+            self.logger.log_event(
+                "system",
+                "smtp_error",
+                {"message": f"Failed to start SMTP Service: {e}"},
+            )
+
+    async def start(self):
+        """Start all framework services and enter main event loop."""
+        self.async_logger.start()
+        self.session_pool.start()
+
+        # Start metrics ASAP for health/readiness checks
+        self.background_tasks.append(asyncio.create_task(self.start_metrics_server()))
+
+        host_keys = self._get_host_keys()
+
+        self._start_vm_pool()
+
+        logging.info(
+            f"[*] Starting SSH service on port {self.config.get('ssh', {}).get('port', 2222)}..."
+        )
+        await self._start_ssh_service(host_keys)
+
+        logging.info(
+            f"[*] Starting Telnet service on port {self.config.get('telnet', {}).get('port', 2323)}..."
+        )
+        await self._start_telnet_service()
+
+        logging.info(
+            f"[*] Starting SMTP service on port {self.config.get('smtp', {}).get('port', 2525)}..."
+        )
+        await self._start_smtp_service()
+
+        self.background_tasks.append(asyncio.create_task(self._cleanup_loop()))
+        self.background_tasks.append(asyncio.create_task(self._stats_logging_loop()))
+        self.background_tasks.append(asyncio.create_task(self._ioc_reporting_loop()))
+
+        if self.services.analytics.ml_online_learning:
+            self.background_tasks.append(
+                asyncio.create_task(self.services.analytics.run_online_learning_loop())
+            )
+
+        try:
+            self._stop_event = asyncio.Event()
+            await self._stop_event.wait()
+        except asyncio.CancelledError:
+            await self.stop()
+            raise
+
+    async def stop(self):
+        """Stop all services."""
+        self.logger.log_event("system", "system_status", {"message": "Stopping CyanideServer..."})
+
+        if self.background_tasks:
+            for task in self.background_tasks:
+                task.cancel()
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*self.background_tasks, return_exceptions=True),
+                    timeout=5.0,
+                )
+            except Exception:
+                self.logger.log_event(
+                    "system",
+                    "warning",
+                    {"message": "Background tasks shutdown timeout"},
+                )
+        self.background_tasks = []
+
+        if hasattr(self, "session_pool") and self.session_pool:
+            await self.session_pool.stop()
+
+        if hasattr(self, "vm_pool") and self.vm_pool:
+            await self.vm_pool.stop()
+
+        await self._close_server(getattr(self, "ssh_server", None), "SSH")
+        self.ssh_server = None
+        await self._close_server(getattr(self, "telnet_server", None), "Telnet")
+        self.telnet_server = None
+        self.smtp_server = None
+
+        if hasattr(self.services, "analytics") and hasattr(self.services.analytics, "geoip"):
+            await self.services.analytics.geoip.close()
+        await self._close_server(getattr(self, "metrics_server", None), "Metrics")
+        self.metrics_server = None
+
+        async_logger = getattr(self, "async_logger", None)
+        if async_logger:
+            await async_logger.stop()
+
+        if hasattr(self, "_stop_event"):
+            self._stop_event.set()
+
+    async def _close_server(self, server, name):
+        """Helper to close a network server gracefully."""
+        if not server:
+            return
+        try:
+            server.close()
+            await asyncio.wait_for(server.wait_closed(), timeout=5.0)
+        except Exception as e:
+            if name != "Metrics":  # Metrics usually closes fast, ignore its errors in stop
+                self.logger.log_event("system", "error", {"message": f"{name} shutdown error: {e}"})
+
+        async_logger = getattr(self, "async_logger", None)
+        if async_logger:
+            await async_logger.stop()
+
+        if hasattr(self, "_stop_event"):
+            self._stop_event.set()
+
+    async def _stats_logging_loop(self):
+        """Periodically log statistics to cyanide-stats.json."""
+        self.logger.log_event(
+            "system",
+            "service_started",
+            {"service": "stats_loop", "interval_seconds": 60},
+        )
+        while True:
+            try:
+                stats_data = self.stats.get_stats()
+                self.logger.log_event("system", "stats", stats_data)
+            except Exception as e:
+                self.logger.log_event("system", "error", {"message": f"Stats Logging Error: {e}"})
+
+            await asyncio.sleep(60)
+
+    async def _cleanup_loop(self):
+        """Background task for automatic file cleanup."""
+        await asyncio.sleep(60)
+
+        from .cleanup import CleanupManager
+
+        manager = CleanupManager(self.config, logger=self.logger)
+
+        if not manager.enabled:
+            self.logger.log_event("system", "cleanup_status", {"message": "Cleanup: Disabled"})
+            return
+
+        self.logger.log_event(
+            "system",
+            "cleanup_status",
+            {
+                "message": f"Cleanup: Enabled (Every {manager.interval}s, older than {manager.retention_days}d)"
+            },
+        )
+
+        while True:
+            await asyncio.sleep(manager.interval)
+            try:
+                stats = manager.cleanup_files()
+                if stats and stats.get("deleted", 0) > 0:
+                    self.logger.log_event(
+                        "system",
+                        "system_cleanup",
+                        {
+                            "deleted": stats["deleted"],
+                            "bytes_freed": stats.get("bytes_freed", 0),
+                        },
+                    )
+            except Exception as e:
+                self.logger.log_event("system", "cleanup_error", {"message": f"Cleanup Error: {e}"})
+
+    async def _ioc_reporting_loop(self):
+        """Background task for automatic STIX 2.1 report generation."""
+        conf = self.config.get("ioc_reporting", {})
+        if not conf.get("enabled", True):
+            return
+
+        import logging
+
+        logging.info(f"[*] IOC Reporting loop started (interval: {self.ioc_interval}s)")
+
+        interval = self.ioc_interval
+
+        while True:
+            try:
+                if hasattr(self.services, "ioc_reporter"):
+                    self.services.ioc_reporter.generate_reports()
+            except Exception as e:
+                self.logger.log_event("system", "error", {"message": f"IOC Reporting Error: {e}"})
+
+            await asyncio.sleep(interval)
+
+
+class SSHServerFactory(asyncssh.SSHServer):
+    """SSH server factory."""
+
+    def __init__(self, framework: CyanideServer):
+        super().__init__()
+        self.framework = framework
+        self.src_ip = "unknown"
+        self.src_port = 0
+        self.fs = None
+        ssh_conf = self.framework.config.get("ssh", {})
+        self._max_auth_tries = ssh_conf.get("auth_tries", 3)
+        self.sessions: dict[str, Any] = {}
+        self._background_tasks: set[asyncio.Task] = set()
+        self.username = "root"
+        self.client_version = "unknown"
+        self._captured_kex_alg: Optional[str] = None
+        self._captured_host_key_alg: Optional[str] = None
+        self.conn_id = str(uuid.uuid4())[:8]  # Initialize with random ID
+
+    def connection_made(self, conn):
+        self.conn = conn
+        self.conn_id = str(uuid.uuid4())[:8]
+        conn.cyanide_factory = self
+        self.src_ip = conn.get_extra_info("peername")[0]
+        self.src_port = conn.get_extra_info("peername")[1]
+        self._handshake_logged = False
+
+        self._setup_handshake_capture(conn)
+
+        if not self._check_session_limits(conn):
+            return
+
+        session_id = "conn_" + self.conn_id
+        self.framework.services.session.register_session(self.src_ip, session_id=session_id)
+        self.fs = self.framework.get_filesystem(
+            session_id=session_id, src_ip=self.src_ip, username=self.username
+        )
+
+        self._init_session_logging(session_id)
+
+        # Trigger GeoIP lookup (background task)
+        self._background_tasks.add(
+            asyncio.create_task(self.framework.services.analytics.geoip.lookup(self.src_ip))
+        )
+
+    def _extract_algorithm_name(self, obj):
+        """Helper to safely extract algorithm name from an internal object (KEX or HostKey)."""
+        if obj is None:
+            return None
+        alg = getattr(obj, "algorithm", None)
+        if isinstance(alg, bytes):
+            return alg.decode("ascii", "ignore")
+        return alg
+
+    def _setup_handshake_capture(self, conn):
+        """Monkey-patch set_extra_info to capture kex/host_key algorithm."""
+        try:
+            original_set_extra = conn.set_extra_info.__func__
+
+            def _capturing_set_extra_info(c, **kwargs):
+                if "send_cipher" in kwargs and self._captured_kex_alg is None:
+                    self._captured_kex_alg = self._extract_algorithm_name(getattr(c, "_kex", None))
+                    self._captured_host_key_alg = self._extract_algorithm_name(
+                        getattr(c, "_server_host_key", None)
+                    )
+                original_set_extra(c, **kwargs)
+
+            import types
+
+            conn.set_extra_info = types.MethodType(_capturing_set_extra_info, conn)
+        except AttributeError:
+            pass  # Non-asyncssh connection (e.g. MagicMock in tests)
+
+    def _init_session_logging(self, session_id):
+        """Initialize TTY and Mirroring early to capture handshake events."""
+        try:
+            import datetime
+
+            date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+            folder_name = f"ssh_{self.src_ip}_{session_id}"
+            log_dir = Path(self.framework.logger.log_dir) / "sessions" / date_str / folder_name
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+            # Register for mirroring immediately
+            self.framework.logger.register_session_log(
+                session_id,
+                log_dir / "audit.json",
+                log_dir / "ml_analysis.json",
+                src_ip=self.src_ip,
+            )
+        except Exception as e:
+            # Fallback: connection continues but without session-specific audit mirroring
+            logging.error(f"Failed to initialize session log directory: {e}")
+            task = asyncio.create_task(self.framework.services.analytics.log_geoip(self.src_ip))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
+
+    async def _log_connection_details(self, conn):
+        """Log connection opening and algorithms."""
+        session_id = "conn_" + self.conn_id
+
+        # Enriched GeoIP lookup
+        geo = await self.framework.services.analytics.geoip.lookup(self.src_ip)
+
+        self.framework.logger.log_event(
+            session_id,
+            "ssh.connect",
+            {
+                "src_ip": self.src_ip,
+                "src_port": self.src_port,
+                "geoip": geo or {"country": "Unknown", "city": "Unknown"},
+            },
+        )
+
+        # Read algorithms via correct asyncssh extra_info keys.
+        # send_* = direction from server's perspective (client→server)
+        # kex_alg and host_key_alg are captured via monkey-patched set_extra_info.
+        kex_alg = self._captured_kex_alg
+        host_key_alg = self._captured_host_key_alg
+
+        cipher = conn.get_extra_info("send_cipher")
+        mac = conn.get_extra_info("send_mac")
+        compression = conn.get_extra_info("send_compression")
+
+        fp_str = ",".join([str(v or "") for v in [kex_alg, host_key_alg, cipher, mac, compression]])
+        # MD5 is used here for identification (fingerprinting), not for security.
+        # Adding usedforsecurity=False tells tools like Bandit/Semgrep it's non-cryptographic.
+        fingerprint = hashlib.md5(fp_str.encode(), usedforsecurity=False).hexdigest()
+
+        # Log client fingerprint
+        self.framework.logger.log_event(
+            session_id,
+            "client_fingerprint",
+            {
+                "protocol": "ssh",
+                "src_ip": self.src_ip,
+                "client_version": self.client_version,
+                "fingerprint": {
+                    "kex": kex_alg,
+                    "key_algo": host_key_alg,
+                    "cipher": cipher,
+                    "mac": mac,
+                    "compression": compression,
+                },
+                "md5": fingerprint,
+            },
+        )
+
+        # Log negotiated algorithms
+        self.framework.logger.log_event(
+            session_id,
+            "ssh_negotiated",
+            {
+                "src_ip": self.src_ip,
+                "kex": kex_alg,
+                "key_algo": host_key_alg,
+                "cipher": cipher,
+                "mac": mac,
+                "compression": compression,
+            },
+        )
+
+    def _check_session_limits(self, conn):
+        """Check if connection can be accepted based on session limits."""
+        with self.framework.tracer.start_as_current_span("ssh_connection_setup") as span:
+            span.set_attribute("net.peer.ip", self.src_ip)
+            span.set_attribute("net.peer.port", self.src_port)
+
+            accepted, reason = self.framework.services.session.can_accept(self.src_ip)
+            if not accepted:
+                span.set_attribute("error", True)
+                span.set_attribute("rejection_reason", reason)
+                self.framework.logger.log_event(
+                    "system",
+                    "connection_rejected",
+                    {
+                        "protocol": "ssh",
+                        "src_ip": self.src_ip,
+                        "reason": reason,
+                        "active_sessions": self.framework.services.session.active_sessions,
+                        "per_ip_sessions": self.framework.services.session.sessions_per_ip.get(
+                            self.src_ip, 0
+                        ),
+                    },
+                )
+                conn.close()
+                return False
+            return True
+
+    def connection_lost(self, exc):
+        # Cancel and clear session-level background tasks
+        for task in self._background_tasks:
+            task.cancel()
+        self._background_tasks.clear()
+
+        if self.fs:
+            self.fs.save_ip_history()
+        # Log session summary
+        stats = self.framework.services.session.get_session_stats("conn_" + self.conn_id)
+        if stats:
+            duration = time.time() - stats["start_time"]
+            self.framework.logger.log_event(
+                "conn_" + self.conn_id,
+                "session.end",
+                {
+                    "src_ip": self.src_ip,
+                    "duration": round(duration, 2),
+                    "commands": stats["commands"],
+                    "file_ops": stats["file_ops"],
+                },
+            )
+
+        self.framework.services.session.unregister_session("conn_" + self.conn_id)
+
+    async def begin_auth(self, username):
+        """Called when authentication begins; handshake is guaranteed to be complete."""
+        if not self._handshake_logged:
+            # Read client_version here — guaranteed available after banner exchange
+            self.client_version = self.conn.get_extra_info("client_version", "unknown")
+            await self._log_connection_details(self.conn)
+            self._handshake_logged = True
+        return True
+
+    def password_auth_supported(self):
+        return True
+
+    def publickey_auth_supported(self):
+        """Enable publickey auth to collect and log keys from attackers."""
+        return True
+
+    def validate_publickey(self, username, key):
+        """Log public key attempt and always fail to force password auth (Cyanide behavior)."""
+        fingerprint = key.get_fingerprint()
+        raw_key = key.export_public_key().decode()
+
+        self.framework.logger.log_event(
+            "conn_" + self.conn_id,
+            "auth.publickey",
+            {
+                "username": username,
+                "fingerprint": fingerprint,
+                "key": raw_key,
+                "success": False,
+            },
+        )
+        return False
+
+    async def validate_password(self, username, password):
+        self.username = username
+        success = self.framework.is_valid_user(username, password)
+        self.framework.stats.on_auth(username, password, success)
+        log_password = password
+        ssh_conf = self.framework.config.get("ssh", {})
+        if not ssh_conf.get("log_passwords", False):
+            pass_hash = hashlib.sha256(password.encode()).hexdigest()
+            log_password = f"sha256:{pass_hash} (len:{len(password)})"
+
+        self.framework.logger.log_event(
+            "conn_" + self.conn_id,
+            "auth",
+            {
+                "protocol": "ssh",
+                "src_ip": self.src_ip,
+                "username": username,
+                "password": log_password,
+                "success": success,
+            },
+        )
+
+        # Extract IOCs from malicious login attempts
+        if not success:
+            analytics_svc = self.framework.services.analytics
+            analytics_svc.analyze_auth(username, password, "conn_" + self.conn_id)
+
+        if success:
+            # Re-fetch VFS now that we have a verified username to support user-specific persistence
+            self.fs = self.framework.get_filesystem(
+                session_id="conn_" + self.conn_id,
+                src_ip=self.src_ip,
+                username=self.username,
+            )
+
+            ssh_conf = self.framework.config.get("ssh", {})
+            auth_delay = ssh_conf.get("auth_delay", 1.0)
+            if auth_delay > 0:
+                await asyncio.sleep(auth_delay)
+
+        return success
+
+    def session_requested(self):
+        logging.debug(f"session_requested for {self.src_ip} as {self.username}")
+        if not self.fs:
+            logging.error(f"session_requested called before FS initialization for {self.src_ip}")
+            return None
+
+        sess = SSHSession(
+            self.framework,
+            self.fs,
+            self.src_ip,
+            self.src_port,
+            self.conn_id,
+            self.username,
+        )
+        self.sessions[self.conn_id] = sess
+        return sess
+
+    def direct_tcpip_requested(self, dest_host, dest_port, src_host, src_port):
+        self.framework.logger.log_event(
+            "conn_" + self.conn_id,
+            "local_forward.request",
+            {
+                "src_ip": self.src_ip,
+                "dest_host": dest_host,
+                "dest_port": dest_port,
+                "src_host": src_host,
+                "src_port": src_port,
+            },
+        )
+        ssh_conf = self.framework.config.get("ssh", {})
+        if not ssh_conf.get("forwarding_enabled", False):
+            return False
+        return True
+
+    def connection_requested(self, dest_host, dest_port, orig_host, orig_port):
+
+        self.framework.logger.log_event(
+            "conn_" + self.conn_id,
+            "remote_forward.request",
+            {
+                "src_ip": self.src_ip,
+                "dest_host": dest_host,
+                "dest_port": dest_port,
+            },
+        )
+        ssh_conf = self.framework.config.get("ssh", {})
+        if not ssh_conf.get("forwarding_enabled", False):
+            return False
+        return True
+
+    async def direct_tcpip(self, chan, dest_host, dest_port, src_host, src_port):
+        target_host, target_port, mode = self._get_forward_target(dest_host, dest_port)
+
+        self.framework.logger.log_event(
+            "conn_" + self.conn_id,
+            "forward.connect",
+            {
+                "src_ip": self.src_ip,
+                "requested_host": dest_host,
+                "requested_port": dest_port,
+                "target_host": target_host,
+                "target_port": target_port,
+                "mode": mode,
+            },
+        )
+
+        try:
+            await self._bridge_tcpip(chan, target_host, target_port)
+        except Exception as e:
+            self.framework.logger.log_event(
+                "conn_" + self.conn_id,
+                "forward.error",
+                {"message": f"Forward Error: {e}"},
+            )
+            chan.close()
+
+    def _apply_forward_rules(self, ssh_conf, port_str):
+        """Apply redirect and tunnel rules for the given port."""
+        for rule_type in ["forward_redirect", "forward_tunnel"]:
+            if not ssh_conf.get(f"{rule_type}_enabled"):
+                continue
+            rules = ssh_conf.get(f"{rule_type}_rules", {})
+            if port_str in rules:
+                target_str = rules[port_str]
+                if ":" in target_str:
+                    host, p_str = target_str.split(":", 1)
+                    return host, int(p_str), rule_type.split("_")[1]
+                return target_str, int(port_str), rule_type.split("_")[1]
+        return None, None, None
+
+    def _is_safe_target(self, host, rule_found, strict_mode):
+        """Check if the target host is safe for forwarding."""
+        try:
+            ip = ipaddress.ip_address(host)
+            if ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_multicast:
+                # Unless it was explicitly allowed by a rule, block it
+                return rule_found
+        except ValueError:
+            # It's a hostname. Block local-sounding names if strict
+            if not rule_found and strict_mode:
+                return host.lower() not in ["localhost", "127.0.0.1", "::1"]
+        return True
+
+    def _get_forward_target(self, dest_host, dest_port):
+        """Apply redirect and tunnel rules with strict security checks."""
+        ssh_conf = self.framework.config.get("ssh", {})
+        strict_mode = ssh_conf.get("forwarding_strict_mode", True)
+
+        t_host, t_port, mode = self._apply_forward_rules(ssh_conf, str(dest_port))
+
+        rule_found = t_host is not None
+        if not rule_found:
+            t_host, t_port, mode = dest_host, dest_port, "allowed"
+
+        if not self._is_safe_target(t_host, rule_found, strict_mode):
+            return "127.0.0.1", 0, "anti_pivot_block"
+
+        # 3. Default Policy: If not explicitly allowed by a rule, and strict mode is on, block.
+        if not rule_found and strict_mode:
+            return "127.0.0.1", 0, "strict_policy_block"
+
+        return t_host, t_port, mode
+
+    async def _forward_stream(self, reader, writer, close_writer: bool = True):
+        """Generic stream forwarding from reader to writer."""
+        try:
+            while True:
+                data = await reader.read(4096)
+                if not data:
+                    break
+                writer.write(data)
+                await writer.drain()
+        except Exception:
+            pass
+        finally:
+            if close_writer:
+                writer.close()
+                try:
+                    await writer.wait_closed()
+                except Exception:
+                    pass
+            else:
+                try:
+                    writer.write_eof()
+                except Exception:
+                    pass
+
+    async def _bridge_tcpip(self, chan, target_host, target_port):
+        """Bridge the SSH channel and the target TCP connection."""
+        target_reader, target_writer = await asyncio.open_connection(target_host, target_port)
+
+        await asyncio.gather(
+            self._forward_stream(chan, target_writer, close_writer=True),
+            self._forward_stream(target_reader, chan, close_writer=False),
+        )
+
+
+class SSHSession(asyncssh.SSHServerSession):
+    """SSH session handler."""
+
+    def __init__(
+        self,
+        framework: CyanideServer,
+        fs: FakeFilesystem,
+        src_ip,
+        src_port,
+        conn_id: str,
+        username: str = "root",
+    ):
+        logging.debug(f"SSHSession.__init__ starting for {src_ip} as {username}")
+        self.framework = framework
+        self.fs = fs
+        self.src_ip = src_ip
+        self.src_port = src_port
+        self.session_id = "conn_" + conn_id
+        self.commands: List[str] = []
+        self.start_time = time.time()
+        self.client_version = "unknown"
+        self.username = username
+        self.buf = ""
+        self.shell: Optional[ShellEmulator] = None
+        self.last_log_time = time.time()
+        self.keystrokes: List[float] = []
+        self.bytes_in = 0
+        self.bytes_out = 0
+        self.width = 80
+        self.height = 24
+        self.process: Optional[asyncssh.SSHServerProcess] = None
+        self._background_tasks: set[asyncio.Task] = set()
+        self._process_lock = asyncio.Lock()
+        self.history_ptr = -1
+        self.history_buffer = ""
+
+    def connection_made(self, channel):
+        super().connection_made(channel)
+        self.channel = channel
+        conn = channel.get_connection()
+        # Ensure we have the latest username from the connection/factory
+        self.client_version = conn.get_extra_info("client_version") or "unknown"
+
+        self.framework.stats.on_connect("ssh", self.src_ip)
+
+        task = asyncio.create_task(self.framework.log_geoip(self.src_ip))
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
+
+        try:
+            self._log_ssh_details(conn)
+        except Exception:
+            pass
+
+    def _get_ssh_info(self, conn, key, internal_attr=None, decode=False):
+        """Helper to get SSH connection info with fallback."""
+        val = conn.get_extra_info(key)
+        if val is not None:
+            return val
+        if internal_attr:
+            val = getattr(conn, internal_attr, None)
+            if val is not None:
+                if decode and isinstance(val, bytes):
+                    return val.decode("utf-8", "ignore")
+                return val
+        return "unknown"
+
+    def _log_ssh_details(self, conn):
+        """Extract and log SSH fingerprint and negotiated algorithms."""
+        kex = self._get_ssh_info(conn, "kex")
+        key_algo = self._get_ssh_info(conn, "server_host_key")
+
+        cipher = self._get_ssh_info(conn, "cipher", "_encryption_algo", True)
+        mac = self._get_ssh_info(conn, "mac", "_mac_algo", True)
+        compression = self._get_ssh_info(conn, "compression", "_compression_algo", True)
+
+        fingerprint = {
+            "kex": kex,
+            "key_algo": key_algo,
+            "cipher": cipher,
+            "mac": mac,
+            "compression": compression,
+        }
+
+        self.framework.logger.log_event(
+            self.session_id,
+            "client_fingerprint",
+            {
+                "src_ip": self.src_ip,
+                "protocol": "ssh",
+                "fingerprint": fingerprint,
+                "client_version": self.client_version,
+            },
+        )
+
+        self.framework.logger.log_event(
+            self.session_id,
+            "ssh_negotiated",
+            {
+                "kex": kex,
+                "cipher_in": cipher,
+                "cipher_out": cipher,
+                "mac_in": mac,
+                "mac_out": mac,
+                "compression_in": compression,
+                "compression_out": compression,
+                "host_key_alg": key_algo,
+            },
+        )
+
+    def connection_lost(self, exc):
+        """Log session disconnect."""
+        # Cancel and clear session-level background tasks
+        for task in self._background_tasks:
+            task.cancel()
+        self._background_tasks.clear()
+
+        reason = "clean"
+        if exc:
+            reason = f"error: {exc}"
+
+        self.framework.stats.on_disconnect()
+
+        self.framework.logger.log_event(
+            self.session_id,
+            "session_disconnect",
+            {
+                "src_ip": self.src_ip,
+                "reason": reason,
+            },
+        )
+        self.framework.logger.unregister_session_log(self.session_id)
+
+    def pty_requested(self, term_type, term_size, term_modes):
+        """Accept PTY allocation so the SSH client puts its local terminal into raw mode."""
+        self.terminal_type = term_type
+        try:
+            if term_size and len(term_size) >= 2:
+                self.width = term_size[0]
+                self.height = term_size[1]
+        except (TypeError, IndexError):
+            self.width, self.height = 80, 24
+        return True
+
+    def window_size_changed(self, width, height, pixwidth, pixheight):
+        self.width = width
+        self.height = height
+        if hasattr(self, "shell") and self.shell:
+            self.shell.width = width
+            self.shell.height = height
+        """Log terminal resize events (SIGWINCH)."""
+        self.framework.logger.log_event(
+            self.session_id,
+            "window_resize",
+            {
+                "src_ip": self.src_ip,
+                "width": width,
+                "height": height,
+            },
+        )
+
+    def shell_requested(self):
+        logging.debug(f"shell_requested called for {self.src_ip}")
+
+        def q_hook(f, c):
+            self.framework.save_quarantine_file(f, c, self.session_id, self.src_ip)
+
+        self.shell = ShellEmulator(
+            self.fs,
+            self.username,
+            quarantine_callback=q_hook,
+            config=self.framework.config,
+            logger=self.framework.logger,
+            session_id=self.session_id,
+            src_ip=self.src_ip,
+            analytics=self.framework.services.analytics,
+            width=self.width,
+            height=self.height,
+        )
+        return True
+
+    def _get_prompt(self):
+        if not self.shell:
+            return "$ "
+        return self.shell.get_prompt()
+
+    def session_started(self):
+        self._ensure_tty_log()
+        if self.shell:
+            # Fetch dynamic/static banner from VFS
+            banner = self.fs.get_content("/etc/motd", args={"src_ip": self.src_ip})
+            if not banner:
+                banner = "\r\nWelcome to Cyanide Framework\r\n\r\n"
+
+            self._write(banner)
+            prompt = self._get_prompt()
+            self._write(prompt)
+
+    def _write(self, data):
+        """Helper to write to channel/process and log."""
+        if not data:
+            return
+
+        if hasattr(self, "process") and self.process and hasattr(self.process, "stdout"):
+            if isinstance(data, bytes):
+                data = data.decode("utf-8", "ignore")
+            self.process.stdout.write(data)
+        else:
+            if isinstance(data, str):
+                encoded = data.encode("utf-8")
+            else:
+                encoded = data
+            self.channel.write(encoded)
+
+        self._log_tty("OUT", data)
+
+    def _ensure_tty_log(self):
+        import datetime
+
+        date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+        folder_name = f"ssh_{self.src_ip}_{self.session_id}"
+        log_dir = Path(self.framework.logger.log_dir) / "sessions" / date_str / folder_name
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        self.tty_log_path_json = log_dir / "audit.json"
+        self.tty_log_path = log_dir / "transcript.log"
+        self.tty_timing_path = log_dir / "timing.time"
+        self.tty_log_path_ml = log_dir / "ml_analysis.json"
+        self.last_log_time = time.time()
+
+        # Initialize remaining files if they don't exist
+        for p in [
+            self.tty_log_path_json,
+            self.tty_log_path,
+            self.tty_timing_path,
+            self.tty_log_path_ml,
+        ]:
+            if not p.exists():
+                p.touch()
+        self.framework.logger.register_session_log(
+            self.session_id,
+            self.tty_log_path_json,
+            self.tty_log_path_ml,
+            src_ip=self.src_ip,
+        )
+
+        # Log initial session info to the JSONL log
+        self.framework.logger.log_event(
+            self.session_id,
+            "session.start",
+            {
+                "protocol": "ssh",
+                "src_port": self.src_port,
+                "username": self.username,
+                "client_version": self.client_version,
+            },
+        )
+
+    def _log_tty(self, direction: str, data: str):
+        if self.shell and self.shell.pending_input_callback is not None:
+            return
+        self.framework._log_tty(self, direction, data)
+
+    def env_received(self, name, value):
+        """Log client environment variables."""
+        if isinstance(name, bytes):
+            name = name.decode("utf-8", "ignore")
+        if isinstance(value, bytes):
+            value = value.decode("utf-8", "ignore")
+
+        self.framework.logger.log_event(
+            self.session_id,
+            "client_env",
+            {
+                "src_ip": self.src_ip,
+                "name": name,
+                "value": value,
+            },
+        )
+        return True
+
+    def data_received(self, data, datatype=None):
+        task = asyncio.create_task(self._process_input(data))
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
+
+    async def _process_input(self, data):
+        async with self._process_lock:
+            try:
+                if isinstance(data, bytes):
+                    data = data.decode("utf-8", errors="ignore")
+
+                in_editor = self.shell is not None and self.shell.pending_input_callback is not None
+                is_paste = len(data) > 1 and ("\n" in data or "\r" in data)
+
+                self.keystrokes.append(time.time())
+
+                if not in_editor:
+                    await self._simulate_typing_delay(data)
+
+                self.bytes_in += len(data)
+                self.framework.stats.on_traffic("in", len(data))
+                self._log_tty("IN", data)
+
+                if in_editor:
+                    await self._handle_editor_input(data)
+                    return
+
+                if await self._buffer_shell_input(data):
+                    await self._process_shell_buffer(is_paste)
+
+            except Exception as e:
+                self.framework.logger.log_event(
+                    self.session_id, "debug", {"message": f"process_input error: {e}"}
+                )
+
+    async def _simulate_typing_delay(self, data):
+        """Simulate realistic typing delays based on input type."""
+        rng = secrets.SystemRandom()
+        if "\r" in data or "\n" in data:
+            delay = rng.uniform(0.5, 1.5) if rng.random() < 0.1 else rng.uniform(0.02, 0.15)
+        else:
+            delay = rng.uniform(0.002, 0.008)
+        await asyncio.sleep(delay)
+
+    async def _handle_editor_input(self, data):
+        """Process input when the shell is in editor mode (e.g. Vim/Nano)."""
+        i = 0
+        last_response = ""
+        while i < len(data):
+            char, i = self._extract_next_input_unit(data, i)
+
+            if self.shell:
+                was_in_editor = self.shell.pending_input_callback is not None
+                stdout, stderr, _ = await self.shell.execute(char)
+                is_in_editor = self.shell.pending_input_callback is not None
+
+                resp = stdout + stderr
+                if was_in_editor and not is_in_editor:
+                    resp += self._get_prompt()
+
+                last_response += resp.replace("\r\n", "\n").replace("\n", "\r\n")
+
+        if last_response:
+            await self._write_output_chunk(last_response)
+
+    def _extract_next_input_unit(self, data, i):
+        """Extract a single character or an entire ANSI escape sequence."""
+        char = data[i]
+        if char == "\x1b" and i + 1 < len(data):
+            j = i + 1
+            if j < len(data) and data[j] == "[":
+                j += 1
+                while j < len(data) and data[j] not in "ABCDHFPQRSm~":
+                    j += 1
+                j += 1  # include terminator
+            return data[i:j], j
+        return char, i + 1
+
+    def _handle_char(self, char: str) -> tuple[str, bool]:
+        """Process a single character and return (echo_chunk, should_continue)."""
+        if char in ("\x08", "\x7f"):
+            if self.buf:
+                self.buf = self.buf[:-1]
+                return "\x08 \x08", True
+            return "", True
+
+        if char in ("\x03", "\x15"):
+            self.buf = ""
+            echo = "^C\r\n" if char == "\x03" else "^U\r\n"
+            return f"{echo}{self._get_prompt()}", True
+
+        if char == "\x04":
+            return ("", False) if not self.buf else ("", True)
+
+        if char in ("\r", "\n"):
+            self.buf += "\n"
+            return "\r\n", True
+
+        # Handle printable characters (ignore raw ESC as it is handled by the caller)
+        if char != "\x1b" and len(char) == 1 and (ord(char) >= 32 or char == "\t"):
+            self.buf += char
+            return char, True
+
+        return "", True
+
+    async def _buffer_shell_input(self, data: str) -> bool:
+        """Buffer shell input and handle basic line editing (echo, backspace, arrows)."""
+        i = 0
+        while i < len(data):
+            char, i = self._extract_next_input_unit(data, i)
+
+            # Handle Arrow Keys for History Navigation
+            if char.startswith("\x1b["):
+                await self._handle_arrow_keys(char)
+                continue
+
+            echo, should_continue = self._handle_char(char)
+            if echo:
+                await self._write_output_chunk(echo)
+
+            if not should_continue:
+                await self._close_session()
+                return False
+        return True
+
+    async def _handle_arrow_keys(self, sequence: str):
+        """Handle history navigation via ANSI escape sequences."""
+        if not self.shell or not self.shell.history:
+            return
+
+        code = sequence[-1]
+        if code == "A":  # UP Arrow
+            if self.history_ptr == -1:
+                self.history_buffer = self.buf
+
+            new_ptr = min(self.history_ptr + 1, len(self.shell.history) - 1)
+            if new_ptr != self.history_ptr:
+                self.history_ptr = new_ptr
+                new_line = self.shell.history[-(self.history_ptr + 1)]
+                await self._refresh_line_ui(new_line)
+                self.buf = new_line
+        elif code == "B":  # DOWN Arrow
+            if self.history_ptr > 0:
+                self.history_ptr -= 1
+                new_line = self.shell.history[-(self.history_ptr + 1)]
+                await self._refresh_line_ui(new_line)
+                self.buf = new_line
+            elif self.history_ptr == 0:
+                self.history_ptr = -1
+                new_line = self.history_buffer
+                await self._refresh_line_ui(new_line)
+                self.buf = new_line
+
+    async def _refresh_line_ui(self, new_line: str):
+        """Redraw the current line with new content (history navigation)."""
+        prompt = self._get_prompt()
+        # \r: Carriage return to start of line
+        # \x1b[K: Clear from cursor to end of line
+        refresh_seq = f"\r\x1b[K{prompt}{new_line}"
+        await self._write_output_chunk(refresh_seq)
+
+    async def _process_shell_buffer(self, is_paste):
+        """Process buffered lines as shell commands."""
+        while "\n" in self.buf:
+            line, self.buf = self.buf.split("\n", 1)
+            self.history_ptr = -1  # Reset history navigation on Enter
+            cmd = line.strip()
+            if not cmd:
+                self._write(self._get_prompt())
+                continue
+
+            is_bot = self._calculate_is_bot(is_paste, len(cmd))
+            self.keystrokes = []
+
+            if self._handle_system_commands(cmd):
+                return
+
+            self._detect_iocs(cmd)
+            await self._execute_shell_command(cmd, is_bot)
+
+    async def _write_output_chunk(self, data):
+        """Helper to write data and update stats/drain."""
+        self._write(data)
+        self.bytes_out += len(data)
+        self.framework.stats.on_traffic("out", len(data))
+        if self.process and hasattr(self.process.stdout, "drain"):
+            await self.process.stdout.drain()
+
+    def _calculate_is_bot(self, is_paste, data_len=0):
+        """
+        Determine if input resembles a bot using multi-factor scoring.
+        Considers: mean delay, standard deviation (jitter), and paste ratio.
+        """
+        score = 0.0
+
+        # 1. Paste Factor: Legitimate users paste short snippets, but bots paste whole scripts.
+        if is_paste:
+            score += 0.3
+            if data_len > 100:  # Long script paste
+                score += 0.5
+
+        if len(self.keystrokes) > 1:
+            delays = [
+                self.keystrokes[i] - self.keystrokes[i - 1] for i in range(1, len(self.keystrokes))
+            ]
+
+            if delays:
+                mean_delay = sum(delays) / len(delays)
+
+                # 2. Speed Factor: Humans rarely stay under 15ms average for a whole command.
+                if mean_delay < 0.015:
+                    score += 0.4
+                elif mean_delay < 0.030:
+                    score += 0.2
+
+                # 3. Jitter Factor (Standard Deviation):
+                # High jitter = human. Low jitter = script/bot.
+                import math
+
+                variance = sum((d - mean_delay) ** 2 for d in delays) / len(delays)
+                std_dev = math.sqrt(variance)
+
+                if std_dev < 0.005:  # Extremely regular typing
+                    score += 0.5
+                elif std_dev < 0.015:
+                    score += 0.2
+
+        # Threshold: if score > 0.7, we are very confident it's a bot.
+        # Otherwise, if score > 0.4, it's "suspicious".
+        return score > 0.7
+
+    def _handle_system_commands(self, cmd):
+        """Handle logout/exit commands."""
+        if cmd in ("exit", "logout"):
+            task = asyncio.create_task(self._close_session())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
+            return True
+        return False
+
+    def _detect_iocs(self, cmd):
+        """Scan command for Indicators of Compromise."""
+        import re
+
+        ipv4_regex = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+        urls_regex = (
+            r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+        )
+
+        iocs = list(set(re.findall(ipv4_regex, cmd) + re.findall(urls_regex, cmd)))
+        if iocs:
+            self.framework.logger.log_event(
+                self.session_id,
+                "ioc_detected",
+                {"src_ip": self.src_ip, "iocs": iocs, "cmd": cmd},
+            )
+            # Register with IOCReporter
+            if hasattr(self.framework.services, "ioc_reporter"):
+                for ioc_val in iocs:
+                    ioc_type = "ipv4-addr" if re.match(ipv4_regex, ioc_val) else "url"
+                    self.framework.services.ioc_reporter.add_ioc(
+                        ioc_type,
+                        ioc_val,
+                        f"Detected in command: {cmd}",
+                        self.session_id,
+                        severity="high" if ioc_type == "url" else "medium",
+                    )
+
+    async def _execute_shell_command(self, cmd, is_bot, write_output=True):
+        """Log and execute the shell command."""
+        self.commands.append(cmd)
+        user = self.shell.username if self.shell else self.username
+        self.framework.stats.on_command("ssh", self.src_ip, user, cmd)
+
+        self.framework.logger.log_event(
+            self.session_id,
+            EVENT_COMMAND_INPUT,
+            {
+                "protocol": "ssh",
+                "src_ip": self.src_ip,
+                "username": user,
+                "input": cmd,
+                "client_version": self.client_version,
+            },
+        )
+
+        if self.framework.services.analytics.ml_enabled:
+            self.framework._analyze_command(
+                cmd, self.username, self.src_ip, self.session_id, "ssh", is_bot=is_bot
+            )
+
+        try:
+            if self.shell:
+                stdout, stderr, rc = await self.shell.execute(cmd)
+            else:
+                stdout, stderr, rc = "", "Shell not initialized\n", 1
+        except SystemExit as se:  # noqa: S5754
+            # We must not re-raise SystemExit to prevent a malicious user from
+            # crashing the server with a command like "mkdir --help" or argparse usage.
+            rc = se.code if isinstance(se.code, int) else 2
+            stdout, stderr = (
+                "",
+                f"{cmd.split()[0] if cmd else 'shell'}: argument error\n",
+            )
+
+        if rc == 127:
+            self.framework.stats.on_command_not_found(cmd)
+            self.framework.logger.log_event(
+                self.session_id,
+                "command_not_found",
+                {"src_ip": self.src_ip, "cmd": cmd},
+            )
+
+        in_editor = self.shell is not None and self.shell.pending_input_callback is not None
+
+        response = stdout + stderr
+        # SSH requires explicit \r\n for proper terminal rendering.
+        # In editor mode (nano/vim), the editor uses ANSI escape sequences and
+        # manages cursor/lines itself — only bare \n need fixing.
+        response = response.replace("\r\n", "\n").replace("\n", "\r\n")
+
+        if write_output:
+            self._write(response)
+            self.bytes_out += len(response)
+            self.framework.stats.on_traffic("out", len(response))
+
+            # Only show the shell prompt when NOT inside an editor session.
+            # The editor renders its own full-screen UI and manages the cursor.
+            if not in_editor:
+                prompt = self._get_prompt()
+                self._write(prompt)
+                self.bytes_out += len(prompt)
+                self.framework.stats.on_traffic("out", len(prompt))
+
+        self._log_tty("IN", cmd + "\n")
+        return response
+
+    async def _close_session(self):
+        await asyncio.sleep(0.01)
+        self.channel.write_eof()
+        self.channel.exit(0)
+        self.channel.close()
+
+    def exec_requested(self, command):
+        if not command or not command.strip():
+            return False
+
+        self.commands.append(command)
+        self.framework.logger.log_event(
+            self.session_id,
+            EVENT_COMMAND_INPUT,
+            {
+                "protocol": "ssh",
+                "src_ip": self.src_ip,
+                "username": self.username,
+                "input": command,
+                "client_version": self.client_version,
+            },
+        )
+
+        if self.framework.services.analytics.ml_enabled:
+            self.framework._analyze_command(
+                command, self.username, self.src_ip, self.session_id, "ssh"
+            )
+
+        task = asyncio.create_task(self._async_exec(command))
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
+        return True
+
+    async def _async_exec(self, command):
+        try:
+            self._ensure_tty_log()
+
+            def q_hook(f, c):
+                self.framework.save_quarantine_file(f, c, self.session_id, self.src_ip)
+
+            shell = ShellEmulator(
+                self.fs
+                or self.framework.get_filesystem(self.session_id, self.src_ip, self.username),
+                self.username,
+                quarantine_callback=q_hook,
+                config=self.framework.config,
+                logger=self.framework.logger,
+                session_id=self.session_id,
+                src_ip=self.src_ip,
+            )
+
+            try:
+                stdout, stderr, rc = await shell.execute(command)
+            except SystemExit as se:  # noqa: S5754
+                rc = se.code if isinstance(se.code, int) else 2
+                stdout, stderr = (
+                    "",
+                    f"{command.split()[0] if command else 'shell'}: argument error\n",
+                )
+
+            self._write_exec_output(stdout, stderr, rc)
+
+        except Exception as e:
+            self.framework.logger.log_event(
+                self.session_id, "error", {"message": f"Exec error: {e}"}
+            )
+            try:
+                self.channel.exit(1)
+                self.channel.close()
+            except Exception:
+                pass
+
+    def _write_exec_output(self, stdout, stderr, rc):
+        """Helper to write process/channel output and exit."""
+        if self.process:
+            self._write_to_process(stdout, stderr, rc)
+        else:
+            self._write_to_channel(stdout, stderr, rc)
+
+        self._log_tty("OUT", stdout)
+        if stderr:
+            self._log_tty("OUT", stderr)
+
+    def _write_to_process(self, stdout, stderr, rc):
+        if not self.process:
+            return
+        stdout_str = stdout.decode("utf-8", "ignore") if isinstance(stdout, bytes) else stdout
+        self.process.stdout.write(stdout_str)
+        if stderr:
+            stderr_str = stderr.decode("utf-8", "ignore") if isinstance(stderr, bytes) else stderr
+            self.process.stderr.write(stderr_str)
+        self.process.exit(rc)
+
+    def _write_to_channel(self, stdout, stderr, rc):
+        self.channel.write(stdout.encode() if isinstance(stdout, str) else stdout)
+        if stderr:
+            self.channel.write_stderr(stderr.encode() if isinstance(stderr, str) else stderr)
+        self.channel.write_eof()
+        self.channel.exit(rc)
+        self.channel.close()
+
+    def session_ended(self):
+        duration = time.time() - self.start_time
+
+        keystroke_stats = {}
+        if len(self.keystrokes) > 1:
+            diffs = []
+            for i in range(1, len(self.keystrokes)):
+                diffs.append(self.keystrokes[i] - self.keystrokes[i - 1])
+
+            avg = sum(diffs) / len(diffs)
+
+            variance = sum((x - avg) ** 2 for x in diffs) / len(diffs)
+            std_dev = variance**0.5
+
+            keystroke_stats = {
+                "count": len(self.keystrokes),
+                "avg_latency": round(avg, 4),
+                "std_dev": round(std_dev, 4),
+            }
+
+        self.framework.logger.log_event(
+            self.session_id,
+            "session.end",
+            {
+                "protocol": "ssh",
+                "src_ip": self.src_ip,
+                "username": self.username,
+                "commands": self.commands,
+                "duration": duration,
+                "client_version": self.client_version,
+                "keystroke_metrics": keystroke_stats,
+                "traffic": {"bytes_in": self.bytes_in, "bytes_out": self.bytes_out},
+            },
+        )

@@ -1,0 +1,122 @@
+honeytokens:
+  - "/etc/passwd"
+  - "/etc/shadow"
+  - "/root/.bash_history"
+  - "/home/admin/.ssh/authorized_keys"
+  - "/home/admin/.bash_history"
+  - "/etc/ssh/sshd_config"
+  - "/etc/redhat-release"
+
+metadata:
+  os_name: "Red Hat Enterprise Linux 9.3 (Plow)"
+  os_id: "rhel"
+  kernel_version: "5.14.0-362.8.1.el9_3.x86_64"
+  arch: "x86_64"
+  hostname: "rhel-server-01"
+  version_id: "9.3"
+  install_date: "2024-03-24T14:32:10Z"
+  ssh_banner: "SSH-2.0-OpenSSH_8.7p1-0.el9"
+  uptime: "42 days, 14:22"
+
+dynamic_files:
+  /proc/uptime:
+    type: generated
+    provider: uptime_provider
+  /proc/cpuinfo:
+    type: generated
+    provider: cpuinfo_provider
+  /proc/version:
+    content: "Linux version {{ kernel_version }} (mockbuild@x86-vm-01.build.eng.bos.redhat.com) (gcc (GCC) 11.4.1 20230605 (Red Hat 11.4.1-2)) #1 SMP PREEMPT_DYNAMIC Tue Nov 7 07:14:44 +0000 2024"
+  /etc/motd:
+    type: generated
+    provider: motd_provider
+  /proc/meminfo:
+    type: generated
+    provider: meminfo_provider
+  /proc/mounts:
+    type: generated
+    provider: mounts_provider
+  /etc/issue:
+    content: "Red Hat Enterprise Linux 9.3 (Plow)\nKernel \\r on an \\m\n\n"
+  /etc/shadow:
+    type: generated
+    provider: shadow_provider
+
+system_templates:
+  cpuinfo: |
+    processor	: 0
+    vendor_id	: GenuineIntel
+    cpu family	: 6
+    model		: 158
+    model name	: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+    stepping	: 4
+    microcode	: 0x200004d
+    cpu MHz		: 2294.608
+    cache size	: 25344 KB
+    physical id	: 0
+    siblings	: 2
+    core id		: 0
+    cpu cores	: 1
+    apicid		: 0
+    initial apicid	: 0
+    fpu		: yes
+    fpu_exception	: yes
+    cpuid level	: 22
+    wp		: yes
+    flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+    bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+    bogomips	: 4589.21
+    clflush size	: 64
+    cache_alignment	: 64
+    address sizes	: 46 bits physical, 48 bits virtual
+    power management:
+
+  meminfo: |
+    MemTotal:       16265972 kB
+    MemFree:         4245620 kB
+    MemAvailable:   12642312 kB
+    Buffers:          510452 kB
+    Cached:          8123564 kB
+    SwapCached:            0 kB
+    Active:          5120452 kB
+    Inactive:        4845612 kB
+    SwapTotal:       4194300 kB
+    SwapFree:        4194300 kB
+
+  processes:
+    - pid: 1
+      user: root
+      time: "00:00:05"
+      cmd: "/usr/lib/systemd/systemd --switched-root --system --deserialize 31"
+    - pid: 2
+      user: root
+      time: "00:00:00"
+      cmd: "[kthreadd]"
+    - pid: 450
+      user: root
+      time: "00:00:01"
+      cmd: "/usr/lib/systemd/systemd-journald"
+    - pid: 480
+      user: root
+      time: "00:00:00"
+      cmd: "/usr/lib/systemd/systemd-udevd"
+    - pid: 600
+      user: dbus
+      time: "00:00:02"
+      cmd: "/usr/bin/dbus-broker-launch --scope system --audit"
+    - pid: 610
+      user: root
+      time: "00:00:00"
+      cmd: "/usr/sbin/NetworkManager --no-daemon"
+    - pid: 800
+      user: root
+      time: "00:00:00"
+      cmd: "/usr/sbin/sshd -D"
+    - pid: 850
+      user: root
+      time: "00:00:01"
+      cmd: "/usr/sbin/rsyslogd -n"
+    - pid: 900
+      user: root
+      time: "00:00:00"
+      cmd: "/usr/lib/systemd/systemd-logind"

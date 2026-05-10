@@ -1,0 +1,138 @@
+services:
+  cyanide:
+    container_name: cyanide-framework-1
+    image: ${GITHUB_REPOSITORY_OWNER:-cyanide}/cyanide-framework:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.12"
+    ports:
+      - "22:2222"
+      - "23:2323"
+      - "25:2525"
+      - "9090:9090"
+    volumes:
+      - ./src/cyanide/configs:/app/configs
+      - ./var/log/cyanide:/app/var/log/cyanide
+      - ./var/quarantine:/app/var/quarantine
+      - ./var/lib/cyanide:/app/var/lib/cyanide
+      - /dev/log:/dev/log
+    restart: unless-stopped
+    user: "cyanide"
+    init: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1G
+          pids: 200
+        reservations:
+          cpus: '0.10'
+          memory: 128M
+    healthcheck:
+      test: [ "CMD", "python3", "-c", "import urllib.request as r; r.urlopen('http://localhost:9090/health')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CYANIDE_FRAMEWORK_HOSTNAME=server01
+      - CYANIDE_FRAMEWORK_QUARANTINE_MAX_SIZE_MB=500
+      - CYANIDE_FRAMEWORK_DNS_CACHE_TTL=60
+      - CYANIDE_FRAMEWORK_ALLOW_LOCAL_NETWORK=false
+      - CYANIDE_FRAMEWORK_FS_YAML=
+      - CYANIDE_SERVER_OS_PROFILE=rhel
+      - CYANIDE_SERVER_MAX_SESSIONS=100
+      - CYANIDE_SERVER_MAX_SESSIONS_PER_IP=5
+      - CYANIDE_SERVER_SESSION_TIMEOUT=300
+      - CYANIDE_SSH_ENABLED=true
+      - CYANIDE_SSH_VFS_PERSISTENCE=true
+      - CYANIDE_SSH_PORT=2222
+      - CYANIDE_SSH_LOG_PASSWORDS=false
+      - CYANIDE_TELNET_ENABLED=true
+      - CYANIDE_TELNET_PORT=2323
+      - CYANIDE_TELNET_LOG_PASSWORDS=false
+      - CYANIDE_ML_ENABLED=true
+      - CYANIDE_ML_ONLINE_LEARNING=true
+      - CYANIDE_ML_RETRAINING_INTERVAL_DAYS=7
+      - CYANIDE_CLEANUP_ENABLED=true
+      - CYANIDE_CLEANUP_INTERVAL=3600
+      - CYANIDE_CLEANUP_RETENTION_DAYS=7
+      - CYANIDE_OTEL_ENABLED=false
+      - CYANIDE_METRICS_ENABLED=true
+      - CYANIDE_METRICS_PORT=9090
+      - CYANIDE_METRICS_ALLOW_REMOTE=true
+      - CYANIDE_METRICS_TOKEN=change_me_to_a_secure_token
+      - CYANIDE_SSH_FORWARDING_STRICT_MODE=true
+      - CYANIDE_SMTP_ENABLED=true
+      - CYANIDE_SMTP_PORT=2525
+      - CYANIDE_VIRUSTOTAL_ENABLED=true
+      - CYANIDE_VIRUSTOTAL_API_KEY=
+      - CYANIDE_IOC_REPORTING_ENABLED=true
+      - CYANIDE_IOC_REPORTING_INTERVAL_HOURS=0.016
+      - 'CYANIDE_AUTH_USERS=[{"user": "root", "pass": "root"}, {"user": "admin", "pass": "admin"}, {"user": "user", "pass": "user"}]'
+      - CYANIDE_FRAMEWORK_PACKAGE_MANAGER=apt,dpkg
+      - CYANIDE_RATE_LIMIT_MAX_CONNECTIONS_PER_MINUTE=60
+      - CYANIDE_RATE_LIMIT_BAN_DURATION=3600
+
+      - CYANIDE_OUTPUT_SQLITE_ENABLED=false
+
+      - CYANIDE_OUTPUT_MYSQL_ENABLED=false
+
+      - CYANIDE_OUTPUT_POSTGRESQL_ENABLED=false
+
+      - CYANIDE_OUTPUT_MONGODB_ENABLED=false
+      - CYANIDE_OUTPUT_MONGODB_URI=mongodb://cyanide:password@mongodb:27017/cyanide?authSource=admin
+
+      - CYANIDE_OUTPUT_ELASTICSEARCH_ENABLED=false
+
+      - CYANIDE_OUTPUT_RETHINKDB_ENABLED=false
+
+      - CYANIDE_OUTPUT_SPLUNK_HEC_ENABLED=false
+      - CYANIDE_OUTPUT_SPLUNK_HEC_TOKEN=AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA
+
+      - CYANIDE_OUTPUT_SYSLOG_ENABLED=false
+
+      - CYANIDE_OUTPUT_SLACK_ENABLED=false
+      - CYANIDE_OUTPUT_SLACK_WEBHOOK_URL=
+      - CYANIDE_OUTPUT_SLACK_BATCH_SIZE=1
+      - CYANIDE_OUTPUT_SLACK_BATCH_TIMEOUT=0.1
+
+      - CYANIDE_OUTPUT_DISCORD_ENABLED=false
+      - CYANIDE_OUTPUT_DISCORD_WEBHOOK_URL=
+      - CYANIDE_OUTPUT_DISCORD_USERNAME=Cyanide Framework
+      - CYANIDE_OUTPUT_DISCORD_BOT_TOKEN=
+      - CYANIDE_OUTPUT_DISCORD_REPORT_CHANNEL_ID=
+      - CYANIDE_OUTPUT_DISCORD_BATCH_SIZE=1
+      - CYANIDE_OUTPUT_DISCORD_BATCH_TIMEOUT=2.0
+
+      - CYANIDE_OUTPUT_TELEGRAM_ENABLED=false
+      - CYANIDE_OUTPUT_TELEGRAM_TOKEN=
+      - CYANIDE_OUTPUT_TELEGRAM_CHAT_ID=
+      - CYANIDE_OUTPUT_TELEGRAM_BATCH_SIZE=1
+      - CYANIDE_OUTPUT_TELEGRAM_BATCH_TIMEOUT=2.0
+
+      - CYANIDE_OUTPUT_HPFEEDS_ENABLED=false
+      - CYANIDE_OUTPUT_HPFEEDS_HOST=hpfeeds
+      - CYANIDE_OUTPUT_HPFEEDS_PORT=10000
+      - CYANIDE_OUTPUT_HPFEEDS_IDENT=cyanide
+      - CYANIDE_OUTPUT_HPFEEDS_SECRET=my-secret-password
+
+networks:
+  default:
+    name: cyanide-net
+    driver: bridge

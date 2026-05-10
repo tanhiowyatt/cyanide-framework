@@ -1,0 +1,73 @@
+from unittest.mock import MagicMock
+
+import pytest
+
+from cyanide.core.server import CyanideServer, SSHServerFactory, SSHSession
+
+
+@pytest.fixture
+def mock_framework(mock_logger):
+    hp = MagicMock(spec=CyanideServer)
+    hp.config = MagicMock()
+    hp.stats = MagicMock()
+    hp.logger = mock_logger
+    return hp
+
+
+@pytest.fixture
+def session(mock_framework):
+    fs = MagicMock()
+    s = SSHSession(mock_framework, fs, "1.2.3.4", 1234, "conn1")
+    return s
+
+
+def test_extract_algorithm_name(mock_framework):
+    factory = SSHServerFactory(mock_framework)
+    assert factory._extract_algorithm_name(None) is None
+
+    obj = MagicMock()
+    obj.algorithm = b"curve25519-sha256"
+    assert factory._extract_algorithm_name(obj) == "curve25519-sha256"
+
+
+def test_get_ssh_info_fallbacks(session):
+    conn = MagicMock()
+
+    conn.get_extra_info.return_value = "extra_val"
+    assert session._get_ssh_info(conn, "test_key") == "extra_val"
+
+    conn.get_extra_info.return_value = None
+    conn._internal = b"internal_val"
+    assert session._get_ssh_info(conn, "test_key", "_internal", decode=True) == "internal_val"
+
+
+def test_log_ssh_details(session):
+    conn = MagicMock()
+    conn.get_extra_info.side_effect = lambda k: {
+        "kex": "kex_val",
+        "server_host_key": "key_val",
+        "cipher": "cipher_val",
+        "mac": "mac_val",
+        "compression": "comp_val",
+    }.get(k)
+
+    session._log_ssh_details(conn)
+    assert session.framework.logger.log_event.call_count >= 2
+
+
+def test_fs_audit_hook_priority(mock_framework):
+    # Setup mock config as a dict to support .get()
+    mock_framework.config = {"honeytokens": ["/global/secret"]}
+    mock_framework._fs_audit_hook = CyanideServer._fs_audit_hook.__get__(
+        mock_framework, CyanideServer
+    )
+
+    mock_framework._fs_audit_hook("open", "/global/secret", session_id="s1")
+    mock_framework.stats.on_honeytoken.assert_called_with("/global/secret")
+
+    mock_framework.config = {"honeytokens": []}
+    mock_fs = MagicMock()
+    mock_fs.honeytokens = ["/profile/secret"]
+
+    mock_framework._fs_audit_hook("open", "/profile/secret", fs=mock_fs, session_id="s1")
+    mock_framework.stats.on_honeytoken.assert_called_with("/profile/secret")

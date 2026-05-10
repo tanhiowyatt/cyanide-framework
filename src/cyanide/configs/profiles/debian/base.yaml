@@ -1,0 +1,108 @@
+metadata:
+  os_name: "Debian 11 (Bullseye)"
+  kernel_version: "5.10.0-28-amd64"
+  hostname: "debian-server"
+  arch: "x86_64"
+  ssh_banner: "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u1"
+  os_id: "debian"
+  version_id: "11"
+  install_date: "2024-01-31T10:00:00Z"
+
+honeytokens:
+  - "/etc/passwd"
+  - "/etc/shadow"
+  - "/root/.bash_history"
+  - "/root/.ssh/id_rsa"
+  - "/home/admin/.bash_history"
+  - "/etc/ssh/sshd_config"
+  - "/var/www/html/.env"
+
+dynamic_files:
+  /proc/uptime:
+    type: generated
+    provider: uptime_provider
+  /proc/cpuinfo:
+    type: generated
+    provider: cpuinfo_provider
+  /proc/version:
+    content: "Linux version {{ kernel_version }} (debian-kernel@lists.debian.org) (gcc-10 (Debian 10.2.1-6) 10.2.1 20210110, GNU ld (GNU Binutils for Debian) 2.35.2) #1 SMP Debian 5.10.209-2 (2024-01-31)"
+  /etc/motd:
+    type: generated
+    provider: motd_provider
+  /proc/meminfo:
+    type: generated
+    provider: meminfo_provider
+  /etc/shadow:
+    type: generated
+    provider: shadow_provider
+
+system_templates:
+  cpuinfo: |
+    processor	: 0
+    vendor_id	: GenuineIntel
+    cpu family	: 6
+    model		: 142
+    model name	: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+    stepping	: 10
+    microcode	: 0xf4
+    cpu MHz		: 1800.000
+    cache size	: 6144 KB
+    physical id	: 0
+    siblings	: 4
+    core id		: 0
+    cpu cores	: 2
+    apicid		: 0
+    initial apicid	: 0
+    fpu		: yes
+    fpu_exception	: yes
+    cpuid level	: 22
+    wp		: yes
+    flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+    bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+    bogomips	: 3600.00
+    clflush size	: 64
+    cache_alignment	: 64
+    address sizes	: 39 bits physical, 48 bits virtual
+    power management:
+
+  meminfo: |
+    MemTotal:        8165972 kB
+    MemFree:         1245620 kB
+    MemAvailable:    5642312 kB
+    Buffers:          210452 kB
+    Cached:          4123564 kB
+    SwapCached:            0 kB
+    Active:          3120452 kB
+    Inactive:        2845612 kB
+    SwapTotal:       2097148 kB
+    SwapFree:        2097148 kB
+
+  processes:
+    - pid: 1
+      user: root
+      time: "00:00:15"
+      cmd: "/sbin/init"
+    - pid: 2
+      user: root
+      time: "00:00:00"
+      cmd: "[kthreadd]"
+    - pid: 150
+      user: root
+      time: "00:00:01"
+      cmd: "/lib/systemd/systemd-journald"
+    - pid: 200
+      user: root
+      time: "00:00:00"
+      cmd: "/lib/systemd/systemd-udevd"
+    - pid: 400
+      user: messagebus
+      time: "00:00:02"
+      cmd: "/usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation"
+    - pid: 500
+      user: root
+      time: "00:00:00"
+      cmd: "/usr/sbin/sshd -D"
+    - pid: 600
+      user: root
+      time: "00:00:01"
+      cmd: "/usr/sbin/rsyslogd -n"

@@ -1,0 +1,25 @@
+{
+  "repo_notes": [
+    {
+      "content": "Cyanide is a medium-interaction SSH and Telnet framework. The core logic is located in the src/cyanide/ directory. Documentation is organized in the docs/ folder, covering developer references, user guides, and translations.",
+      "author": "tanhiowyatt"
+    }
+  ],
+  "pages": [
+    {
+      "title": "Architecture Overview",
+      "purpose": "Overview of the framework architecture, session flow, and component interaction.",
+      "parent": null
+    },
+    {
+      "title": "Developer Reference",
+      "purpose": "Detailed documentation for developers on core services, emulators, and ML engine.",
+      "parent": "Architecture Overview"
+    },
+    {
+      "title": "User Reference",
+      "purpose": "Guides for installation, configuration, and advanced usage.",
+      "parent": "Architecture Overview"
+    }
+  ]
+}

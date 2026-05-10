@@ -1,0 +1,206 @@
+static_files:
+  tree_folders: /bin /boot /dev /etc /home /lib /lib64 /media /mnt /opt /proc /root /run /srv /sys /tmp /usr /var /media/cdrom0
+
+  nodes:
+    etc:
+      bash.bashrc: |
+        # System-wide .bashrc file for interactive bash(1) shells.
+        if [ -z "$PS1" ]; then return; fi
+        PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+        alias ls='ls --color=auto'
+        alias grep='grep --color=auto'
+      debian_version: "11.7\n"
+      fstab: |
+        # /etc/fstab: static file system information.
+        # <file system> <mount point>   <type>  <options>       <dump>  <pass>
+        /dev/sda1       /               ext4    errors=remount-ro 0       1
+        /dev/sda2       none            swap    sw              0       0
+        /dev/sr0        /media/cdrom0   udf,iso9660 user,noauto     0       0
+      group: |
+        root:x:0:
+        daemon:x:1:
+        bin:x:2:
+        sys:x:3:
+        adm:x:4:admin
+        tty:x:5:
+        disk:x:6:
+        lp:x:7:
+        mail:x:8:
+        news:x:9:
+        uucp:x:10:
+        proxy:x:13:
+        www-data:x:33:
+        backup:x:34:
+        list:x:38:
+        irc:x:39:
+        gnats:x:41:
+        shadow:x:42:
+        utmp:x:43:
+        video:x:44:
+        sasl:x:45:
+        plugdev:x:46:
+        staff:x:50:
+        games:x:60:
+        users:x:100:
+        nogroup:x:65534:
+        systemd-journal:x:101:
+        systemd-network:x:102:
+        systemd-resolve:x:103:
+        systemd-timesync:x:104:
+        messagebus:x:105:
+        _apt:x:106:
+        sshd:x:107:
+        sudo:x:27:admin
+        admin:x:1000:
+      hostname: "{{ hostname }}\n"
+      hosts: |
+        127.0.0.1 localhost
+        127.0.1.1 {{ hostname }}
+        ::1     ip6-localhost ip6-loopback
+        fe00::0 ip6-localnet
+        ff00::0 ip6-mcastprefix
+        ff02::1 ip6-allnodes
+        ff02::2 ip6-allrouters
+      issue: "Debian GNU/Linux {{ version_id }} \\n \\l\n"
+      motd: |
+        The programs included with the Debian GNU/Linux system are free software;
+        the exact distribution terms for each program are described in the
+        individual files in /usr/share/doc/*/copyright.
+
+        Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+        permitted by applicable law.
+        Last login: Sun Apr  5 02:00:15 2024 from 192.168.1.50
+      os-release: |
+        PRETTY_NAME="Debian GNU/Linux {{ version_id }} (bullseye)"
+        NAME="Debian GNU/Linux"
+        VERSION_ID="{{ version_id }}"
+        VERSION="{{ version_id }} (bullseye)"
+        ID={{ os_id }}
+        HOME_URL="https://www.debian.org/"
+        SUPPORT_URL="https://www.debian.org/support"
+        BUG_REPORT_URL="https://bugs.debian.org/"
+      passwd: |
+        root:x:0:0:root:/root:/bin/bash
+        daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+        bin:x:2:2:bin:/bin:/usr/sbin/nologin
+        sys:x:3:3:sys:/dev:/usr/sbin/nologin
+        sync:x:4:65534:sync:/bin:/bin/sync
+        games:x:5:60:games:/usr/games:/usr/sbin/nologin
+        man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+        lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+        mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+        news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+        uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+        proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+        www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+        backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+        list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+        irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+        gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+        nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+        _apt:x:100:65534::/nonexistent:/usr/sbin/nologin
+        systemd-network:x:101:102:systemd Network Management,,,:/run/systemd:/usr/sbin/nologin
+        systemd-resolve:x:102:103:systemd Resolver,,,:/run/systemd:/usr/sbin/nologin
+        systemd-timesync:x:103:104:systemd Time Synchronization,,,:/run/systemd:/usr/sbin/nologin
+        messagebus:x:104:110::/nonexistent:/usr/sbin/nologin
+        sshd:x:105:65534::/run/sshd:/usr/sbin/nologin
+        admin:x:1000:1000:admin,,,:/home/admin:/bin/bash
+      profile: |
+        # /etc/profile: system-wide .profile file for the Bourne shell
+        if [ "$PS1" ]; then
+          if [ "$BASH" ] && [ "$BASH" != "/bin/sh" ]; then
+            if [ -f /etc/bash.bashrc ]; then
+              . /etc/bash.bashrc
+            fi
+          else
+            if [ "`id -u`" -eq 0 ]; then
+              PS1='# '
+            else
+              PS1='$ '
+            fi
+          fi
+        fi
+        export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      resolv.conf: |
+        nameserver 8.8.8.8
+        nameserver 1.1.1.1
+        search localdomain
+      shadow: |
+        root:*:19450:0:99999:7:::
+        admin:$6$v.CkqC7f$6T5S9X...:19450:0:99999:7:::
+      shells: |
+        /bin/sh
+        /bin/bash
+        /usr/bin/bash
+        /bin/rbash
+        /usr/bin/rbash
+        /bin/dash
+        /usr/bin/dash
+      sudoers: |
+        Defaults	env_reset
+        Defaults	mail_badpass
+        Defaults	secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        root	ALL=(ALL:ALL) ALL
+        %sudo	ALL=(ALL:ALL) ALL
+      apt:
+        sources.list: |
+          deb http://deb.debian.org/debian bullseye main
+          deb http://security.debian.org/debian-security bullseye-security main
+          deb http://deb.debian.org/debian bullseye-updates main
+      pam.d:
+        sshd: |
+          auth       required     pam_unix.so try_first_pass
+          account    required     pam_unix.so
+          session    required     pam_unix.so
+      ssh:
+        sshd_config: |
+          Port 22
+          Protocol 2
+          HostKey /etc/ssh/ssh_host_rsa_key
+          PermitRootLogin yes
+          PasswordAuthentication yes
+          ChallengeResponseAuthentication no
+          UsePAM yes
+          X11Forwarding yes
+          PrintMotd no
+          AcceptEnv LANG LC_*
+          Subsystem sftp /usr/lib/openssh/sftp-server
+
+    bin: [ awk, bash, cat, chmod, chown, cp, date, dd, df, dmesg, echo, ed, egrep, false, fgrep, find, grep, gzip, hostname, kill, ln, login, ls, mkdir, more, mount, mv, ps, pwd, rm, rmdir, sed, sh, sleep, stty, su, sync, tar, touch, true, umount, uname, zcat ]
+
+    sbin: [ fdisk, fsck, getty, halt, ifconfig, init, ip, iptables, mke2fs, reboot, route, shutdown, sysctl ]
+
+    usr/bin: [ apt, apt-get, basename, bzip2, clear, cut, diff, dirname, dpkg, du, env, free, head, id, last, less, locate, lscpu, md5sum, msgfmt, nano, passwd, pgrep, pkill, python3, readlink, realpath, scp, sftp, sort, ssh, ssh-keygen, stat, systemctl, tail, tee, top, tr, tty, uniq, uptime, vi, vim, wc, wget, which, whoami, xargs, zip ]
+
+    usr/sbin: [ addgroup, adduser, chroot, cron, groupadd, groupdel, groupmod, nologin, rsyslogd, sshd, tcpdump, useradd, userdel, usermod ]
+
+    home/admin:
+      .bashrc: |
+        export PS1='\u@\h:\w\$ '
+        alias ls='ls --color=auto'
+        alias grep='grep --color=auto'
+      .bash_history: |
+        ls -la
+        sudo apt update
+        sudo apt install -y vim python3-pip
+        python3 --version
+        df -h
+        tail -f /var/log/syslog
+        ip addr
+        exit
+      .ssh:
+        authorized_keys: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC5..."
+
+    root:
+      .bashrc: |
+        export PS1='\u@\h:\w\# '
+        alias ls='ls --color=auto'
+      .bash_history: |
+        apt update
+        apt upgrade -y
+        vi /etc/ssh/sshd_config
+        systemctl restart sshd
+        tail -f /var/log/auth.log
+        id
+        exit
+
