@@ -123,12 +123,12 @@ class CyanideLogger:
                 plugin_instance.start()
                 plugins.append(plugin_instance)
                 logging.info(f"Loaded output plugin: {plugin_name}")
-            except ImportError as e:
-                logging.error(
-                    f"Failed to load output plugin {plugin_name}: {e}. Try installing extras with pip install .[outputs]"
+            except ImportError:
+                logging.exception(
+                    f"Failed to load output plugin {plugin_name}. Try installing extras with pip install .[outputs]"
                 )
-            except Exception as e:
-                logging.error(f"Failed to load output plugin {plugin_name}: {e}")
+            except Exception:
+                logging.exception(f"Failed to load output plugin {plugin_name}")
 
         return plugins
 
@@ -299,8 +299,8 @@ class CyanideLogger:
                 else:
                     with open(paths["ml_json"], "a") as f:
                         f.write(line)
-        except Exception as e:
-            logging.error(f"Failed to mirror event to session log {session_id}: {e}")
+        except Exception:
+            logging.exception(f"Failed to mirror event to session log {session_id}")
 
     def _sanitize_log_entry(self, entry: Any) -> Any:
         """Deeply convert entry values to JSON-serializable types."""
@@ -347,8 +347,8 @@ class CyanideLogger:
         for plugin in self.plugins:
             try:
                 plugin.stop()
-            except Exception as e:
-                logging.error(f"Error stopping plugin: {e}")
+            except Exception:
+                logging.exception("Error stopping plugin")
 
         # Close main loggers
         for logger_obj in [self.ml_log, self.stats_log, self.tty_log]:

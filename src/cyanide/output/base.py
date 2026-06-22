@@ -81,8 +81,8 @@ class OutputPlugin(ABC):
         """Execute flush and handle cleanup."""
         try:
             self.flush(batch)
-        except Exception as e:
-            logging.error(f"[{self.__class__.__name__}] Flush error: {e}", exc_info=True)
+        except Exception:
+            logging.exception(f"[{self.__class__.__name__}] Flush error")
         finally:
             for _ in range(len(batch)):
                 self.queue.task_done()
@@ -96,8 +96,8 @@ class OutputPlugin(ABC):
         for event in events:
             try:
                 self.write(event)
-            except Exception as e:
-                logging.error(f"[{self.__class__.__name__}] Write error: {e}", exc_info=True)
+            except Exception:
+                logging.exception(f"[{self.__class__.__name__}] Write error")
 
     def write(self, event: Dict[str, Any]):
         """

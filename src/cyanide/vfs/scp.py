@@ -44,8 +44,8 @@ class ScpHandler:
             if isinstance(data, str):
                 return data.encode("latin-1")
             return bytes(data)
-        except Exception as e:
-            logger.error(f"SCP Read Error: {e}")
+        except Exception:
+            logger.exception("SCP Read Error")
             return b""
 
     def _write(self, data: bytes):
@@ -55,8 +55,8 @@ class ScpHandler:
                 self.process.channel.write(data.decode("latin-1"))
             else:
                 self.session.channel.write(data.decode("latin-1"))
-        except Exception as e:
-            logger.error(f"SCP Write Error: {e}")
+        except Exception:
+            logger.exception("SCP Write Error")
 
     def _send_ack(self):
         """Send SCP success acknowledgement (a null byte)."""
@@ -95,8 +95,8 @@ class ScpHandler:
                 owner=getattr(self.session, "username", "root"),
                 group=getattr(self.session, "username", "root"),
             )
-        except Exception as e:
-            logger.error(f"Failed to save SCP file to VFS: {e}")
+        except Exception:
+            logger.exception("Failed to save SCP file to VFS")
             raise
 
     async def _handle_copy_command(self, header_str: str, dest_base: str) -> int:
@@ -138,7 +138,7 @@ class ScpHandler:
             self._send_ack()
             return 0
         except Exception as e:
-            logger.error(f"SCP Upload Error for {filename}: {e}")
+            logger.exception(f"SCP Upload Error for {filename}")
             self._write(f"\x01SCP: Internal error saving file {filename}: {e}\n".encode("utf-8"))
             return 1
 
@@ -155,8 +155,8 @@ class ScpHandler:
         if self.fs:
             try:
                 self.fs.mkdir_p(new_dir)
-            except Exception as e:
-                logger.error(f"Failed to create SCP directory in VFS: {e}")
+            except Exception:
+                logger.exception("Failed to create SCP directory in VFS")
 
         self.logger.log_event(
             self.session_id,
@@ -329,8 +329,8 @@ class ScpHandler:
                         await self._send_directory(child_path, child_node)
                     else:
                         await self._send_file(child_path, child_node)
-        except Exception as e:
-            logger.error(f"Error sending SCP directory content: {e}")
+        except Exception:
+            logger.exception("Error sending SCP directory content")
 
         self._write(b"E\n")
         await self._read(1)

@@ -42,8 +42,8 @@ class Plugin(OutputPlugin):
                 )
             """)
             self.conn.commit()
-        except Exception as e:
-            logging.error(f"[SQLite] Failed to initialize database: {e}")
+        except Exception:
+            logging.exception("[SQLite] Failed to initialize database")
 
     def write(self, event: Dict[str, Any]):
         if not self.conn:
@@ -63,8 +63,8 @@ class Plugin(OutputPlugin):
                 (timestamp, session, eventid, json.dumps(data)),
             )
             self.conn.commit()
-        except Exception as e:
-            logging.error(f"[SQLite] Failed to write event: {e}")
+        except Exception:
+            logging.exception("[SQLite] Failed to write event")
 
     def close(self):
         if self.conn:

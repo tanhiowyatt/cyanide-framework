@@ -8,6 +8,10 @@ import asyncssh
 
 logger = logging.getLogger("cyanide.vfs.sftp")
 
+DEV_RANDOM = "/dev/random"
+DEV_URANDOM = "/dev/urandom"
+DEV_SDA = "/dev/sda"
+
 
 class CyanideSFTPHandler(asyncssh.SFTPServer):
     """
@@ -125,12 +129,12 @@ class CyanideSFTPHandler(asyncssh.SFTPServer):
         content = b""
         if is_write:
             if not (flags & asyncssh.FXF_TRUNC) and self.fs.exists(p):
-                if p not in ("/dev/random", "/dev/urandom", "/dev/sda"):
+                if p not in (DEV_RANDOM, DEV_URANDOM, DEV_SDA):
                     content = self._get_node_content(p)
         else:
             if not self.fs.exists(p):
                 raise asyncssh.SFTPNoSuchFile(self.ERR_NO_SUCH_FILE)
-            if p not in ("/dev/random", "/dev/urandom", "/dev/sda"):
+            if p not in (DEV_RANDOM, DEV_URANDOM, DEV_SDA):
                 content = self._get_node_content(p)
 
         handle_id = self.next_handle_id
@@ -151,12 +155,12 @@ class CyanideSFTPHandler(asyncssh.SFTPServer):
 
         fh = self.file_handles[handle]
         p = fh["path"]
-        if p in ("/dev/random", "/dev/urandom"):
+        if p in (DEV_RANDOM, DEV_URANDOM):
             import os
 
             return os.urandom(size)
 
-        if p == "/dev/sda":
+        if p == DEV_SDA:
             sda_size = 40 * 1024 * 1024 * 1024
             if offset >= sda_size:
                 return b""

@@ -47,8 +47,8 @@ class Plugin(OutputPlugin):
                         )
                     """)
                 self.conn.commit()
-        except Exception as e:
-            logging.error(f"[PostgreSQL] Connection failed: {e}")
+        except Exception:
+            logging.exception("[PostgreSQL] Connection failed")
             self.conn = None
 
     def write(self, event: Dict[str, Any]):
@@ -70,8 +70,8 @@ class Plugin(OutputPlugin):
                     (timestamp, session, eventid, json.dumps(data)),
                 )
             self.conn.commit()
-        except Exception as e:
-            logging.error(f"[PostgreSQL] Write failure: {e}")
+        except Exception:
+            logging.exception("[PostgreSQL] Write failure")
             self.conn = None
 
     def close(self):

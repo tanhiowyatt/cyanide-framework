@@ -305,5 +305,5 @@ class KnowledgeBase:
                 data = joblib.load(f)
                 self.__dict__.update(data)
             logger.info(f"[*] KB loaded from {path}")
-        except Exception as e:
-            logger.error(f"[!] Failed to load KB: {e}")
+        except Exception:
+            logger.exception("[!] Failed to load KB")

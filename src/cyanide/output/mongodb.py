@@ -42,8 +42,8 @@ class Plugin(OutputPlugin):
             if self.client:
                 self.client.admin.command("ping")
                 self.db = self.client[self.database]
-        except Exception as e:
-            logging.error(f"[MongoDB] Connection failed: {e}")
+        except Exception:
+            logging.exception("[MongoDB] Connection failed")
             self.client = None
 
     def _get_collection(self) -> Optional[Any]:
@@ -64,7 +64,7 @@ class Plugin(OutputPlugin):
 
         try:
             collection.insert_one(event.copy())
-        except Exception as e:
-            logging.error(f"[MongoDB] Write failure: {e}")
+        except Exception:
+            logging.exception("[MongoDB] Write failure")
             self.client = None
             self.db = None

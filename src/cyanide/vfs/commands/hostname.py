@@ -6,30 +6,33 @@ from .base import Command
 class HostnameCommand(Command):
     """Show or set the system's host name."""
 
-    async def execute(self, args: list[str], input_data: str = "") -> tuple[str, str, int]:
-        await asyncio.sleep(0)
-
-        # Determine current hostname, prioritizing resolved context hostname
+    def _get_current_hostname(self) -> str:
         hostname = ""
         if self.fs.context and hasattr(self.fs.context, "hostname"):
             hostname = self.fs.context.hostname
 
-        if not hostname:
-            if self.fs.exists("/etc/hostname"):
-                content = self.fs.get_content("/etc/hostname")
-                if isinstance(content, bytes):
-                    content = content.decode("utf-8", errors="replace")
-                hostname = content.strip()
-                if "{{" in hostname and self.fs.context:
-                    try:
-                        from jinja2 import Template
+        if not hostname and self.fs.exists("/etc/hostname"):
+            content = self.fs.get_content("/etc/hostname")
+            if isinstance(content, bytes):
+                content = content.decode("utf-8", errors="replace")
+            hostname = content.strip()
+            if "{{" in hostname and self.fs.context:
+                try:
+                    from jinja2 import Template
 
-                        hostname = Template(hostname).render(**self.fs.context.to_dict()).strip()
-                    except Exception:
-                        pass
+                    hostname = Template(hostname).render(**self.fs.context.to_dict()).strip()
+                except Exception:
+                    pass
 
         if not hostname or "{{" in hostname:
             hostname = "localhost"
+
+        return hostname
+
+    async def execute(self, args: list[str], input_data: str = "") -> tuple[str, str, int]:
+        await asyncio.sleep(0)
+
+        hostname = self._get_current_hostname()
 
         if not args:
             return f"{hostname}\n", "", 0

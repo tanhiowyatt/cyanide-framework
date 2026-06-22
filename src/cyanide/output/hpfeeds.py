@@ -35,8 +35,8 @@ class Plugin(OutputPlugin):
                 return
 
             self.client = hpfeeds.new(self.host, self.port, self.ident, self.secret)
-        except Exception as e:
-            logging.error(f"[HPFeeds] Connection failed: {e}")
+        except Exception:
+            logging.exception("[HPFeeds] Connection failed")
             self.client = None
 
     def write(self, event: Dict[str, Any]):
@@ -51,6 +51,6 @@ class Plugin(OutputPlugin):
         try:
             payload = json.dumps(event).encode("utf-8")
             self.client.publish(self.channel, payload)
-        except Exception as e:
-            logging.error(f"[HPFeeds] Write failure: {e}")
+        except Exception:
+            logging.exception("[HPFeeds] Write failure")
             self.client = None

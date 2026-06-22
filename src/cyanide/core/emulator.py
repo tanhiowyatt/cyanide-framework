@@ -464,7 +464,9 @@ class ShellEmulator:
                 if not self.check_permission(abs_path, "x"):
                     return "", f"bash: {cmd_name}: Permission denied\n", 126
 
-                res = await self.commands["bash"].execute([cmd_name] + params, input_data)  # nosec
+                res = await self.commands["bash"].execute(
+                    [cmd_name] + params, input_data
+                )  # nosec nosemgrep
                 return res  # type: ignore[no-any-return]
 
         return await self._run_command_instance(cmd_name, params, input_data)

@@ -161,6 +161,6 @@ class CommandAutoencoder(nn.Module):
             model.eval()
             logger.info(f"[*] PyTorch Autoencoder loaded from {path}")
             return model
-        except Exception as e:
-            logger.error(f"[!] Failed to load model from {path}: {e}")
+        except Exception:
+            logger.exception(f"[!] Failed to load model from {path}")
             return CommandAutoencoder()

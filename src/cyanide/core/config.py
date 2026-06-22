@@ -42,8 +42,8 @@ def _load_config_file(path: Path) -> dict[str, Any]:
                 logger.error(f"Config file {path} is not a valid YAML dictionary.")
                 return {}
             return data
-    except Exception as e:
-        logger.error(f"Error loading config {path}: {e}")
+    except Exception:
+        logger.exception(f"Error loading config {path}")
         return {}
 
 
@@ -136,8 +136,8 @@ def _cast_val(val, cast, default, env_label: str):
             return val
         try:
             return json.loads(val)
-        except (json.JSONDecodeError, TypeError) as e:
-            logger.error(f"Failed to parse JSON/List/Dict for {env_label}: {e}")
+        except (json.JSONDecodeError, TypeError):
+            logger.exception(f"Failed to parse JSON/List/Dict for {env_label}")
             return default
 
     return val

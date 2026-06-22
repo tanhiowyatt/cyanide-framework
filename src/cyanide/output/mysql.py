@@ -59,8 +59,8 @@ class Plugin(OutputPlugin):
                 """)
                 self.conn.commit()
                 cursor.close()
-        except Exception as e:
-            logging.error(f"[MySQL] Connection failed: {e}")
+        except Exception:
+            logging.exception("[MySQL] Connection failed")
             self.conn = None
 
     def write(self, event: Dict[str, Any]):
@@ -83,8 +83,8 @@ class Plugin(OutputPlugin):
             )
             self.conn.commit()
             cursor.close()
-        except Exception as e:
-            logging.error(f"[MySQL] Write failure: {e}")
+        except Exception:
+            logging.exception("[MySQL] Write failure")
             self.conn = None
 
     def close(self):

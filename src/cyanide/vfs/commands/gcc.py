@@ -28,7 +28,7 @@ class GccCommand(Command):
                 pass
 
         # Check if input files exist (rudimentary)
-        sources = [a for a in args if a.endswith(".c") or a.endswith(".cpp")]
+        sources = [a for a in args if a.endswith((".c", ".cpp"))]
         for src in sources:
             if not self.fs.exists(self.emulator.resolve_path(src)):
                 return (

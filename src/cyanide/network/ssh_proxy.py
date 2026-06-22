@@ -198,8 +198,8 @@ class ProxyServerSession(asyncssh.SSHServerSession):
 
             self.send_task = asyncio.create_task(self._send_loop())
 
-        except Exception as e:
-            logger.error(f"Backend connect failed: {e}")
+        except Exception:
+            logger.exception("Backend connect failed")
             if self._chan:
                 self._chan.close()
 

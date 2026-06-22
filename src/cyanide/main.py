@@ -28,8 +28,8 @@ async def async_main():
 
     try:
         config = load_config(CONFIG_PATH)
-    except ValidationError as e:
-        logging.error(f"Configuration Error:\n{e}")
+    except ValidationError:
+        logging.exception("Configuration Error")
         sys.exit(1)
 
     server = CyanideServer(config)
@@ -50,8 +50,8 @@ def main():
     except (KeyboardInterrupt, SystemExit):
         logging.info("\n[*] Framework stopped.")
         raise
-    except Exception as e:
-        logging.error(f"[!] Unexpected error: {e}")
+    except Exception:
+        logging.exception("[!] Unexpected error")
 
 
 if __name__ == "__main__":

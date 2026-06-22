@@ -123,8 +123,8 @@ class Plugin(OutputPlugin):
                     logging.error(
                         f"[Discord] Webhook error: status={resp.status_code} body={resp.text[:200]}"
                     )
-            except Exception as exc:
-                logging.error(f"[Discord] Delivery failure: {exc}")
+            except Exception:
+                logging.exception("[Discord] Delivery failure")
 
     def write(self, event: Dict[str, Any]):
         self.flush([event])
@@ -153,8 +153,8 @@ class Plugin(OutputPlugin):
                 else:
                     logging.debug(f"[Discord] Poll returned non-list: {messages}")
 
-            except Exception as exc:
-                logging.error(f"[Discord] Report poll error: {exc}")
+            except Exception:
+                logging.exception("[Discord] Report poll error")
 
     def _process_poll_messages(self, messages: list, headers: dict):
         """Process a list of messages from the polling loop."""
@@ -188,8 +188,8 @@ class Plugin(OutputPlugin):
                 try:
                     with open(path, "rb") as fh:
                         files_to_send.append((os.path.basename(path), fh.read(), label))
-                except OSError as exc:
-                    logging.error(f"[Discord] Cannot read report {path}: {exc}")
+                except OSError:
+                    logging.exception(f"[Discord] Cannot read report {path}")
             else:
                 logging.warning(f"[Discord] Report not found: {path}")
 
@@ -219,8 +219,8 @@ class Plugin(OutputPlugin):
                 )
             else:
                 logging.info("[Discord] IOC report files sent successfully.")
-        except Exception as exc:
-            logging.error(f"[Discord] File upload failure: {exc}")
+        except Exception:
+            logging.exception("[Discord] File upload failure")
 
     def _send_channel_message(self, headers: dict, content: str):
         url = f"{_DISCORD_API}/channels/{self.report_channel_id}/messages"
@@ -228,5 +228,5 @@ class Plugin(OutputPlugin):
             resp = requests.post(url, headers=headers, json={"content": content}, timeout=10)
             if resp.status_code not in (200, 201):
                 logging.error(f"[Discord] Message send error: {resp.status_code}")
-        except Exception as exc:
-            logging.error(f"[Discord] Message send failure: {exc}")
+        except Exception:
+            logging.exception("[Discord] Message send failure")

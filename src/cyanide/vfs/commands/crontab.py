@@ -111,5 +111,5 @@ class CrontabCommand(Command):
         try:
             # We use the shell emulator itself to execute the command!
             await self.emulator.execute(cmd_str)
-        except Exception as e:
-            logging.error(f"Cron simulation failed for '{cmd_str}': {e}")
+        except Exception:
+            logging.exception(f"Cron simulation failed for '{cmd_str}'")

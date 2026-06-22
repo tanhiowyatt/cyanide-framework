@@ -138,8 +138,8 @@ class VMPool:
                             "pool_error",
                             {"backend": "libvirt", "error": str(e)},
                         )
-                    logging.getLogger(VM_POOL_LOGGER_NAME).error(
-                        f"Failed to load LibvirtPool: {e}. Falling back to SimplePool."
+                    logging.getLogger(VM_POOL_LOGGER_NAME).exception(
+                        "Failed to load LibvirtPool. Falling back to SimplePool."
                     )
                     self.backend = SimplePool(config, logger=logger)
             else:

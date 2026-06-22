@@ -94,8 +94,8 @@ class SessionPool:
                             pass
 
                 await asyncio.sleep(1)
-            except Exception as e:
-                logger.error(f"SessionPool worker error: {e}")
+            except Exception:
+                logger.exception("SessionPool worker error")
                 await asyncio.sleep(5)
 
     def _create_session(self, profile: str) -> Tuple[FakeFilesystem, ShellEmulator]:

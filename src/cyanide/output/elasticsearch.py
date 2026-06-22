@@ -33,8 +33,8 @@ class Plugin(OutputPlugin):
                 self.client = Elasticsearch(self.hosts, basic_auth=(self.user, self.password))
             else:
                 self.client = Elasticsearch(self.hosts)
-        except Exception as e:
-            logging.error(f"[Elasticsearch] Connection failed: {e}")
+        except Exception:
+            logging.exception("[Elasticsearch] Connection failed")
             self.client = None
 
     def write(self, event: Dict[str, Any]):
@@ -50,5 +50,5 @@ class Plugin(OutputPlugin):
 
         try:
             self.client.index(index=self.index, document=event)
-        except Exception as e:
-            logging.error(f"[Elasticsearch] Write failure: {e}")
+        except Exception:
+            logging.exception("[Elasticsearch] Write failure")

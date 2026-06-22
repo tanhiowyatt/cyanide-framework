@@ -44,8 +44,8 @@ class Plugin(OutputPlugin):
             if self.table not in r.db(self.database).table_list().run(self.conn):
                 r.db(self.database).table_create(self.table).run(self.conn)
 
-        except Exception as e:
-            logging.error(f"[RethinkDB] Connection failed: {e}")
+        except Exception:
+            logging.exception("[RethinkDB] Connection failed")
             self.conn = None
 
     def write(self, event: Dict[str, Any]):
@@ -63,6 +63,6 @@ class Plugin(OutputPlugin):
         if rethink is not None:
             try:
                 rethink.table(self.table).insert(event).run(self.conn)
-            except Exception as e:
-                logging.error(f"[RethinkDB] Write failure: {e}")
+            except Exception:
+                logging.exception("[RethinkDB] Write failure")
                 self.conn = None

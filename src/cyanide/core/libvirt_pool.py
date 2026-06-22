@@ -64,8 +64,8 @@ class LibvirtPool:
             self.conn = libvirt.open(self.uri)
             if self.conn is None:
                 logger.error(f"Failed to open connection to the hypervisor: {self.uri}")
-        except Exception as e:
-            logger.error(f"Exception connecting to libvirt {self.uri}: {e}")
+        except Exception:
+            logger.exception(f"Exception connecting to libvirt {self.uri}")
 
     def start(self):
         """Start background tasks for healthcheck and recycling"""
@@ -107,8 +107,8 @@ class LibvirtPool:
                         "ip": self._get_domain_ip(dom),
                         "last_used": time.time(),
                     }
-        except Exception as e:
-            logger.error(f"VM sync failed: {e}")
+        except Exception:
+            logger.exception("VM sync failed")
 
     def _get_domain_ip(self, dom) -> Optional[str]:
         """Get actual IP from libvirt guest network"""
@@ -232,8 +232,8 @@ class LibvirtPool:
                             f"No current snapshot found for {vm_id}, proceeding with restart."
                         )
                 await loop.run_in_executor(None, dom.create)
-            except Exception as e:
-                logger.error(f"Failed to rebuild {vm_id}: {e}")
+            except Exception:
+                logger.exception(f"Failed to rebuild {vm_id}")
 
         async with self.lock:
             if vm_id in self.vms:
@@ -264,8 +264,8 @@ class LibvirtPool:
                 task = asyncio.create_task(self._rebuild_vm(vm_id))
                 self._rebuild_tasks.add(task)
                 task.add_done_callback(self._rebuild_tasks.discard)
-        except Exception as e:
-            logger.error(f"Healthcheck failed for {vm_id}: {e}")
+        except Exception:
+            logger.exception(f"Healthcheck failed for {vm_id}")
 
     async def _recycle_loop(self):
         """Recycle unused VMs after timeout."""

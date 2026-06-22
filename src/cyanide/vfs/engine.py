@@ -14,6 +14,11 @@ from .context import Context
 from .dynamic import PROVIDERS
 from .nodes import Directory, File, Node
 
+DEV_NULL = "/dev/null"
+DEV_RANDOM = "/dev/random"
+DEV_URANDOM = "/dev/urandom"
+DEV_SDA = "/dev/sda"
+
 
 class VirtualFile(File):
     """Proxy for a file node."""
@@ -279,10 +284,10 @@ class FakeFilesystem:
         try:
             history_base.mkdir(parents=True, exist_ok=True)
             (history_base / self.BASH_HISTORY).write_text(content)
-        except Exception as e:
+        except Exception:
             import logging
 
-            logging.error(f"Failed to save history for {self.src_ip}: {e}")
+            logging.exception(f"Failed to save history for {self.src_ip}")
 
     def _initialize_user_homes(self):
         """Automatically create /home/[user] for all configured users."""
@@ -356,14 +361,8 @@ class FakeFilesystem:
         base_overlay = data.get("base_overlay", {})
         self.memory_overlay = ChainMap({}, base_overlay)
 
-    def get_node(self, path: str) -> Optional[Node]:
-        """Resolve a path to a VirtualFile or VirtualDirectory node."""
-        self._ensure_system_init()
-        path = self.resolve(path)
-        if path in self.deleted_paths:
-            return None
-
-        if path == "/dev/null":
+    def _get_special_dev_node(self, path: str) -> Optional[Node]:
+        if path == DEV_NULL:
             return VirtualFile(
                 "null",
                 path,
@@ -371,7 +370,7 @@ class FakeFilesystem:
                 {"type": "file", "perm": "crw-rw-rw-", "owner": "root", "group": "root", "size": 0},
             )
 
-        if path in ("/dev/random", "/dev/urandom"):
+        if path in (DEV_RANDOM, DEV_URANDOM):
             return VirtualFile(
                 posixpath.basename(path),
                 path,
@@ -379,7 +378,7 @@ class FakeFilesystem:
                 {"type": "file", "perm": "crw-rw-rw-", "owner": "root", "group": "root", "size": 0},
             )
 
-        if path == "/dev/sda":
+        if path == DEV_SDA:
             return VirtualFile(
                 "sda",
                 path,
@@ -392,6 +391,18 @@ class FakeFilesystem:
                     "size": 40 * 1024 * 1024 * 1024,
                 },
             )
+        return None
+
+    def get_node(self, path: str) -> Optional[Node]:
+        """Resolve a path to a VirtualFile or VirtualDirectory node."""
+        self._ensure_system_init()
+        path = self.resolve(path)
+        if path in self.deleted_paths:
+            return None
+
+        dev_node = self._get_special_dev_node(path)
+        if dev_node:
+            return dev_node
 
         if path in self.memory_overlay:
             config = self.memory_overlay[path]
@@ -426,7 +437,7 @@ class FakeFilesystem:
         path = self.resolve(path)
         if path in self.deleted_paths:
             return False
-        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda"):
+        if path in (DEV_NULL, DEV_RANDOM, DEV_URANDOM, DEV_SDA):
             return True
         if (
             path == "/"
@@ -442,7 +453,7 @@ class FakeFilesystem:
         path = self.resolve(path)
         if path in self.deleted_paths:
             return False
-        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda"):
+        if path in (DEV_NULL, DEV_RANDOM, DEV_URANDOM, DEV_SDA):
             return False
         if path == "/":
             return True
@@ -463,7 +474,7 @@ class FakeFilesystem:
         path = self.resolve(path)
         if path in self.deleted_paths:
             return False
-        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda"):
+        if path in (DEV_NULL, DEV_RANDOM, DEV_URANDOM, DEV_SDA):
             return True
         if path in self.memory_overlay:
             return bool(self.memory_overlay[path].get("type") == "file")
@@ -496,8 +507,7 @@ class FakeFilesystem:
             contents.add("sda")
 
         if self.backend:
-            for item in self.backend.list_dir(path):
-                contents.add(item)
+            contents.update(self.backend.list_dir(path))
 
         prefix = path.rstrip("/") + "/"
         for p in self.dynamic_files:
@@ -529,15 +539,15 @@ class FakeFilesystem:
 
         self._record_file_op("read", path)
 
-        if path == "/dev/null":
+        if path == DEV_NULL:
             return ""
 
-        if path in ("/dev/random", "/dev/urandom"):
+        if path in (DEV_RANDOM, DEV_URANDOM):
             import os
 
             return os.urandom(65536)
 
-        if path == "/dev/sda":
+        if path == DEV_SDA:
             return self._generate_sda_data(0, 65536)
 
         if path in self.memory_overlay:
@@ -578,6 +588,32 @@ class FakeFilesystem:
                 total += len(str(content))
         return total
 
+    def _mkfile_special_dev(self, path: str) -> VirtualFile:
+        if path in self.deleted_paths:
+            self.deleted_paths.remove(path)
+        if self.stats:
+            self.stats.on_file_op("write", path)
+        if self.session_mgr:
+            self.session_mgr.record_file_op(self.session_id)
+        name = posixpath.basename(path)
+        if path == DEV_SDA:
+            config = {
+                "type": "file",
+                "perm": "brw-rw----",
+                "owner": "root",
+                "group": "disk",
+                "size": 40 * 1024 * 1024 * 1024,
+            }
+        else:
+            config = {
+                "type": "file",
+                "perm": "crw-rw-rw-",
+                "owner": "root",
+                "group": "root",
+                "size": 0,
+            }
+        return VirtualFile(name, path, self, config)
+
     def mkfile(
         self,
         path: str,
@@ -587,31 +623,8 @@ class FakeFilesystem:
         perm="-rw-r--r--",
     ):
         path = self.resolve(path)
-        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda"):
-            if path in self.deleted_paths:
-                self.deleted_paths.remove(path)
-            if self.stats:
-                self.stats.on_file_op("write", path)
-            if self.session_mgr:
-                self.session_mgr.record_file_op(self.session_id)
-            name = posixpath.basename(path)
-            if path == "/dev/sda":
-                config = {
-                    "type": "file",
-                    "perm": "brw-rw----",
-                    "owner": "root",
-                    "group": "disk",
-                    "size": 40 * 1024 * 1024 * 1024,
-                }
-            else:
-                config = {
-                    "type": "file",
-                    "perm": "crw-rw-rw-",
-                    "owner": "root",
-                    "group": "root",
-                    "size": 0,
-                }
-            return VirtualFile(name, path, self, config)
+        if path in (DEV_NULL, DEV_RANDOM, DEV_URANDOM, DEV_SDA):
+            return self._mkfile_special_dev(path)
 
         if len(self.memory_overlay.maps[0]) >= self.max_nodes:
             return None
@@ -643,9 +656,8 @@ class FakeFilesystem:
 
     def mkdir_p(self, path: str, owner="root", group="root", perm="drwxr-xr-x"):
         path = self.resolve(path)
-        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda") or any(
-            path.startswith(x + "/")
-            for x in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda")
+        if path in (DEV_NULL, DEV_RANDOM, DEV_URANDOM, DEV_SDA) or any(
+            path.startswith(x + "/") for x in (DEV_NULL, DEV_RANDOM, DEV_URANDOM, DEV_SDA)
         ):
             return False
         parts = [p for p in path.split("/") if p]

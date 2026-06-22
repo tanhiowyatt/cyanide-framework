@@ -71,11 +71,11 @@ class Plugin(OutputPlugin):
                 self.logger.addHandler(handler)
                 logging.info(f"[Syslog] Initialized with address: {self.address}")
 
-        except PermissionError as e:
-            logging.error(f"[Syslog] Permission denied for {self.address}: {e}")
+        except PermissionError:
+            logging.exception(f"[Syslog] Permission denied for {self.address}")
             self.enabled = False
-        except Exception as e:
-            logging.error(f"[Syslog] Initialization failure: {e}")
+        except Exception:
+            logging.exception("[Syslog] Initialization failure")
             self.enabled = False
 
     def _check_dev_log(self) -> bool:
@@ -94,5 +94,5 @@ class Plugin(OutputPlugin):
         try:
             payload = json.dumps(event, ensure_ascii=False)
             self.logger.info(payload)
-        except Exception as e:
-            logging.error(f"[Syslog] Write failure: {e}")
+        except Exception:
+            logging.exception("[Syslog] Write failure")

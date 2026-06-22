@@ -82,8 +82,8 @@ class CyanideServer:
             for ev in _CONFIG_EVENTS:
                 self.logger.log_event("system", ev["action"], ev["data"])
 
-        except Exception as e:
-            logging.error(f"[!] CyanideServer: Failed to initialize Logger: {e}")
+        except Exception:
+            logging.exception("[!] CyanideServer: Failed to initialize Logger")
             raise
 
         try:
@@ -744,9 +744,7 @@ class CyanideServer:
             process.exit(rc)
             return
 
-        if (command.startswith("scp ") or command.startswith("/usr/bin/scp ")) and ssh_conf.get(
-            "scp_enabled", True
-        ):
+        if command.startswith(("scp ", "/usr/bin/scp ")) and ssh_conf.get("scp_enabled", True):
             scp = ScpHandler(sess, process)
             rc = await scp.handle(command)
             process.exit(rc)
@@ -1244,9 +1242,9 @@ class SSHServerFactory(asyncssh.SSHServer):
                 log_dir / "ml_analysis.json",
                 src_ip=self.src_ip,
             )
-        except Exception as e:
+        except Exception:
             # Fallback: connection continues but without session-specific audit mirroring
-            logging.error(f"Failed to initialize session log directory: {e}")
+            logging.exception("Failed to initialize session log directory")
             task = asyncio.create_task(self.framework.services.analytics.log_geoip(self.src_ip))
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)

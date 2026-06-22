@@ -101,6 +101,11 @@ class WgetCommand(Command):
         )
 
     async def _download_file(self, url):
+        if not isinstance(url, str) or not url.startswith(("http://", "https://")):
+            raise ValueError("Invalid URL scheme")
+        is_valid, error, _ = self.validate_url(url)
+        if not is_valid:
+            raise ValueError(f"SSRF Prevention: {error}")
         async with aiohttp.ClientSession() as session:
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status != 200:

@@ -118,8 +118,8 @@ class Plugin(OutputPlugin):
                         f"[Telegram] sendMessage error: status={resp.status_code} "
                         f"body={resp.text[:200]}"
                     )
-            except Exception as exc:
-                logging.error(f"[Telegram] Delivery failure: {exc}")
+            except Exception:
+                logging.exception("[Telegram] Delivery failure")
 
     def write(self, event: Dict[str, Any]):
         self.flush([event])
@@ -148,8 +148,8 @@ class Plugin(OutputPlugin):
                 self._process_updates(data.get("result", []))
                 time.sleep(0.05)
 
-            except Exception as exc:
-                logging.error(f"[Telegram] Poll error: {exc}")
+            except Exception:
+                logging.exception("[Telegram] Poll error")
                 time.sleep(_POLL_INTERVAL)
 
     def _process_updates(self, updates: list):
@@ -204,10 +204,10 @@ class Plugin(OutputPlugin):
                     )
                 else:
                     logging.info(f"[Telegram] Sent report file: {os.path.basename(path)}")
-            except OSError as exc:
-                logging.error(f"[Telegram] Cannot read report {path}: {exc}")
-            except Exception as exc:
-                logging.error(f"[Telegram] sendDocument failure: {exc}")
+            except OSError:
+                logging.exception(f"[Telegram] Cannot read report {path}")
+            except Exception:
+                logging.exception("[Telegram] sendDocument failure")
 
         if not found_any:
             self._send_text(
@@ -222,5 +222,5 @@ class Plugin(OutputPlugin):
                 json={"chat_id": self.chat_id, "text": text, "parse_mode": _PARSE_MODE},
                 timeout=10,
             )
-        except Exception as exc:
-            logging.error(f"[Telegram] sendMessage failure: {exc}")
+        except Exception:
+            logging.exception("[Telegram] sendMessage failure")

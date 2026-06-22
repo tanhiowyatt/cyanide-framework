@@ -66,8 +66,8 @@ class Plugin(OutputPlugin):
                     logging.error(
                         f"[Slack] Write error: status={resp.status_code} text={resp.text}"
                     )
-            except Exception as e:
-                logging.error(f"[Slack] Delivery failure: {e}")
+            except Exception:
+                logging.exception("[Slack] Delivery failure")
 
     def write(self, event: Dict[str, Any]):
         self.flush([event])

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cyanide-framework"
-version = "1.1.1" 
+version = "1.1.2" 
 description = "A medium-interaction framework with ML-based anomaly detection."
 readme = "README.md"
 authors = [
@@ -104,7 +104,7 @@ minversion = "6.0"
 addopts = "-v --asyncio-mode=auto --color=yes --tb=short"
 testpaths = ["src/cyanide/tests"]
 pythonpath = ["src"]
-log_cli = true
+log_cli = false
 log_cli_level = "INFO"
 markers = [
     "integration: mark test as integration test",

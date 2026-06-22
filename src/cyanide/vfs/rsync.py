@@ -65,8 +65,8 @@ class RsyncHandler:
         except asyncio.TimeoutError:
             logger.debug("Read timeout after 10s - normal for framework")
             return b""
-        except Exception as e:
-            logger.error(f"Read error: {e}")
+        except Exception:
+            logger.exception("Read error")
             return b""
 
     async def _read_int(self) -> int:
