@@ -26,8 +26,6 @@ async def test_read_char_iac_negotiation(handler):
     writer = MagicMock()
     writer.drain = AsyncMock()
 
-    # Sequence: 255 (IAC), 251 (WILL), 1 (ECHO) -> Should be skipped
-    # Then returns "A"
     reader.read.side_effect = [b"\xff", b"\xfb", b"\x01", b"A"]
 
     char = await handler._read_char(reader)
@@ -42,8 +40,6 @@ async def test_read_char_sb_negotiation(handler):
     writer = MagicMock()
     writer.drain = AsyncMock()
 
-    # Sequence: 255, 250 (SB), 24, 0, ... 255, 240 (SE)
-    # Then returns "B"
     reader.read.side_effect = [b"\xff", b"\xfa", b"\x18", b"\x00", b"\xff", b"\xf0", b"B"]
 
     char = await handler._read_char(reader)
@@ -59,11 +55,8 @@ async def test_read_line_advanced_history(handler):
     shell = MagicMock()
     shell.history = ["ls -la", "cat /etc/passwd"]
 
-    # Simulate Arrow Up: ESC [ A
-    # Then Enter: \r
     reader.read.side_effect = [b"\x1b", b"[", b"A", b"\r"]
 
-    # Mock _consume_eol to do nothing
     handler._consume_eol = AsyncMock()
 
     line = await handler._read_line_advanced(reader, writer, "prompt> ", shell)
@@ -78,7 +71,6 @@ async def test_read_line_advanced_backspace(handler):
     writer = MagicMock()
     writer.drain = AsyncMock()
 
-    # Input: a, b, Backspace, c, Enter
     reader.read.side_effect = [b"a", b"b", b"\x7f", b"c", b"\r"]
     handler._consume_eol = AsyncMock()
 
@@ -109,18 +101,14 @@ async def test_run_shell_editor_mode(handler):
     shell.get_prompt.return_value = "prompt> "
 
     async def initial_editor_call(*args):
-        # This call enters editor mode
         shell.pending_input_callback = MagicMock()
         return "Entering editor", "", 0
 
     async def second_editor_call(*args):
-        # This call (the "q" input) exits editor mode
         shell.pending_input_callback = None
         return "Exiting editor", "", 0
 
-    # _read_line_advanced returns "vim"
     handler._read_line_advanced = AsyncMock(return_value="vim")
-    # Patch _read_char with AsyncMock
     handler._read_char = AsyncMock(side_effect=["q", None])
 
     def shell_execute_side_effect(*args):
@@ -133,10 +121,9 @@ async def test_run_shell_editor_mode(handler):
 
     shell.execute = AsyncMock(side_effect=shell_execute_side_effect)
 
-    await handler._run_shell(reader, writer, shell, "root", "sess1")
+    await handler._run_shell(reader, writer, shell, "sess1")
 
     assert writer.write.called
-    # Check if "Exiting editor" was written
     all_writes = b"".join(call[0][0] for call in writer.write.call_args_list)
     assert b"Entering editor" in all_writes
     assert b"Exiting editor" in all_writes

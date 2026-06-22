@@ -14,6 +14,46 @@ class CurlCommand(Command):
     If output is stdout, prints to terminal but STILL saves to quarantine for analysis.
     """
 
+    async def _fetch_url(self, session, current_url, parsed) -> tuple[int, dict, bytes, str, int]:
+        """Fetch the URL, handle redirect, error status, or content retrieval.
+        Returns:
+            (status, headers, content, error_msg, rc)
+        """
+        is_valid, error, _ = self.validate_url(current_url)
+        if not is_valid:
+            return 0, {}, b"", f"curl: (1) Redirect to unsafe URL blocked: {error}\n", 1
+
+        if parsed.head:
+            async with session.head(
+                current_url,
+                headers={},
+                timeout=aiohttp.ClientTimeout(total=10),
+                allow_redirects=False,
+            ) as resp:
+                if resp.status in (301, 302, 303, 307, 308):
+                    return resp.status, resp.headers, b"", "", 0
+                return 200, {}, self._handle_head_response(resp).encode("utf-8"), "", 0
+
+        async with session.get(
+            current_url,
+            headers={},
+            timeout=aiohttp.ClientTimeout(total=10),
+            allow_redirects=False,
+        ) as resp:
+            if resp.status in (301, 302, 303, 307, 308):
+                return resp.status, resp.headers, b"", "", 0
+
+            if resp.status >= 400:
+                err_msg = (
+                    ""
+                    if parsed.silent
+                    else f"curl: (22) The requested URL returned error: {resp.status}\n"
+                )
+                return resp.status, {}, b"", err_msg, 22
+
+            content = await resp.read()
+            return 200, {}, content, "", 0
+
     async def execute(self, args, input_data=""):
         """Execute the curl command."""
         parsed, unknown = self._parse_curl_args(args)
@@ -43,55 +83,31 @@ class CurlCommand(Command):
         try:
             async with aiohttp.ClientSession() as session:
                 for _ in range(max_redirects):
-                    is_valid, error, _ = self.validate_url(current_url)
-                    if not is_valid:
-                        return "", f"curl: (1) Redirect to unsafe URL blocked: {error}\n", 1
+                    status, headers, content, err_msg, rc = await self._fetch_url(
+                        session, current_url, parsed
+                    )
+                    if rc != 0 or err_msg:
+                        return "", err_msg, rc
 
+                    if status in (301, 302, 303, 307, 308):
+                        current_url = headers.get("Location", "")
+                        if not current_url:
+                            break
+                        continue
+
+                    # We successfully fetched the content
                     if parsed.head:
-                        async with session.head(
-                            current_url,
-                            headers={},
-                            timeout=aiohttp.ClientTimeout(total=10),
-                            allow_redirects=False,
-                        ) as resp:
-                            if resp.status in (301, 302, 303, 307, 308):
-                                current_url = resp.headers.get("Location", "")
-                                if not current_url:
-                                    break
-                                continue
-                            return self._handle_head_response(resp), "", 0
-
-                    async with session.get(
-                        current_url,
-                        headers={},
-                        timeout=aiohttp.ClientTimeout(total=10),
-                        allow_redirects=False,
-                    ) as resp:
-                        if resp.status in (301, 302, 303, 307, 308):
-                            current_url = resp.headers.get("Location", "")
-                            if not current_url:
-                                break
-                            continue
-
-                        if resp.status >= 400:
-                            err_msg = (
-                                ""
-                                if parsed.silent
-                                else f"curl: (22) The requested URL returned error: {resp.status}\n"
-                            )
-                            return "", err_msg, 22
-
-                        content = await resp.read()
-                        q_filename = (
-                            filename if filename else PurePosixPath(url).name or "index.html"
-                        )
-                        if self.emulator.quarantine_callback:
-                            self.emulator.quarantine_callback(q_filename, content)
-
-                        if save_to_file:
-                            return self._handle_file_save(filename, content, parsed.silent)
-
                         return content.decode("utf-8", errors="ignore"), "", 0
+
+                    q_filename = filename if filename else PurePosixPath(url).name or "index.html"
+                    if self.emulator.quarantine_callback:
+                        self.emulator.quarantine_callback(q_filename, content)
+
+                    if save_to_file:
+                        return self._handle_file_save(filename, content, parsed.silent)
+
+                    return content.decode("utf-8", errors="ignore"), "", 0
+
                 return "", "curl: (47) Maximum redirects followed\n", 47
 
         except aiohttp.ClientError as e:

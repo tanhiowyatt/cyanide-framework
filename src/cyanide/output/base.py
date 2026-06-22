@@ -29,8 +29,6 @@ class OutputPlugin(ABC):
     def stop(self):
         """Stop the background worker thread and flush the queue."""
         self.running = False
-        # We don't join here because it's a daemon thread,
-        # but we wait a bit for it to finish processing.
         start_time = time.time()
         while not self.queue.empty() and time.time() - start_time < 5.0:
             time.sleep(0.1)

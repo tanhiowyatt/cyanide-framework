@@ -7,7 +7,6 @@ from cyanide.network.tcp_proxy import TCPProxy
 
 @pytest.mark.asyncio
 async def test_tcp_proxy_connection_error():
-    # Mocking open_connection to fail
     with patch("asyncio.open_connection", side_effect=Exception("connection refused")):
         proxy = TCPProxy("127.0.0.1", 12345, "127.0.0.1", 54321)
         mock_reader = MagicMock()

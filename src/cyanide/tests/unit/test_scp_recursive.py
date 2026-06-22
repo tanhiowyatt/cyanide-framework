@@ -33,17 +33,11 @@ async def test_scp_directory_recursive(mock_session, mock_process):
     handler = ScpHandler(mock_session, process=mock_process)
     mock_session.fs.mkdir_p("/tmp")
 
-    # Sequence for:
-    # 1. D0755 0 dir1
-    # 2. C0644 4 file1 (data)
-    # 3. NULL (EOF for file1)
-    # 4. E (End of dir1)
-    # 5. E (End of transfer - initial dest_dir)
     mock_process.stdin.read.side_effect = [
         b"D0755 0 dir1\n",
         b"C0644 4 file1\n",
         b"data",
-        b"\0",  # Added NULL EOF marker
+        b"\0",
         b"E\n",
         b"E\n",
         b"",
@@ -61,7 +55,6 @@ async def test_scp_nested_directories(mock_session, mock_process):
     handler = ScpHandler(mock_session, process=mock_process)
     mock_session.fs.mkdir_p("/tmp")
 
-    # D dir_a -> D dir_b -> C file -> NULL (EOF) -> E (b) -> E (a) -> E (final)
     mock_process.stdin.read.side_effect = [
         b"D0755 0 dir_a\n",
         b"D0755 0 dir_b\n",

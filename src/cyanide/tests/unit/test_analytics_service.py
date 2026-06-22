@@ -29,7 +29,6 @@ def analytics_service(mock_logger):
 
 def test_analytics_init_error(mock_logger):
     config = {"ml": {"enabled": True}}
-    # Force an error in GeoIP/StatsManager import or init
     with patch("cyanide.core.geoip.GeoIP", side_effect=Exception("GeoIP error")):
         AnalyticsService(config, mock_logger)
         mock_logger.log_event.assert_any_call(
@@ -85,7 +84,6 @@ def test_analyze_file_hash_reporting(analytics_service, mock_logger):
     mock_reporter = MagicMock()
     analytics_service.set_ioc_reporter(mock_reporter)
 
-    # Mock ML pipeline to return an anomaly
     analytics_service.ml_pipeline = MagicMock()
     analytics_service.ml_pipeline.analyze_command.return_value = {
         "is_anomaly": True,

@@ -1,8 +1,3 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
 from .base import Command
 
 
@@ -23,5 +18,4 @@ class PkexecCommand(Command):
         if not args:
             return "", "pkexec: must specify a program to execute\n", 1
 
-        # Execute automatically without password prompt
         return await self._on_delegated_auth(args)

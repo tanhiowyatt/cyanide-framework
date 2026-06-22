@@ -13,11 +13,9 @@ def emulator():
 
 @pytest.mark.asyncio
 async def test_bash_script_execution(emulator):
-    # 1. Create a script
     script_content = "echo hello\nmkdir /tmp/test_bash\ntouch /tmp/test_bash/file"
     emulator.fs.mkfile("/tmp/script.sh", content=script_content, perm="-rwxr-xr-x")
 
-    # 2. Execute directly
     stdout, stderr, rc = await emulator.execute("/tmp/script.sh")
 
     assert "hello" in stdout
@@ -28,16 +26,13 @@ async def test_bash_script_execution(emulator):
 
 @pytest.mark.asyncio
 async def test_bash_command_explicit(emulator):
-    # 1. Create a script without +x
     script_content = "echo secret"
     emulator.fs.mkfile("/tmp/secret.sh", content=script_content, perm="-rw-r--r--")
 
-    # 2. Execute via bash command (should work even without +x)
     stdout, stderr, rc = await emulator.execute("bash /tmp/secret.sh")
     assert "secret" in stdout
     assert rc == 0
 
-    # 3. Execute directly (should also work now because permissions are universally granted)
     stdout, stderr, rc = await emulator.execute("/tmp/secret.sh")
     assert "secret" in stdout
     assert rc == 0

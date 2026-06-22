@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Mock database drivers before importing plugins
 mysql_mock = MagicMock()
 sys.modules["mysql"] = mysql_mock
 sys.modules["mysql.connector"] = mysql_mock.connector
@@ -78,7 +77,7 @@ def test_slack_plugin():
     config = {
         "webhook_url": "https://hooks.slack.com/services/test",
         "username": "TestBot",
-        "max_content_length": 1000,  # Increased to avoid truncation in test
+        "max_content_length": 1000,
     }
     plugin = SlackPlugin(config)
     plugin.running = True

@@ -24,7 +24,6 @@ def test_vim_modes_and_keys(emulator):
     cmd = VimCommand(emulator)
     cmd._reset_state("test.txt")
 
-    # Insert mode characters
     cmd.mode = "INSERT"
     cmd._handle_input("h")
     cmd._handle_input("e")
@@ -33,22 +32,18 @@ def test_vim_modes_and_keys(emulator):
     cmd._handle_input("o")
     assert cmd.lines == ["hello"]
 
-    # Backspace in insert
     cmd._handle_input("\x7f")
     assert cmd.lines == ["hell"]
 
-    # Newline in insert
     cmd._handle_input("\n")
     assert len(cmd.lines) == 2
 
-    # Normal mode o (open line below)
     cmd.mode = "NORMAL"
     cmd.cursor_y = 0
     cmd._handle_input("o")
     assert len(cmd.lines) == 3
     assert cmd.mode == "INSERT"
 
-    # Colon mode unknown command
     cmd.mode = "COLON"
     cmd.colon_buffer = "unknown"
     cmd._handle_colon_execute()
@@ -59,18 +54,16 @@ def test_nano_scrolling_and_keys(emulator):
     cmd = NanoCommand(emulator)
     cmd._reset_state("test.txt")
 
-    # Fill many lines to trigger scrolling logic
     cmd.lines = ["line"] * 50
     cmd.cursor_y = 40
     cmd.scroll_top = 0
-    cmd._render()  # Should update scroll_top
+    cmd._render()
     assert cmd.scroll_top > 0
 
-    # Cut and Uncut (Note: Nano implementation in Cyanide always pops/appends at the end)
     cmd.lines = ["a", "b", "c"]
-    cmd._handle_input("\x0b")  # Ctrl+K
+    cmd._handle_input("\x0b")
     assert cmd.lines == ["a", "b"]
     assert cmd.cut_buffer == "c"
 
-    cmd._handle_input("\x15")  # Ctrl+U
+    cmd._handle_input("\x15")
     assert cmd.lines == ["a", "b", "c"]

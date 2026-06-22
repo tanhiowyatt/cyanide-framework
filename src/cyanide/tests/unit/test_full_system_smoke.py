@@ -7,7 +7,6 @@ from cyanide.vfs.engine import FakeFilesystem
 @pytest.fixture
 def emulator():
     fs = FakeFilesystem()
-    # Add some initial structure
     fs.mkdir_p("/etc")
     fs.mkfile("/etc/passwd", content="root:x:0:0:root:/root:/bin/bash")
     fs.mkdir_p("/var/log")
@@ -81,21 +80,15 @@ date
 crontab -l
     """
 
-    # Save and run
     emulator.fs.mkfile("/root/smoke.sh", content=mega_script, perm="-rwxr-xr-x")
     stdout, stderr, rc = await emulator.execute("/root/smoke.sh")
 
-    # Validation: Ensure basic markers are in output
     assert "/root" in stdout
     assert "cyanide test" in stdout
     assert "root" in stdout
     assert "127.0.0.1" in stdout or "eth0" in stdout
     assert "python" in stdout.lower()
 
-    # Check new commands
-    assert "UTC" in stdout  # date
-    assert "Filesystem" in stdout  # df
-
-    # We allow some stderr for things like 'make' with no targets
-    # but we check if the overall return code is successful (or reasonable)
-    assert rc == 0 or rc == 2  # make often returns 2 on error
+    assert "UTC" in stdout
+    assert "Filesystem" in stdout
+    assert rc == 0 or rc == 2

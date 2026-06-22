@@ -34,12 +34,10 @@ async def test_scp_upload_sink_mode(mock_session, mock_process):
     handler = ScpHandler(mock_session, process=mock_process)
     mock_session.fs.mkdir_p("/tmp")
 
-    # Mock full protocol sequence
-    # 1. C0644 12 test.txt -> 2. content -> 3. NULL (EOF) -> 4. E (Done)
     mock_process.stdin.read.side_effect = [
         b"C0644 12 test.txt\n",
-        b"hello world\n",  # Exactly 12 bytes
-        b"\0",  # EOF NULL marker (mandatory)
+        b"hello world\n",
+        b"\0",
         b"E\n",
         b"",
     ]

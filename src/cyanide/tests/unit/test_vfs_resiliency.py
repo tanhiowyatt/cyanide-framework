@@ -16,7 +16,6 @@ def test_sqlite_corruption_fallback(tmp_path):
     db_file.write_text("NOT_A_SQLITE_FILE")
     invalidate()
 
-    # Patch the logger to suppress the intentional warning in test output
     from unittest.mock import patch
 
     with patch("cyanide.vfs.profile_loader.logger") as mock_logger:

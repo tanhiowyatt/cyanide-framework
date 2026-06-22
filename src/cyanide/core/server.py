@@ -39,8 +39,6 @@ from .telemetry import setup_telemetry
 from .vm_pool import VMPool
 from .vt_scanner import VTScanner
 
-# Default honeytokens removed - users must now configure them explicitly.
-
 CONTENT_TYPE_PLAIN = "text/plain"
 MIME_JSON = "application/json"
 PATH_STATS = "/logs/stats"
@@ -203,10 +201,8 @@ class CyanideServer:
         self.metrics_server: Any = None
         self.background_tasks: List[asyncio.Task] = []
 
-        # IOC reporting configuration
         ioc_conf = config.get("ioc_reporting", {})
 
-        # Explicitly check environment variable as fallback or priority
         import os
 
         env_interval = os.environ.get("CYANIDE_IOC_REPORTING_INTERVAL_HOURS")
@@ -337,13 +333,10 @@ class CyanideServer:
         def audit_hook(action, path, fs_instance=None):
             self._fs_audit_hook(action, path, fs_instance, session_id, src_ip)
 
-        # 1. Try to retrieve from persistence cache
         if self.vfs_persistence and src_ip != "unknown":
             if cache_key in self.vfs_cache:
                 self.vfs_cache.move_to_end(cache_key)
                 return self.vfs_cache[cache_key]
-
-        # 2. Try to get from session pool synchronously
         pooled = self.session_pool.get_session_sync(self.os_profile, username or "root")
         if pooled:
             fs, _ = pooled
@@ -353,7 +346,6 @@ class CyanideServer:
             self._add_to_vfs_cache(cache_key, fs, src_ip)
             return fs
 
-        # 3. Create a new filesystem instance
         fs = self._create_new_fs(session_id, src_ip, audit_hook)
         self._add_to_vfs_cache(cache_key, fs, src_ip)
         return fs
@@ -402,7 +394,6 @@ class CyanideServer:
             src_ip = getattr(session_obj, "src_ip", "unknown")
             protocol = "ssh" if hasattr(session_obj, "channel") else "telnet"
 
-            # log_event routes to fs_log and mirrors to session audit.json automatically
             self.logger.log_event(
                 session_id,
                 f"tty.{direction.lower()}",
@@ -461,7 +452,6 @@ class CyanideServer:
         return json.dumps(status_data)
 
     def _route_metrics_request(self, path: str) -> tuple[str, str]:
-        # Virtual path mapping for logs (Clean URLs without extensions)
         log_mapping = {
             "/logs/vfs": "cyanide-vfs.json",
             "/logs/ml": "cyanide-ml.json",
@@ -481,7 +471,6 @@ class CyanideServer:
         if path == PATH_HEALTH:
             return self._get_health_status(), MIME_JSON
 
-        # Handle Root Index
         if path == "/" or path == "":
             index = {
                 "cyanide_control_plane": {
@@ -498,7 +487,6 @@ class CyanideServer:
             }
             return json.dumps(index, indent=2), MIME_JSON
 
-        # Handle Virtual Log Access
         if path in log_mapping:
             import os
 
@@ -506,17 +494,13 @@ class CyanideServer:
             log_path = os.path.join(self.logger.log_dir, filename)
 
             if os.path.exists(log_path) and os.path.isfile(log_path):
-                # For reports, return the full file as it's a single JSON bundle
                 if "reports/" in filename:
                     with open(log_path, "r") as f:
                         return f.read(), MIME_JSON
-
-                # For line-based logs, return the last 2000 lines to avoid OOM
                 from collections import deque
 
                 try:
                     with open(log_path, "r") as f:
-                        # Simple and reasonably efficient for typical log sizes
                         last_lines = deque(f, maxlen=2000)
                         return "".join(last_lines), MIME_JSON
                 except Exception as e:
@@ -553,7 +537,6 @@ class CyanideServer:
             except Exception:
                 return
 
-            # Token Auth Check
             token = self.config.get("metrics", {}).get("token")
             is_health_check = path.startswith("/health")
             if token and not is_health_check:
@@ -730,8 +713,6 @@ class CyanideServer:
         try:
             while True:
                 try:
-                    # Read up to 256 bytes at once. asyncssh delivers each
-                    # keystroke (or paste chunk) as a separate read() result.
                     data = await process.stdin.read(256)
                     if not data:
                         break
@@ -824,9 +805,9 @@ class CyanideServer:
             "encoding": "utf-8",
             "login_timeout": ssh_conf.get("login_timeout", 60),
             "rekey_bytes": self._parse_ssh_rekey(ssh_conf.get("rekey_limit", "1G")),
-            "keepalive_interval": 15,  # Send keepalive every 15s
-            "keepalive_count_max": 3,  # Disconnect after 3 failed keepalives
-            "line_editor": False,  # Disables asyncssh internal PTY buffering
+            "keepalive_interval": 15,
+            "keepalive_count_max": 3,
+            "line_editor": False,
         }
 
         if ssh_conf.get("sftp_enabled", True):
@@ -1001,7 +982,6 @@ class CyanideServer:
         self.async_logger.start()
         self.session_pool.start()
 
-        # Start metrics ASAP for health/readiness checks
         self.background_tasks.append(asyncio.create_task(self.start_metrics_server()))
 
         host_keys = self._get_host_keys()
@@ -1215,7 +1195,6 @@ class SSHServerFactory(asyncssh.SSHServer):
 
         self._init_session_logging(session_id)
 
-        # Trigger GeoIP lookup (background task)
         self._background_tasks.add(
             asyncio.create_task(self.framework.services.analytics.geoip.lookup(self.src_ip))
         )
@@ -1289,9 +1268,6 @@ class SSHServerFactory(asyncssh.SSHServer):
             },
         )
 
-        # Read algorithms via correct asyncssh extra_info keys.
-        # send_* = direction from server's perspective (client→server)
-        # kex_alg and host_key_alg are captured via monkey-patched set_extra_info.
         kex_alg = self._captured_kex_alg
         host_key_alg = self._captured_host_key_alg
 
@@ -1300,11 +1276,8 @@ class SSHServerFactory(asyncssh.SSHServer):
         compression = conn.get_extra_info("send_compression")
 
         fp_str = ",".join([str(v or "") for v in [kex_alg, host_key_alg, cipher, mac, compression]])
-        # MD5 is used here for identification (fingerprinting), not for security.
-        # Adding usedforsecurity=False tells tools like Bandit/Semgrep it's non-cryptographic.
         fingerprint = hashlib.md5(fp_str.encode(), usedforsecurity=False).hexdigest()
 
-        # Log client fingerprint
         self.framework.logger.log_event(
             session_id,
             "client_fingerprint",
@@ -1392,7 +1365,6 @@ class SSHServerFactory(asyncssh.SSHServer):
     async def begin_auth(self, username):
         """Called when authentication begins; handshake is guaranteed to be complete."""
         if not self._handshake_logged:
-            # Read client_version here — guaranteed available after banner exchange
             self.client_version = self.conn.get_extra_info("client_version", "unknown")
             await self._log_connection_details(self.conn)
             self._handshake_logged = True
@@ -1444,13 +1416,11 @@ class SSHServerFactory(asyncssh.SSHServer):
             },
         )
 
-        # Extract IOCs from malicious login attempts
         if not success:
             analytics_svc = self.framework.services.analytics
             analytics_svc.analyze_auth(username, password, "conn_" + self.conn_id)
 
         if success:
-            # Re-fetch VFS now that we have a verified username to support user-specific persistence
             self.fs = self.framework.get_filesystem(
                 session_id="conn_" + self.conn_id,
                 src_ip=self.src_ip,
@@ -1559,10 +1529,8 @@ class SSHServerFactory(asyncssh.SSHServer):
         try:
             ip = ipaddress.ip_address(host)
             if ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_multicast:
-                # Unless it was explicitly allowed by a rule, block it
                 return rule_found
         except ValueError:
-            # It's a hostname. Block local-sounding names if strict
             if not rule_found and strict_mode:
                 return host.lower() not in ["localhost", "127.0.0.1", "::1"]
         return True
@@ -1581,7 +1549,6 @@ class SSHServerFactory(asyncssh.SSHServer):
         if not self._is_safe_target(t_host, rule_found, strict_mode):
             return "127.0.0.1", 0, "anti_pivot_block"
 
-        # 3. Default Policy: If not explicitly allowed by a rule, and strict mode is on, block.
         if not rule_found and strict_mode:
             return "127.0.0.1", 0, "strict_policy_block"
 
@@ -1661,7 +1628,6 @@ class SSHSession(asyncssh.SSHServerSession):
         super().connection_made(channel)
         self.channel = channel
         conn = channel.get_connection()
-        # Ensure we have the latest username from the connection/factory
         self.client_version = conn.get_extra_info("client_version") or "unknown"
 
         self.framework.stats.on_connect("ssh", self.src_ip)
@@ -1733,7 +1699,6 @@ class SSHSession(asyncssh.SSHServerSession):
 
     def connection_lost(self, exc):
         """Log session disconnect."""
-        # Cancel and clear session-level background tasks
         for task in self._background_tasks:
             task.cancel()
         self._background_tasks.clear()
@@ -1810,7 +1775,6 @@ class SSHSession(asyncssh.SSHServerSession):
     def session_started(self):
         self._ensure_tty_log()
         if self.shell:
-            # Fetch dynamic/static banner from VFS
             banner = self.fs.get_content("/etc/motd", args={"src_ip": self.src_ip})
             if not banner:
                 banner = "\r\nWelcome to Cyanide Framework\r\n\r\n"
@@ -1851,7 +1815,6 @@ class SSHSession(asyncssh.SSHServerSession):
         self.tty_log_path_ml = log_dir / "ml_analysis.json"
         self.last_log_time = time.time()
 
-        # Initialize remaining files if they don't exist
         for p in [
             self.tty_log_path_json,
             self.tty_log_path,
@@ -1867,7 +1830,6 @@ class SSHSession(asyncssh.SSHServerSession):
             src_ip=self.src_ip,
         )
 
-        # Log initial session info to the JSONL log
         self.framework.logger.log_event(
             self.session_id,
             "session.start",
@@ -1976,7 +1938,7 @@ class SSHSession(asyncssh.SSHServerSession):
                 j += 1
                 while j < len(data) and data[j] not in "ABCDHFPQRSm~":
                     j += 1
-                j += 1  # include terminator
+                j += 1
             return data[i:j], j
         return char, i + 1
 
@@ -2000,7 +1962,6 @@ class SSHSession(asyncssh.SSHServerSession):
             self.buf += "\n"
             return "\r\n", True
 
-        # Handle printable characters (ignore raw ESC as it is handled by the caller)
         if char != "\x1b" and len(char) == 1 and (ord(char) >= 32 or char == "\t"):
             self.buf += char
             return char, True
@@ -2013,7 +1974,6 @@ class SSHSession(asyncssh.SSHServerSession):
         while i < len(data):
             char, i = self._extract_next_input_unit(data, i)
 
-            # Handle Arrow Keys for History Navigation
             if char.startswith("\x1b["):
                 await self._handle_arrow_keys(char)
                 continue
@@ -2033,7 +1993,7 @@ class SSHSession(asyncssh.SSHServerSession):
             return
 
         code = sequence[-1]
-        if code == "A":  # UP Arrow
+        if code == "A":
             if self.history_ptr == -1:
                 self.history_buffer = self.buf
 
@@ -2058,8 +2018,6 @@ class SSHSession(asyncssh.SSHServerSession):
     async def _refresh_line_ui(self, new_line: str):
         """Redraw the current line with new content (history navigation)."""
         prompt = self._get_prompt()
-        # \r: Carriage return to start of line
-        # \x1b[K: Clear from cursor to end of line
         refresh_seq = f"\r\x1b[K{prompt}{new_line}"
         await self._write_output_chunk(refresh_seq)
 
@@ -2067,7 +2025,7 @@ class SSHSession(asyncssh.SSHServerSession):
         """Process buffered lines as shell commands."""
         while "\n" in self.buf:
             line, self.buf = self.buf.split("\n", 1)
-            self.history_ptr = -1  # Reset history navigation on Enter
+            self.history_ptr = -1
             cmd = line.strip()
             if not cmd:
                 self._write(self._get_prompt())
@@ -2097,10 +2055,9 @@ class SSHSession(asyncssh.SSHServerSession):
         """
         score = 0.0
 
-        # 1. Paste Factor: Legitimate users paste short snippets, but bots paste whole scripts.
         if is_paste:
             score += 0.3
-            if data_len > 100:  # Long script paste
+            if data_len > 100:
                 score += 0.5
 
         if len(self.keystrokes) > 1:
@@ -2111,26 +2068,20 @@ class SSHSession(asyncssh.SSHServerSession):
             if delays:
                 mean_delay = sum(delays) / len(delays)
 
-                # 2. Speed Factor: Humans rarely stay under 15ms average for a whole command.
                 if mean_delay < 0.015:
                     score += 0.4
                 elif mean_delay < 0.030:
                     score += 0.2
 
-                # 3. Jitter Factor (Standard Deviation):
-                # High jitter = human. Low jitter = script/bot.
                 import math
 
                 variance = sum((d - mean_delay) ** 2 for d in delays) / len(delays)
                 std_dev = math.sqrt(variance)
 
-                if std_dev < 0.005:  # Extremely regular typing
+                if std_dev < 0.005:
                     score += 0.5
                 elif std_dev < 0.015:
                     score += 0.2
-
-        # Threshold: if score > 0.7, we are very confident it's a bot.
-        # Otherwise, if score > 0.4, it's "suspicious".
         return score > 0.7
 
     def _handle_system_commands(self, cmd):
@@ -2158,7 +2109,6 @@ class SSHSession(asyncssh.SSHServerSession):
                 "ioc_detected",
                 {"src_ip": self.src_ip, "iocs": iocs, "cmd": cmd},
             )
-            # Register with IOCReporter
             if hasattr(self.framework.services, "ioc_reporter"):
                 for ioc_val in iocs:
                     ioc_type = "ipv4-addr" if re.match(ipv4_regex, ioc_val) else "url"
@@ -2199,8 +2149,6 @@ class SSHSession(asyncssh.SSHServerSession):
             else:
                 stdout, stderr, rc = "", "Shell not initialized\n", 1
         except SystemExit as se:  # noqa: S5754
-            # We must not re-raise SystemExit to prevent a malicious user from
-            # crashing the server with a command like "mkdir --help" or argparse usage.
             rc = se.code if isinstance(se.code, int) else 2
             stdout, stderr = (
                 "",
@@ -2218,9 +2166,6 @@ class SSHSession(asyncssh.SSHServerSession):
         in_editor = self.shell is not None and self.shell.pending_input_callback is not None
 
         response = stdout + stderr
-        # SSH requires explicit \r\n for proper terminal rendering.
-        # In editor mode (nano/vim), the editor uses ANSI escape sequences and
-        # manages cursor/lines itself — only bare \n need fixing.
         response = response.replace("\r\n", "\n").replace("\n", "\r\n")
 
         if write_output:
@@ -2228,8 +2173,6 @@ class SSHSession(asyncssh.SSHServerSession):
             self.bytes_out += len(response)
             self.framework.stats.on_traffic("out", len(response))
 
-            # Only show the shell prompt when NOT inside an editor session.
-            # The editor renders its own full-screen UI and manages the cursor.
             if not in_editor:
                 prompt = self._get_prompt()
                 self._write(prompt)

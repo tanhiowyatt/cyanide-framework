@@ -18,7 +18,7 @@ def test_analyze_url_safe(analyzer):
     result = analyzer.analyze_url("Check https://github.com/project")
     assert result["has_url"] is True
     assert result["verdict"] == "safe"
-    assert result["risk_score"] == 0.0  # Whitelist bonus reduces risk to 0 (max(0.0, ...))
+    assert result["risk_score"] == 0.0
 
 
 def test_analyze_url_suspicious_ip(analyzer):

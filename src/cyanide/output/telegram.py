@@ -146,9 +146,6 @@ class Plugin(OutputPlugin):
 
                 data = resp.json()
                 self._process_updates(data.get("result", []))
-                # Yield to other threads between poll cycles.  Without this
-                # Python 3.12's revised GIL scheduling can starve the daemon
-                # thread and cause the test (and real usage) to miss updates.
                 time.sleep(0.05)
 
             except Exception as exc:

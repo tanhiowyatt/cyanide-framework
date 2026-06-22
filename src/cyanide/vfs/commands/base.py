@@ -17,8 +17,6 @@ class Command:
     def _log_event(self, event_type: str, data: dict):
         """Centralized logging helper for command-specific events."""
         if self.emulator.logger:
-            # We don't need to manually inject src_ip as the CyanideLogger
-            # automatically resolves it from the session_id mapping.
             self.emulator.logger.log_event(self.emulator.session_id, event_type, data)
 
     @property

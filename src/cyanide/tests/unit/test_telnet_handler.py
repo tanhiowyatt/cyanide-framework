@@ -65,7 +65,7 @@ async def test_telnet_run_shell(telnet_handler):
     shell.execute = AsyncMock(return_value=("output\n", "", 0))
 
     with patch.object(telnet_handler, "_read_line_advanced", side_effect=["ls", "exit"]):
-        await telnet_handler._run_shell(reader, writer, shell, "root", "session_id")
+        await telnet_handler._run_shell(reader, writer, shell, "session_id")
 
         assert shell.execute.call_count == 1
         shell.execute.assert_called_with("ls")

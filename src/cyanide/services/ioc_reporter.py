@@ -15,7 +15,6 @@ class IOCReporter:
         self.logger = logger
         self.iocs: List[Dict[str, Any]] = []
 
-        # Ensure absolute path for Docker consistency
         raw_dir = config.get("logging", {}).get("directory", "var/log/cyanide")
         if not raw_dir.startswith("/"):
             raw_dir = "/app/" + raw_dir
@@ -74,7 +73,6 @@ class IOCReporter:
         bundle_id = f"bundle--{uuid.uuid4()}"
         objects = []
 
-        # Create Identity for the Framework
         framework_identity = {
             "type": "identity",
             "spec_version": "2.1",
@@ -90,7 +88,6 @@ class IOCReporter:
         for ioc in self.iocs:
             indicator_id = f"indicator--{uuid.uuid4()}"
 
-            # Map internal types to STIX patterns
             pattern = ""
             if ioc["type"] == "ipv4-addr":
                 pattern = f"[ipv4-addr:value = '{ioc['value']}']"
@@ -103,7 +100,6 @@ class IOCReporter:
             elif ioc["type"] == "credential":
                 pattern = f"[user-account:user_id = '{ioc['value']}']"
             else:
-                # Fallback to a generic note or skip
                 continue
 
             indicator = {

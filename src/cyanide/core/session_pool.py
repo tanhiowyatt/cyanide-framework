@@ -21,7 +21,6 @@ class SessionPool:
         self.max_size = pool_conf.get("max_size", 20)
         self.profiles = pool_conf.get("profiles", ["debian"])
 
-        # profile_name -> list of (fs, shell)
         self._pools: Dict[str, asyncio.Queue[Tuple[FakeFilesystem, ShellEmulator]]] = {}
         for profile in self.profiles:
             self._pools[profile] = asyncio.Queue(maxsize=self.max_size)
@@ -40,8 +39,6 @@ class SessionPool:
             self._fill_task.cancel()
             try:
                 await self._fill_task
-            except asyncio.CancelledError:
-                raise
             finally:
                 self._fill_task = None
 
@@ -52,7 +49,6 @@ class SessionPool:
         if not self.enabled or profile not in self._pools:
             return None
 
-        # This will wait if the queue is empty until a worker fills it
         fs, shell = await self._pools[profile].get()
         self._reconfigure_session(shell, username)
         return fs, shell
@@ -65,7 +61,6 @@ class SessionPool:
             return None
 
         try:
-            # Queue.get_nowait() is safe to call from sync code if we don't block
             fs, shell = self._pools[profile].get_nowait()
             self._reconfigure_session(shell, username)
             return fs, shell
@@ -91,8 +86,6 @@ class SessionPool:
             try:
                 for profile, queue in self._pools.items():
                     if not queue.full():
-                        # Create a new session
-                        # We use a helper thread to not block the event loop with sync VFS/Shell init
                         fs, shell = await asyncio.to_thread(self._create_session, profile)
                         try:
                             queue.put_nowait((fs, shell))
@@ -100,9 +93,7 @@ class SessionPool:
                         except asyncio.QueueFull:
                             pass
 
-                await asyncio.sleep(1)  # Check every second
-            except asyncio.CancelledError:
-                raise
+                await asyncio.sleep(1)
             except Exception as e:
                 logger.error(f"SessionPool worker error: {e}")
                 await asyncio.sleep(5)

@@ -56,7 +56,6 @@ async def test_scp_sink_invalid_header(mock_session):
 
     rc = await handler.handle("scp -t /tmp")
     assert rc == 1
-    # Should have sent initial ACK then error for unknown command
     mock_session.channel.write.assert_any_call("\x01SCP: Unknown protocol command: INVALID\n")
 
 

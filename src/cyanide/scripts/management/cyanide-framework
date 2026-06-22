@@ -37,7 +37,6 @@ def start():
         print("Cyanide already running (pid file exists).")
         return
 
-    # Load and print configuration info
     try:
         from cyanide.core.aesthetics import print_startup_banner
         from cyanide.core.config import load_config
@@ -63,7 +62,6 @@ def start():
         f.write(str(p.pid))
     print(f"Cyanide started with PID {p.pid}")
 
-# Function 317: Stops the currently running CyanideServer instance.
 def stop():
     if not os.path.exists(PID_FILE):
         print("Cyanide not running.")

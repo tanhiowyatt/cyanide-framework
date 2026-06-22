@@ -59,7 +59,6 @@ async def check_telnet_functional(host, port):
     """Try to perform a simple Telnet connect and banner read."""
     try:
         reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=5)
-        # Try to read some data (banner)
         data = await asyncio.wait_for(reader.read(1024), timeout=5)
         writer.close()
         try:

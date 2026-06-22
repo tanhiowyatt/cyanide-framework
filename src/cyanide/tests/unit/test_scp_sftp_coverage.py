@@ -18,12 +18,10 @@ def mock_session():
 
 @pytest.mark.asyncio
 async def test_scp_handler_sink_mode(mock_session):
-    # Mock stdin to return SCP protocol messages
-    # C0644 5 test.txt\n + content + \0
+
     mock_process = MagicMock()
     mock_process.stdin = AsyncMock()
 
-    # We need to return bytes
     mock_process.stdin.read.side_effect = [
         b"C",
         b"0",
@@ -48,16 +46,14 @@ async def test_scp_handler_sink_mode(mock_session):
         b"l",
         b"o",
         b"\0",
-        b"",  # End
+        b"",
     ]
 
     handler = ScpHandler(mock_session, process=mock_process)
 
-    # Test handle scp -t /tmp
     rc = await handler.handle("scp -t /tmp")
     assert rc == 0
 
-    # Verify VFS calls
     mock_session.fs.mkfile.assert_called_once()
     args, kwargs = mock_session.fs.mkfile.call_args
     assert args[0] == "/tmp/test.txt"
@@ -68,12 +64,9 @@ async def test_scp_handler_sink_mode(mock_session):
 async def test_scp_handler_source_mode(mock_session):
     mock_process = MagicMock()
     mock_process.stdin = AsyncMock()
-    # Initial ACK from client
     mock_process.stdin.read.side_effect = [b"\0"]
 
     handler = ScpHandler(mock_session, process=mock_process)
-
-    # Mock VFS node
     node = MagicMock()
     node.is_dir.return_value = False
     node.content = b"world"
@@ -83,8 +76,6 @@ async def test_scp_handler_source_mode(mock_session):
     rc = await handler.handle("scp -f /tmp/world.txt")
     assert rc == 0
 
-    # Verify output (header + content + null)
-    # The handler writes to process.channel.write(data.decode('latin-1'))
     calls = mock_process.channel.write.call_args_list
     output = "".join(c[0][0] for c in calls)
     assert "C0644 5 world.txt" in output

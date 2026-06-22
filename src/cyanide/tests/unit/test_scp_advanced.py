@@ -34,7 +34,6 @@ async def test_scp_handler_direct_session_mode(mock_session):
     """Test ScpHandler without a process object (using session.channel directly)."""
     mock_session.channel = MagicMock()
     mock_session.channel.read = AsyncMock()
-    # Mock data for sequence: C0644 5 test.txt\n + data
     mock_session.channel.read.side_effect = [
         b"C0644 5 test.txt\n",
         b"hello",
@@ -72,15 +71,12 @@ async def test_scp_handler_read_error(mock_session, mock_process):
 async def test_scp_source_mode_not_found(mock_session, mock_process):
     """Test ScpHandler in source mode (-f) for non-existent file."""
     handler = ScpHandler(mock_session, process=mock_process)
-    # Scp source mode detects -f. It then waits for an initial ACK ( b"\0" ).
 
     mock_process.stdin.read.side_effect = [b"\0", b""]
 
-    # We assume /nonexistent doesn't exist in mock_session.fs
     rc = await handler.handle("scp -f /nonexistent")
 
     assert rc == 1
-    # Check if we wrote an error message starting with \x01
     assert mock_process.channel.write.called
     assert "\x01SCP: No such file" in mock_process.channel.write.call_args[0][0]
 

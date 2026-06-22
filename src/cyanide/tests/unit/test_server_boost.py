@@ -35,11 +35,9 @@ def server(server_config):
 
 
 def test_fs_audit_hook_honeytoken(server):
-    # Honeytoken hit
     server._fs_audit_hook("read", "/etc/passwd", session_id="s1", src_ip="1.2.3.4")
     server.stats.on_honeytoken.assert_called_with("/etc/passwd")
 
-    # Normal audit
     server.stats.reset_mock()
     server._fs_audit_hook("read", "/tmp/normal", session_id="s1", src_ip="1.2.3.4")
     server.stats.on_honeytoken.assert_not_called()

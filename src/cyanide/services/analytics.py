@@ -79,8 +79,6 @@ class AnalyticsService:
 
                 commands = self._fetch_training_data()
                 if commands and self.ml_pipeline:
-                    # Offload to thread to not block event loop if fit is heavy
-                    # However, fit is currently synchronous in model.py
                     loop = asyncio.get_event_loop()
                     await loop.run_in_executor(None, self.ml_pipeline.retrain, commands)
 
@@ -184,7 +182,6 @@ class AnalyticsService:
                 asyncio.to_thread(self._perform_ml_analysis, cmd, src_ip, session_id, is_bot)
             )
         except RuntimeError:
-            # Fallback for synchronous environments (e.g. some unit tests)
             self._perform_ml_analysis(cmd, src_ip, session_id, is_bot)
 
     def _detect_tools(self, cmd: str, src_ip: str, session_id: str):
@@ -224,8 +221,7 @@ class AnalyticsService:
             domains = {
                 domain
                 for domain in re.findall(r"\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b", cmd)
-                if domain not in url_domains
-                and not domain.replace(".", "").isdigit()  # Ignore IP-like strings
+                if domain not in url_domains and not domain.replace(".", "").isdigit()
             }
             for domain in domains:
                 self.ioc_reporter.add_ioc(
@@ -319,9 +315,6 @@ class AnalyticsService:
     def analyze_auth(self, username, password, session_id):
         """Analyze authentication attempt for IOC extraction."""
         if self.ioc_reporter:
-            # Check if this user/pass combo is part of a common attack list
-            # For now, we log all failed attempts from known malicious IPs
-            # or simply log them as text IOCs
             self.ioc_reporter.add_ioc(
                 "credential",
                 f"{username}:{password}",

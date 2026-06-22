@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import posixpath
-from typing import Any, AsyncIterator, Dict, Optional, Union
+from typing import Any, AsyncIterator, Dict, Optional, Union, cast
 
 import asyncssh
 
@@ -125,11 +125,13 @@ class CyanideSFTPHandler(asyncssh.SFTPServer):
         content = b""
         if is_write:
             if not (flags & asyncssh.FXF_TRUNC) and self.fs.exists(p):
-                content = self._get_node_content(p)
+                if p not in ("/dev/random", "/dev/urandom", "/dev/sda"):
+                    content = self._get_node_content(p)
         else:
             if not self.fs.exists(p):
                 raise asyncssh.SFTPNoSuchFile(self.ERR_NO_SUCH_FILE)
-            content = self._get_node_content(p)
+            if p not in ("/dev/random", "/dev/urandom", "/dev/sda"):
+                content = self._get_node_content(p)
 
         handle_id = self.next_handle_id
         self.next_handle_id += 1
@@ -148,6 +150,23 @@ class CyanideSFTPHandler(asyncssh.SFTPServer):
             raise asyncssh.SFTPBadMessage(self.ERR_INVALID_HANDLE)
 
         fh = self.file_handles[handle]
+        p = fh["path"]
+        if p in ("/dev/random", "/dev/urandom"):
+            import os
+
+            return os.urandom(size)
+
+        if p == "/dev/sda":
+            sda_size = 40 * 1024 * 1024 * 1024
+            if offset >= sda_size:
+                return b""
+            read_size = min(size, sda_size - offset)
+            if hasattr(self.fs, "_generate_sda_data"):
+                return cast(bytes, self.fs._generate_sda_data(offset, read_size))
+            import os
+
+            return os.urandom(read_size)
+
         buffer = fh["buffer"]
         if offset >= len(buffer):
             return b""

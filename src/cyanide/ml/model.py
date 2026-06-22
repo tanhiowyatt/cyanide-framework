@@ -115,7 +115,6 @@ class CommandAutoencoder(nn.Module):
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=1e-5)
         criterion = nn.MSELoss()
 
-        # Tokenize and normalize all commands
         vectors = []
         for cmd in commands:
             tokens = self.tokenizer.encode(cmd)

@@ -363,6 +363,36 @@ class FakeFilesystem:
         if path in self.deleted_paths:
             return None
 
+        if path == "/dev/null":
+            return VirtualFile(
+                "null",
+                path,
+                self,
+                {"type": "file", "perm": "crw-rw-rw-", "owner": "root", "group": "root", "size": 0},
+            )
+
+        if path in ("/dev/random", "/dev/urandom"):
+            return VirtualFile(
+                posixpath.basename(path),
+                path,
+                self,
+                {"type": "file", "perm": "crw-rw-rw-", "owner": "root", "group": "root", "size": 0},
+            )
+
+        if path == "/dev/sda":
+            return VirtualFile(
+                "sda",
+                path,
+                self,
+                {
+                    "type": "file",
+                    "perm": "brw-rw----",
+                    "owner": "root",
+                    "group": "disk",
+                    "size": 40 * 1024 * 1024 * 1024,
+                },
+            )
+
         if path in self.memory_overlay:
             config = self.memory_overlay[path]
             return (
@@ -396,6 +426,8 @@ class FakeFilesystem:
         path = self.resolve(path)
         if path in self.deleted_paths:
             return False
+        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda"):
+            return True
         if (
             path == "/"
             or path in self.memory_overlay
@@ -409,6 +441,8 @@ class FakeFilesystem:
         self._ensure_system_init()
         path = self.resolve(path)
         if path in self.deleted_paths:
+            return False
+        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda"):
             return False
         if path == "/":
             return True
@@ -429,6 +463,8 @@ class FakeFilesystem:
         path = self.resolve(path)
         if path in self.deleted_paths:
             return False
+        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda"):
+            return True
         if path in self.memory_overlay:
             return bool(self.memory_overlay[path].get("type") == "file")
         if path in self.dynamic_files:
@@ -452,6 +488,12 @@ class FakeFilesystem:
             return []
 
         contents = set()
+
+        if path == "/dev":
+            contents.add("null")
+            contents.add("random")
+            contents.add("urandom")
+            contents.add("sda")
 
         if self.backend:
             for item in self.backend.list_dir(path):
@@ -486,6 +528,17 @@ class FakeFilesystem:
             return ""
 
         self._record_file_op("read", path)
+
+        if path == "/dev/null":
+            return ""
+
+        if path in ("/dev/random", "/dev/urandom"):
+            import os
+
+            return os.urandom(65536)
+
+        if path == "/dev/sda":
+            return self._generate_sda_data(0, 65536)
 
         if path in self.memory_overlay:
             content = self.memory_overlay[path].get("content", "")
@@ -534,6 +587,32 @@ class FakeFilesystem:
         perm="-rw-r--r--",
     ):
         path = self.resolve(path)
+        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda"):
+            if path in self.deleted_paths:
+                self.deleted_paths.remove(path)
+            if self.stats:
+                self.stats.on_file_op("write", path)
+            if self.session_mgr:
+                self.session_mgr.record_file_op(self.session_id)
+            name = posixpath.basename(path)
+            if path == "/dev/sda":
+                config = {
+                    "type": "file",
+                    "perm": "brw-rw----",
+                    "owner": "root",
+                    "group": "disk",
+                    "size": 40 * 1024 * 1024 * 1024,
+                }
+            else:
+                config = {
+                    "type": "file",
+                    "perm": "crw-rw-rw-",
+                    "owner": "root",
+                    "group": "root",
+                    "size": 0,
+                }
+            return VirtualFile(name, path, self, config)
+
         if len(self.memory_overlay.maps[0]) >= self.max_nodes:
             return None
 
@@ -564,6 +643,11 @@ class FakeFilesystem:
 
     def mkdir_p(self, path: str, owner="root", group="root", perm="drwxr-xr-x"):
         path = self.resolve(path)
+        if path in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda") or any(
+            path.startswith(x + "/")
+            for x in ("/dev/null", "/dev/random", "/dev/urandom", "/dev/sda")
+        ):
+            return False
         parts = [p for p in path.split("/") if p]
         current = "/"
         for part in parts:
@@ -738,3 +822,41 @@ class FakeFilesystem:
             return cast(str, rendered)
         except Exception:
             return content
+
+    def _generate_sda_data(self, offset: int, size: int) -> bytes:
+        import hashlib
+
+        def get_fake_mbr() -> bytes:
+            msg = b"GRUB Boot Loader. Error: No bootable device found.\r\n"
+            mbr = bytearray(512)
+            bootstrap = b"\xeb\x48\x90"
+            mbr[0 : len(bootstrap)] = bootstrap
+            mbr[0x10 : 0x10 + len(msg)] = msg
+            mbr[510] = 0x55
+            mbr[511] = 0xAA
+            return bytes(mbr)
+
+        data = bytearray(size)
+        sector_start = offset // 512
+        sector_end = (offset + size + 511) // 512
+
+        for sec in range(sector_start, sector_end):
+            sec_offset = sec * 512
+            overlap_start = max(offset, sec_offset)
+            overlap_end = min(offset + size, sec_offset + 512)
+            if overlap_start >= overlap_end:
+                continue
+
+            if sec == 0:
+                sec_data = get_fake_mbr()
+            else:
+                h = hashlib.sha256(f"sda_sector_{sec}".encode()).digest()
+                sec_data = (h * 16)[:512]
+
+            out_start = overlap_start - offset
+            out_end = overlap_end - offset
+            sec_start = overlap_start - sec_offset
+            sec_end = overlap_end - sec_offset
+            data[out_start:out_end] = sec_data[sec_start:sec_end]
+
+        return bytes(data)

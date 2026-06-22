@@ -29,7 +29,6 @@ class LazyCommandDict(dict):
 
         if key in self.command_map:
             cmd_class = self.command_map[key]
-            # Handle aliases pointing to other command names
             if isinstance(cmd_class, str):
                 return self.__getitem__(cmd_class)
 
@@ -49,8 +48,6 @@ class LazyCommandDict(dict):
             return default
 
     def items(self):
-        # This might trigger instantiation of all commands if used,
-        # but it's rarely used in ShellEmulator.
         for key in self.command_map:
             yield key, self.__getitem__(key)
 
@@ -204,8 +201,6 @@ class ShellEmulator:
 
         self.commands = LazyCommandDict(self, COMMAND_MAP)
 
-        # Pre-register some core aliases/commands if needed
-        # (ls is already in COMMAND_MAP, we can add 'dir' as a pointer)
         if "ls" in COMMAND_MAP:
             self.commands["dir"] = "ls"
 
@@ -290,16 +285,13 @@ class ShellEmulator:
                 return cast(tuple[str, str, int], await res)
             return cast(tuple[str, str, int], res)
 
-        # Handle History Navigation via Arrow Keys (\x1b[A = Up, \x1b[B = Down)
         if "\x1b[A" in command_line or "\x1b[B" in command_line:
             ups = command_line.count("\x1b[A")
             downs = command_line.count("\x1b[B")
             diff = ups - downs
             if self.history:
-                # Calculate index from the end
                 idx = max(0, min(len(self.history) - 1, len(self.history) - diff))
                 cmd = self.history[idx]
-                # Echo the command we're about to run for realism
                 stdout, stderr, rc = await self.execute(cmd)
                 return f"{cmd}\n{stdout}", stderr, rc
             return "", "", 0
@@ -307,7 +299,6 @@ class ShellEmulator:
         if not command_line.strip():
             return "", "", 0
 
-        # Save to history (if not the same as last command)
         if not self.history or self.history[-1] != command_line.strip():
             self.history.append(command_line.strip())
         command_line = self._expand_vars(command_line)
@@ -392,6 +383,21 @@ class ShellEmulator:
             parts.append(current.strip())
         return parts
 
+    def _handle_redirection(self, redirect_target: str, append_mode: bool, stdout: str):
+        """Handle writing stdout to the redirect target file."""
+        if append_mode:
+            existing_content = ""
+            abs_target = self.resolve_path(redirect_target)
+            if self.fs.exists(abs_target):
+                raw_existing = self.fs.get_content(abs_target)
+                if isinstance(raw_existing, bytes):
+                    existing_content = raw_existing.decode("utf-8", errors="replace")
+                else:
+                    existing_content = raw_existing
+            self._write_file(redirect_target, existing_content + stdout)
+        else:
+            self._write_file(redirect_target, stdout)
+
     async def _execute_pipeline(self, pipeline_str: str) -> tuple[str, str, int]:
         """Execute a single pipeline (A | B | C)."""
         segments = self._split_ignore_quotes(pipeline_str, "|")
@@ -400,7 +406,7 @@ class ShellEmulator:
         last_rc = 0
         err_out = ""
 
-        for i, segment in enumerate(segments):
+        for segment in segments:
             cmd_str, redirect_target, append_mode = self._parse_redirections(segment)
 
             stdout, stderr, rc = await self._execute_single_command(cmd_str, input_data)
@@ -410,19 +416,7 @@ class ShellEmulator:
                 err_out += stderr
 
             if redirect_target:
-                if append_mode:
-                    existing_content = ""
-                    abs_target = self.resolve_path(redirect_target)
-                    if self.fs.exists(abs_target):
-                        raw_existing = self.fs.get_content(abs_target)
-                        if isinstance(raw_existing, bytes):
-                            existing_content = raw_existing.decode("utf-8", errors="replace")
-                        else:
-                            existing_content = raw_existing
-                    self._write_file(redirect_target, existing_content + stdout)
-                else:
-                    self._write_file(redirect_target, stdout)
-
+                self._handle_redirection(redirect_target, append_mode, stdout)
                 input_data = ""
             else:
                 input_data = stdout
@@ -464,16 +458,12 @@ class ShellEmulator:
 
         cmd_name, params = self._resolve_alias(args[0], args[1:])
 
-        # Support direct execution of scripts (e.g. ./script.sh)
         if cmd_name not in self.commands:
             abs_path = self.resolve_path(cmd_name)
             if self.fs.exists(abs_path) and not self.fs.is_dir(abs_path):
-                # Real bash check: must have +x for direct execution
                 if not self.check_permission(abs_path, "x"):
                     return "", f"bash: {cmd_name}: Permission denied\n", 126
 
-                # If it's a file, execute it via bash
-                # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                 res = await self.commands["bash"].execute([cmd_name] + params, input_data)  # nosec
                 return res  # type: ignore[no-any-return]
 

@@ -224,7 +224,6 @@ class LibvirtPool:
                     await loop.run_in_executor(None, dom.destroy)
                 if self.save_snapshots:
                     try:
-                        # Attempt to revert to current snapshot if enabled
                         snap = await loop.run_in_executor(None, dom.snapshotCurrent)
                         await loop.run_in_executor(None, dom.revertToSnapshot, snap)
                         logger.info(f"VM {vm_id} reverted tracked snapshot.")
@@ -258,7 +257,6 @@ class LibvirtPool:
         if v["state"] != "ready" or not conn:
             return
         try:
-            # Verify VM is still responsive/active in libvirt
             dom = await asyncio.get_running_loop().run_in_executor(None, conn.lookupByName, vm_id)
             if not await asyncio.get_running_loop().run_in_executor(None, dom.isActive):
                 logger.warning(f"VM {vm_id} found inactive in 'ready' state. Rebuilding.")

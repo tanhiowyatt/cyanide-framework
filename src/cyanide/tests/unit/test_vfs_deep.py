@@ -25,18 +25,14 @@ def fs(tmp_path):
 
 
 def test_vfs_history_loading_saving(tmp_path):
-    # Completely isolated test for history
     with patch("cyanide.vfs.engine.Path") as mock_path_cls:
         mock_file = MagicMock()
         mock_file.exists.return_value = True
         mock_file.read_text.return_value = "ls -la\nwhoami\n"
         mock_file.stat.return_value.st_mtime = 123456789
-
-        # Setup mock Path chain: Path(...) / src_ip / .bash_history
         mock_path_cls.return_value.__truediv__.return_value.__truediv__.return_value = mock_file
 
         fs = FakeFilesystem(src_ip="1.2.3.4")
-        # The constructor calls _load_ip_history
 
         assert fs.exists("/root/.bash_history")
         content = fs.get_content("/root/.bash_history")
@@ -74,19 +70,15 @@ async def test_scp_edge_cases(tmp_path):
     await handler._handle_copy_command("INVALID HEADER", "/tmp")
     handler._write.assert_called_with(b"\x01SCP Protocol Error: Invalid header\n")
 
-    # Test directory creation failure mock
     handler.fs.mkdir_p = MagicMock(side_effect=Exception("mkdir failed"))
     handler._handle_dir_command("D0755 0 testdir", "/tmp")
-    # Should log error but not crash
 
-    # Test scp metadata unknown direction
     is_sink, is_source, path = handler._parse_scp_metadata("scp unknown_cmd")
     assert is_sink is False
     assert is_source is False
 
 
 def test_profile_loader_edge_cases(tmp_path):
-    # Test compute hash with marker
     p1 = tmp_path / "p1"
     p1.mkdir()
     base = p1 / "base.yaml"
@@ -143,7 +135,6 @@ def test_profile_loader_db_error(tmp_path):
     from cyanide.vfs.profile_loader import _compile_to_sqlite
 
     manifest = {"/test": {"type": "file", "content": "test"}}
-    # Use a directory as db_path to trigger error
     db_dir = tmp_path / "bad_db"
     db_dir.mkdir()
 

@@ -14,6 +14,7 @@ from .chmod import ChmodCommand
 from .cp import CpCommand
 from .crontab import CrontabCommand
 from .curl import CurlCommand
+from .dd import DdCommand
 from .doas import DoasCommand
 from .dpkg import DpkgCommand
 from .echo import EchoCommand
@@ -28,6 +29,7 @@ from .grep import GrepCommand
 from .head import HeadCommand
 from .help import HelpCommand
 from .history import HistoryCommand
+from .hostname import HostnameCommand
 from .id import IdCommand
 from .ifconfig import IfconfigCommand
 from .ip import IpCommand
@@ -78,6 +80,7 @@ COMMAND_MAP = {
     "sudo": SudoCommand,
     "su": SuCommand,
     "help": HelpCommand,
+    "hostname": HostnameCommand,
     "export": ExportCommand,
     "who": WhoCommand,
     "w": WCommand,
@@ -88,6 +91,7 @@ COMMAND_MAP = {
     "rmdir": RmdirCommand,
     "rm": RmCommand,
     "cp": CpCommand,
+    "dd": DdCommand,
     "mv": MvCommand,
     "find": FindCommand,
     "grep": GrepCommand,

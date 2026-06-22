@@ -18,8 +18,8 @@ class SimplePool:
         self.config = config
         self.logger = logger
         self.targets = []
-        self.failed_targets = {}  # (host, port) -> last_failure_time
-        self.failure_threshold = 300  # 5 minutes
+        self.failed_targets = {}
+        self.failure_threshold = 300
         pool_conf = config.get("pool", {})
         target_str = pool_conf.get("targets", "")
 
@@ -52,21 +52,18 @@ class SimplePool:
             )
 
     async def start(self):
-        # No background services to initialize for SimplePool.
+
         await asyncio.sleep(0)
 
     async def stop(self):
-        # No background tasks to clean up for SimplePool.
         await asyncio.sleep(0)
 
     async def reserve_target(self, session_id: str, protocol: str):
         await asyncio.sleep(0)
         if not self.targets:
-            # We already warned in __init__, so just return None here.
             return None
 
         now = time.time()
-        # Filter out targets that failed recently
         available_targets = [
             t
             for t in self.targets

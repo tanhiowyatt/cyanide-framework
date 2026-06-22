@@ -212,34 +212,51 @@ class VimCommand(BaseVisualEditor):
         self.emulator.pending_input_callback = self._handle_input
         return self._render(), "", 0
 
-    def _handle_normal_mode(self, char: str) -> tuple[str, str, int]:
+    def _handle_normal_movement(self, char: str) -> bool:
+        """Handle movement keys in NORMAL mode. Returns True if handled."""
         if char in ("k", "\x1b[A") and self.cursor_y > 0:  # Up
             self.cursor_y -= 1
-        elif char in ("j", "\x1b[B") and self.cursor_y < len(self.lines) - 1:  # Down
+            return True
+        if char in ("j", "\x1b[B") and self.cursor_y < len(self.lines) - 1:  # Down
             self.cursor_y += 1
-        elif char in ("l", "\x1b[C"):  # Right
+            return True
+        if char in ("l", "\x1b[C"):  # Right
             if self.cursor_x < len(self.lines[self.cursor_y]):
                 self.cursor_x += 1
-        elif char in ("h", "\x1b[D"):  # Left
+            return True
+        if char in ("h", "\x1b[D"):  # Left
             self.cursor_x = max(0, self.cursor_x - 1)
-        elif char == "i":
+            return True
+        return False
+
+    def _handle_normal_action(self, char: str) -> bool:
+        """Handle mode switches and actions in NORMAL mode. Returns True if handled."""
+        if char == "i":
             self.mode = "INSERT"
             if not self.lines:
                 self.lines = [""]
-        elif char == ":":
+            return True
+        if char == ":":
             self.mode = "COLON"
             self.colon_buffer = ""
-        elif char == "G":
+            return True
+        if char == "G":
             if self.lines:
                 self.cursor_y = len(self.lines) - 1
-        elif char == "o":
+            return True
+        if char == "o":
             if len(self.lines) < self.MAX_LINES:
                 self.lines.insert(self.cursor_y + 1, "")
                 self.cursor_y += 1
                 self.cursor_x = 0
                 self.mode = "INSERT"
-        else:
-            self._handle_normal_delete_commands(char)
+            return True
+        return False
+
+    def _handle_normal_mode(self, char: str) -> tuple[str, str, int]:
+        if not self._handle_normal_movement(char):
+            if not self._handle_normal_action(char):
+                self._handle_normal_delete_commands(char)
 
         if self.lines:
             self.cursor_x = min(self.cursor_x, len(self.lines[self.cursor_y]))
@@ -403,8 +420,6 @@ class NanoCommand(BaseVisualEditor):
         elif self.cursor_y >= self.scroll_top + (self.height - 6):
             self.scroll_top = self.cursor_y - (self.height - 7)
 
-        # Overwrite in-place from cursor home — no blank-screen flash.
-        # ENTER_ALT_SCREEN is only used on initial open and final exit.
         if getattr(self, "_first_render", True):
             self._first_render = False
             out = ENTER_ALT_SCREEN
@@ -432,8 +447,6 @@ class NanoCommand(BaseVisualEditor):
             [("^X", "Exit"), ("^J", "Justify"), ("^R", "Read File"), ("^U", "Uncut Text")]
         )
 
-        # Precise cursor positioning
-        # Row 1 = title bar, content starts at row 2
         render_cursor_y = min(self.cursor_y - self.scroll_top + 2, self.height - 3)
         render_cursor_x = self.cursor_x + 1
 

@@ -23,10 +23,10 @@ class TelnetHandler:
         self.services = server.services
         self.session_timeout = config.get("telnet", {}).get("timeout", 600)  # Increased to 10 mins
 
-    async def _read_byte(self, reader, timeout: Optional[float] = None) -> Optional[int]:
+    async def _read_byte(self, reader) -> Optional[int]:
         """Helper to read a single byte and return its integer value."""
         try:
-            b = await asyncio.wait_for(reader.read(1), timeout=timeout or self.session_timeout)
+            b = await asyncio.wait_for(reader.read(1), timeout=self.session_timeout)
             if not b:
                 return None
             return ord(b[0]) if isinstance(b, str) else b[0]
@@ -44,32 +44,41 @@ class TelnetHandler:
                 await self._process_telnet_iac(reader)
                 continue
 
-            # Convert back to bytes for decoding
             b = bytes([val])
             return self._decode_char(b)
 
     async def _process_telnet_iac(self, reader):
         """Handle Telnet Interpret As Command (IAC) sequences."""
-        cmd = await self._read_byte(reader, timeout=0.1)
+        try:
+            cmd = await asyncio.wait_for(self._read_byte(reader), timeout=0.1)
+        except Exception:
+            return
         if cmd is None:
             return
 
         if 251 <= cmd <= 254:
-            # 3-byte sequences (WILL/WONT/DO/DONT)
-            await self._read_byte(reader, timeout=0.1)
+            try:
+                await asyncio.wait_for(self._read_byte(reader), timeout=0.1)
+            except Exception:
+                pass
         elif cmd == 250:
-            # Subnegotiation (SB)
             await self._process_subnegotiation(reader)
 
     async def _process_subnegotiation(self, reader):
         """Process Telnet SB (Subnegotiation) until SE (Subnegotiation End)."""
         while True:
-            val = await self._read_byte(reader, timeout=0.1)
+            try:
+                val = await asyncio.wait_for(self._read_byte(reader), timeout=0.1)
+            except Exception:
+                break
             if val is None:
                 break
             if val == 255:
-                next_val = await self._read_byte(reader, timeout=0.1)
-                if next_val in (None, 240):  # SE or EOF
+                try:
+                    next_val = await asyncio.wait_for(self._read_byte(reader), timeout=0.1)
+                except Exception:
+                    break
+                if next_val in (None, 240):
                     break
 
     def _decode_char(self, b: bytes | str) -> Optional[str]:
@@ -84,7 +93,6 @@ class TelnetHandler:
     async def _consume_eol(self, reader):
         """Standard Telnet EOL consumer (swallows follow-up \n or \0)."""
         try:
-            # Check if another byte is waiting (non-blocking)
             await asyncio.wait_for(reader.read(1), timeout=0.1)
         except Exception:
             pass
@@ -163,7 +171,6 @@ class TelnetHandler:
 
     async def _refresh_line_ui(self, writer, prompt, old_line, new_line):
         """Redraw the line with new content from history."""
-        # Clear line: Carriage return + spaces + Carriage return
         writer.write(b"\r" + b" " * (len(prompt) + len(old_line)) + b"\r")
         writer.write(prompt.encode() + new_line.encode())
         await writer.drain()
@@ -212,12 +219,9 @@ class TelnetHandler:
         self.services.session.register_session(src_ip, session_id=session_id)
 
         try:
-            # Master Mode Negotiation
-            writer.write(bytes([255, 251, 1]))  # WILL ECHO
-            writer.write(bytes([255, 251, 3]))  # WILL SUPPRESS_GO_AHEAD
+            writer.write(bytes([255, 251, 1]))
+            writer.write(bytes([255, 251, 3]))
             await writer.drain()
-
-            # Send banner immediately
             banner_conf = (
                 self.config.get("telnet", {}).get("banner", "")
                 or "Red Hat Enterprise Linux 9.3 (Plow)\nKernel \\r on an \\m\n"
@@ -268,7 +272,7 @@ class TelnetHandler:
                     src_ip=src_ip,
                     analytics=getattr(self.server, "analytics", None),
                 )
-                await self._run_shell(reader, writer, shell, username, session_id)
+                await self._run_shell(reader, writer, shell, session_id)
             else:
                 writer.write(b"Login incorrect\r\n")
                 await writer.drain()
@@ -287,7 +291,7 @@ class TelnetHandler:
             except Exception:
                 pass
 
-    async def _run_shell(self, reader, writer, shell, username, session_id):
+    async def _run_shell(self, reader, writer, shell, session_id):
         """Interactive shell loop with Editor and History support."""
         prompt_str = shell.get_prompt()
         writer.write(prompt_str.encode())
@@ -321,7 +325,6 @@ class TelnetHandler:
 
         resp = stdout + stderr
         if was_in_editor and not is_in_editor:
-            # Just exited editor, append the prompt
             resp += shell.get_prompt()
 
         output = resp.replace("\n", "\r\n").encode("utf-8")

@@ -10,18 +10,15 @@ class BashCommand(Command):
         if not args:
             return "", "", 0
 
-        # Filter out common interactive/login flags
         clean_args = [a for a in args if not a.startswith("-") or a == "-c"]
 
         if "-i" in args:
             return "welcome to cyanide bash\n", "", 0
 
         if not clean_args and args:
-            # Just flags like -l
             return "", "", 0
 
         script_path = clean_args[0] if clean_args else args[0]
-        # if it's -c, the next arg is the command string
         if script_path == "-c" and len(clean_args) > 1:
             res = await self.emulator.execute(clean_args[1])
             return cast(tuple[str, str, int], res)

@@ -10,7 +10,7 @@ def test_rate_limiting():
         "rate_limit": {
             "max_connections_per_minute": 2,
             "ban_duration": 1,
-        },  # short ban for testing
+        },
     }
     from unittest.mock import MagicMock
 
@@ -18,31 +18,25 @@ def test_rate_limiting():
     ip = "1.2.3.4"
     now = time.time()
 
-    # 1. First connection
     allowed, reason = mgr.can_accept(ip)
     assert allowed
     mgr.register_session(ip)
 
-    # 2. Second connection
     allowed, reason = mgr.can_accept(ip)
     assert allowed
     mgr.register_session(ip)
 
-    # 3. Third connection (Should be banned)
     allowed, reason = mgr.can_accept(ip)
     assert not allowed
     assert "rate_limit_exceeded" in reason
 
-    # 4. Verify Ban
     allowed, reason = mgr.can_accept(ip)
     assert not allowed
     assert "ip_banned" in reason
 
-    # 5. Wait for ban expiry and history clear
     from unittest.mock import patch
 
     with patch("time.time") as mock_time:
-        # Advance time by 61 seconds
         mock_time.return_value = now + 61
         allowed, reason = mgr.can_accept(ip)
         assert allowed

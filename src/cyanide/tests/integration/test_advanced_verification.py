@@ -122,14 +122,12 @@ async def test_resource_limits(advanced_config: dict[str, Any]) -> None:
         async with asyncssh.connect(
             "127.0.0.1", port=port, username="root", password="toor", known_hosts=None
         ) as conn:
-            # 1. Deep chaining test (max_chain_depth is 50 in config)
             deep_cmd = " && ".join(["echo ok"] * 60)
             result = await conn.run(deep_cmd)
             stderr = str(result.stderr or "")
             assert "maximum command chain depth exceeded" in stderr
             assert result.exit_status != 0
 
-            # 2. Output size limit test (max_output_size is 1024 bytes)
             large_output_cmd = " ; ".join(["echo 'THIS_IS_A_LONG_STRING_REPEATED_MANY_TIMES'"] * 50)
             result = await conn.run(large_output_cmd)
             stdout = str(result.stdout or "")
